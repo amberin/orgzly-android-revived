@@ -52,6 +52,7 @@ import androidx.test.espresso.util.HumanReadables;
 import androidx.test.espresso.util.TreeIterables;
 import androidx.test.uiautomator.UiDevice;
 
+import com.orgzly.BuildConfig;
 import com.orgzly.R;
 import com.orgzly.android.ui.SpanUtils;
 
@@ -519,7 +520,7 @@ public class EspressoUtils {
 
     public static void grantAlarmsAndRemindersSpecialPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            String shellCmd = "appops set --uid com.orgzlyrevived SCHEDULE_EXACT_ALARM allow";
+            String shellCmd = "appops set --uid " + BuildConfig.APPLICATION_ID + " SCHEDULE_EXACT_ALARM allow";
             getInstrumentation().getUiAutomation().executeShellCommand(shellCmd);
         }
     }
