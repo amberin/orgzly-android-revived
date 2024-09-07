@@ -124,9 +124,7 @@ public class DirectoryRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(String repoRelativePath, File destinationFile) throws IOException {
-        Uri uri = repoUri.buildUpon().appendPath(repoRelativePath).build();
-
+    public VersionedRook retrieveBook(Uri uri, File destinationFile) throws IOException {
         String path = uri.getPath();
 
         if (path == null) {
