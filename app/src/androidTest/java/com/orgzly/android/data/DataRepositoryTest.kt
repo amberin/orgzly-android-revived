@@ -15,7 +15,7 @@ class DataRepositoryTest : OrgzlyTest() {
      * - a runtime exception should be thrown
      */
     @Test(expected = RuntimeException::class)
-    fun testExportSettingsAndSearchesToSelectedNote() {
+    fun testExportSettingsToNonUniqueNoteId() {
         testUtils.setupBook(
             "book1",
             """
@@ -39,12 +39,28 @@ class DataRepositoryTest : OrgzlyTest() {
         AppPreferences.settingsExportAndImportNoteId(context, "not-unique-value")
         try {
             dataRepository.exportSettingsAndSearchesToSelectedNote()
-        } catch (e: IOException) {
+        } catch (e: RunTimeException) {
             Assert.assertTrue(e.message!!.contains("Found multiple"))
             throw e
         } finally {
             TestCase.assertEquals("content", dataRepository.getNotes("book1")[0].note.content)
             TestCase.assertEquals("content", dataRepository.getNotes("book1")[1].note.content)
         }
+    }
+
+    @Test
+    fun testImportSettingsWithInvalidEntries() {
+        testUtils.setupBook(
+            "book1",
+            """
+                * Note 1
+                :PROPERTIES:
+                :ID: myexportnote
+                :END:
+
+                content
+
+           """.trimIndent()
+        )
     }
 }
