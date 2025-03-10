@@ -18,7 +18,6 @@ import com.orgzly.android.data.DataRepository
 import com.orgzly.android.db.entity.Book
 import com.orgzly.android.db.entity.Note
 import com.orgzly.android.ui.Breadcrumbs
-import com.orgzly.android.ui.note.NotePayload
 import com.orgzly.android.ui.showSnackbar
 import com.orgzly.android.util.LogUtils
 import com.orgzly.databinding.DialogImportSettingsBinding
@@ -118,13 +117,8 @@ class SettingsImportFragment : DialogFragment() {
                 }
             } else {
                 dismiss()
-
-                (result.userData as NotePayload).let {
-                    activity?.showSnackbar(
-                        getString(
-                            R.string.settings_imported_from, it.title
-                        )
-                    )
+                if (result.userData as Boolean) {
+                    activity?.showSnackbar(R.string.settings_imported)
                 }
             }
         }

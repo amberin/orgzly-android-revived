@@ -9,6 +9,9 @@ import android.os.Environment;
 
 import androidx.annotation.StringRes;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.orgzly.R;
 import com.orgzly.android.App;
 import com.orgzly.android.LocalStorage;
@@ -65,6 +68,11 @@ public class AppPreferences {
     public static void setDefaultPrefsFromJsonMap(Context context, Map<String, ?> parsedMap) {
         SharedPreferences prefs = getDefaultSharedPreferences(context);
         setPrefsFromValues(prefs, parsedMap);
+    }
+
+    public static JsonElement getDefaultPrefsAsJsonObject(Context context) {
+        Gson gson = new Gson();
+        return gson.toJsonTree(getDefaultSharedPreferences(context).getAll());
     }
 
     public static void setAllFromValues(Context context, AppPreferencesValues values) {

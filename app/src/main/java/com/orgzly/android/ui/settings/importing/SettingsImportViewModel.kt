@@ -34,8 +34,10 @@ class SettingsImportViewModel(
     val importedEvent: SingleLiveEvent<UseCaseResult> = SingleLiveEvent()
 
     fun openForTheFirstTime() {
-        val targetNote: NoteIdBookId? = dataRepository.findUniqueNoteHavingProperty(
-            "ID", AppPreferences.settingsExportAndImportNoteId(App.getAppContext()))
+        val targetNote: NoteIdBookId? = try {
+            dataRepository.findUniqueNoteHavingProperty(
+                "ID", AppPreferences.settingsExportAndImportNoteId(App.getAppContext()))
+        } catch (_: java.lang.RuntimeException) { null }
         var item: Item? = null
         if (targetNote != null) {
             val note = dataRepository.getNote(targetNote.noteId)
@@ -126,11 +128,11 @@ class SettingsImportViewModel(
             }
         }
         AppPreferences.settingsExportAndImportNoteId(App.getAppContext(), notePayload.properties.get("ID"))
-        dataRepository.importSettingsAndSearchesFromSelectedNote()
+        val importedSomething = dataRepository.importSettingsAndSearchesFromSelectedNote()
         importedEvent.postValue(UseCaseResult(
             modifiesLocalData = true,
             triggersSync = SYNC_DATA_MODIFIED,
-            userData = notePayload
+            userData = importedSomething
         ))
     }
 
