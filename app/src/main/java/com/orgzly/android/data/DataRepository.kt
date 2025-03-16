@@ -2069,31 +2069,6 @@ class DataRepository @Inject constructor(
             throw RuntimeException("Found no settings or saved searches to import.")
     }
 
-/*
-    fun importSettingsAndSearchesFromNotePayload(notePayload: NotePayload) {
-        val gson: Map<*, *>
-        try {
-            gson = Gson().fromJson(notePayload.content, Map::class.java)
-        } catch (e: JsonSyntaxException) {
-            throw RuntimeException(context.getString(R.string.note_does_not_contain_valid_json))
-        }
-        if (!("settings" in gson.keys && "saved_searches" in gson.keys)) // Both keys must be present
-            throw RuntimeException(context.getString(R.string.imported_json_is_missing_mandatory_fields))
-        val settings = gson["settings"] as Map<String, *>
-        if (settings.isNotEmpty()) {
-            AppPreferences.setDefaultPrefsFromJsonMap(context, settings)
-        }
-        val savedSearches: List<SavedSearch> = (gson["saved_searches"] as Map<String, String>)
-            .entries
-            .mapIndexed { index, entry ->
-                SavedSearch(0, entry.key, entry.value, index + 1)
-            }
-        if (savedSearches.isNotEmpty()) {
-            replaceSavedSearches(savedSearches)
-        }
-    }
-*/
-
     /*
      * Saved search
      */
