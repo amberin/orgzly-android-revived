@@ -121,7 +121,7 @@ public class DocumentRepo implements SyncRepo {
                 }
             }
             for (DocumentFile node : currentDir.listFiles()) {
-                if (node.isDirectory()) {
+                if (node.isDirectory() && AppPreferences.subfolderSupport(context)) {
                     // Avoid descending into completely ignored directories
                     if (Build.VERSION.SDK_INT >= 26) {
                         if (!ignoreNode.isPathIgnored(repoRelativePath.toString(), true)) {
@@ -187,7 +187,14 @@ public class DocumentRepo implements SyncRepo {
         if (!file.exists()) {
             throw new FileNotFoundException("File " + file + " does not exist");
         }
-        DocumentFile destinationDir = ensureDirectoryHierarchy(repoRelativePath);
+        DocumentFile destinationDir = repoDocumentFile;
+        if (repoRelativePath.contains("/")) {
+            if (AppPreferences.subfolderSupport(context)) {
+                destinationDir = ensureDirectoryHierarchy(repoRelativePath);
+            } else {
+                throw new IOException(context.getString(R.string.subfolder_support_disabled));
+            }
+        }
         String destinationFileName = Uri.parse(repoRelativePath).getLastPathSegment();
         assert destinationFileName != null;
         DocumentFile destinationFile = destinationDir.findFile(destinationFileName);
