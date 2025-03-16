@@ -4,6 +4,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.orgzly.android.BookName;
 import com.orgzly.android.LocalStorage;
 import com.orgzly.android.db.entity.Repo;
@@ -227,6 +229,7 @@ public class DirectoryRepo implements SyncRepo {
         return mDirectory;
     }
 
+    @NonNull
     @NotNull
     @Override
     public String toString() {
