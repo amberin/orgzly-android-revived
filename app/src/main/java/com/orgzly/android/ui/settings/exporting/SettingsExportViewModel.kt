@@ -118,38 +118,6 @@ class SettingsExportViewModel(
         }
     }
 
-/*
-    fun export(item: Item) {
-        try {
-            val payload = item.payload as Note
-            val notePayload = dataRepository.getNotePayload(payload.id) ?: throw RuntimeException(App.getAppContext().getString(R.string.failed_to_get_note_payload))
-            var noteIdPropertyValue = notePayload.properties.get("ID")
-            if (noteIdPropertyValue == null) {
-                // Note has no "ID" property - let's add one
-                noteIdPropertyValue = UUID.randomUUID().toString()
-                notePayload.properties.put("ID", noteIdPropertyValue)
-                dataRepository.updateNote(payload.id, notePayload)
-            }
-            // Ensure that the note's "ID" property value is unique
-            val targetNote = dataRepository.findUniqueNoteHavingProperty("ID", noteIdPropertyValue)
-            AppPreferences.settingsExportAndImportNoteId(App.getAppContext(), noteIdPropertyValue)
-            dataRepository.exportSettingsAndSearchesToNote(targetNote!!)
-            exportedEvent.postValue(UseCaseResult(
-                modifiesLocalData = true,
-                // Let's not trigger auto-sync, in case of accidental export to the wrong note.
-                triggersSync = SYNC_NOT_REQUIRED,
-                userData = notePayload
-            ))
-        } catch (e: Exception) {
-            exportedEvent.postValue(UseCaseResult(
-                modifiesLocalData = false,
-                triggersSync = SYNC_NOT_REQUIRED,
-                userData = e,
-            ))
-        }
-    }
-*/
-
     private fun replayUntilNoteId(noteId: Long): Item? {
         val notes = dataRepository.getNoteAndAncestors(noteId)
 

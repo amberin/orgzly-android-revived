@@ -117,44 +117,7 @@ class SettingsImportViewModel(
             ))
         }
     }
-
-/*
-    fun import(item: Item) {
-        var triggersSync = SYNC_NOT_REQUIRED
-        try {
-            val context = App.getAppContext()
-            val note = item.payload as Note
-            val notePayload = dataRepository.getNotePayload(note.id) ?: throw RuntimeException(
-                context.getString(R.string.failed_to_get_note_payload))
-            val noteIdProperty = notePayload.properties.get("ID")
-            if (noteIdProperty != null)
-            // Ensure that the note's "ID" property value is unique
-                dataRepository.findUniqueNoteHavingProperty("ID", notePayload.properties.get("ID"))
-            if (notePayload.content.isNullOrEmpty())
-                throw RuntimeException(context.getString(R.string.note_has_no_content))
-            dataRepository.importSettingsAndSearchesFromNotePayload(notePayload)
-            if (noteIdProperty == null) {
-                // Note has no "ID" property - let's add one
-                notePayload.properties.put("ID", UUID.randomUUID().toString())
-                dataRepository.updateNote(note.id, notePayload)
-                triggersSync = SYNC_DATA_MODIFIED
-            }
-            AppPreferences.settingsExportAndImportNoteId(context, notePayload.properties.get("ID"))
-            importedEvent.postValue(UseCaseResult(
-                modifiesLocalData = true,
-                triggersSync = triggersSync,
-                userData = note.title,
-            ))
-        } catch (e: Exception) {
-            importedEvent.postValue(UseCaseResult(
-                modifiesLocalData = false,
-                triggersSync = triggersSync,
-                userData = e,
-            ))
-        }
-    }
-*/
-
+    
     private fun replayUntilNoteId(noteId: Long): Item? {
         val notes = dataRepository.getNoteAndAncestors(noteId)
 
