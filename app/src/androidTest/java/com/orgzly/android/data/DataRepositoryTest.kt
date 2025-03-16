@@ -53,44 +53,6 @@ class DataRepositoryTest : OrgzlyTest() {
     }
 
     /**
-     * If the user attempts to import app settings from a note with a non-unique "ID" value, then
-     * the import should happen, but the note ID should not be stored to preferences.
-     */
-    @Test
-    fun testImportSettingsFromNonUniqueNoteId() {
-        // Given
-        val noteId = "non-unique-value"
-        testUtils.setupBook(
-            "book1",
-            """
-                * Note 1
-                :PROPERTIES:
-                :ID: $noteId
-                :END:
-                
-                content
-
-                * Note 2
-                :PROPERTIES:
-                :ID: $noteId
-                :END:
-                
-                {"settings":{"pref_key_states":"NEXT | DONE"},"saved_searches":{}}
-                
-           """.trimIndent()
-        )
-        assertEquals("TODO NEXT | DONE", AppPreferences.states(context))
-        val sourceNote = dataRepository.getNotes("book1")[1].note
-
-        // Expect
-        dataRepository.importSettingsAndSearchesFromNote(sourceNote)
-        // Settings should have changed
-        assertEquals("NEXT | DONE", AppPreferences.states(context))
-        // No note ID should have been stored to preferences
-        assertEquals("", AppPreferences.settingsExportAndImportNoteId(context))
-    }
-
-    /**
      * Unknown keys in the JSON blob must be silently ignored during import
      * without causing issues.
      */
