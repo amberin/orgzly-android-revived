@@ -98,9 +98,6 @@ public class BookName {
     public static String getRepoRelativePath(Uri repoUri, Uri fileUri) throws IOException {
         /* The content:// repository type requires special handling */
         if ("content".equals(repoUri.getScheme())) {
-//            String repoUriLastSegment = repoUri.toString().replaceAll("^.*/", "");
-//            String repoRootUriSegment = repoUri + "/document/" + repoUriLastSegment + "%2F";
-//            return Uri.decode(fileUri.toString().replace(repoRootUriSegment, ""));
             Context context = App.getAppContext();
             DocumentFile repoRootDir = DocumentFile.fromTreeUri(context, repoUri);
             assert(repoRootDir != null);
