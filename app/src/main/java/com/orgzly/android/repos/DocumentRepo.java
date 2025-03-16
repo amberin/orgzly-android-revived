@@ -6,6 +6,7 @@ import android.os.Build;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.orgzly.BuildConfig;
@@ -161,6 +162,7 @@ public class DocumentRepo implements SyncRepo {
 
         /* "Download" the file. */
         try (InputStream is = context.getContentResolver().openInputStream(sourceFile.getUri())) {
+            assert is != null;
             MiscUtils.writeStreamToFile(is, destinationFile);
         }
 
@@ -219,7 +221,7 @@ public class DocumentRepo implements SyncRepo {
         DocumentFile currentDir = repoDocumentFile;
         while (levels.size() > 1) {
             String nextDirName = levels.remove(0);
-            DocumentFile nextDir = currentDir.findFile(nextDirName);
+            DocumentFile nextDir = Objects.requireNonNull(currentDir).findFile(nextDirName);
             if (nextDir == null) {
                 currentDir = currentDir.createDirectory(nextDirName);
             } else {
@@ -240,7 +242,7 @@ public class DocumentRepo implements SyncRepo {
      */
     @Override
     public VersionedRook renameBook(Uri oldFullUri, String newName) throws IOException {
-        DocumentFile oldDocFile = DocumentFile.fromSingleUri(context, oldFullUri);
+        DocumentFile oldDocFile = Objects.requireNonNull(DocumentFile.fromSingleUri(context, oldFullUri));
         long mtime = oldDocFile.lastModified();
         String rev = String.valueOf(mtime);
         String oldDocFileName = oldDocFile.getName();
@@ -252,7 +254,7 @@ public class DocumentRepo implements SyncRepo {
         );
         BookName oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(repoUri, oldFullUri));
         String newRelativePath = BookName.repoRelativePath(newName, oldBookName.getFormat());
-        String newDocFileName = Uri.parse(newRelativePath).getLastPathSegment();
+        String newDocFileName = Objects.requireNonNull(Uri.parse(newRelativePath).getLastPathSegment());
         DocumentFile newDir;
         Uri newUri = oldFullUri;
 
@@ -280,6 +282,7 @@ public class DocumentRepo implements SyncRepo {
                         oldDirUri,
                         newDir.getUri()
                 );
+                assert newUri != null;
             } else {
                 throw new IllegalArgumentException(
                         context.getString(R.string.moving_between_subdirectories_requires_api_24));
@@ -293,6 +296,7 @@ public class DocumentRepo implements SyncRepo {
                     newUri,
                     newDocFileName
             );
+            assert newUri != null;
         }
 
         return new VersionedRook(repoId, RepoType.DOCUMENT, repoUri, newUri, rev, mtime);
@@ -309,6 +313,7 @@ public class DocumentRepo implements SyncRepo {
         }
     }
 
+    @NonNull
     @Override
     public String toString() {
         return getUri().toString();
