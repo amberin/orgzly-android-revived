@@ -80,10 +80,9 @@ class DataRepositoryTest : OrgzlyTest() {
         // When
         dataRepository.importSettingsAndSearchesFromNote(sourceNote)
 
-        // Then
-        // The setting should have changed
+        // Expect the ssetting to have changed
         assertEquals("NEXT | DONE", AppPreferences.states(context))
-        // Searches should not have changed
+        // Expect searches not to have changed
         assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
     }
 
@@ -223,12 +222,12 @@ class DataRepositoryTest : OrgzlyTest() {
         assertEquals("TODO NEXT | DONE", AppPreferences.states(context))
         val sourceNote = dataRepository.getNotes("book1")[0].note
 
-        // Expect
-        // Import should happen
+        // When
         dataRepository.importSettingsAndSearchesFromNote(sourceNote)
-        // Searches have not changed
+
+        // Expect searches not to have changed
         assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
-        // Settings have changed
+        // Expect settings to have changed
         assertEquals("NEXT | DONE", AppPreferences.states(context))
     }
 
@@ -254,10 +253,10 @@ class DataRepositoryTest : OrgzlyTest() {
         val settingsBeforeImport = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
         val sourceNote = dataRepository.getNotes("book1")[0].note
 
-
-        // Expect
-        // Import should happen
+        // When
         dataRepository.importSettingsAndSearchesFromNote(sourceNote)
+
+        // Then
         // Searches have changed
         assertEquals(1, dataRepository.getSavedSearches().size)
         // Settings have not changed
