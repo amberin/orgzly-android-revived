@@ -111,14 +111,14 @@ class SettingsImportFragment : DialogFragment() {
         }
 
         viewModel.importedEvent.observeSingle(viewLifecycleOwner) { result ->
-            if (result.userData is RuntimeException) {
+            if (result.userData is Exception) {
                 (result.userData).let {
-                    activity?.showSnackbar(it.localizedMessage)
+                    activity?.showSnackbar(getString(R.string.error) + ": " + it.localizedMessage)
                 }
             } else {
                 dismiss()
-                if (result.userData as Boolean) {
-                    activity?.showSnackbar(R.string.settings_imported)
+                (result.userData as String).let { noteTitle ->
+                    activity?.showSnackbar(getString(R.string.settings_imported_from, noteTitle))
                 }
             }
         }

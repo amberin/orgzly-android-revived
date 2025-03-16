@@ -11,11 +11,12 @@ class DataRepositoryTest : OrgzlyTest() {
 
     /**
      * If the user attempts to export app settings to a note with a non-unique "ID" value, then
-     * - a runtime exception should be thrown
+     * - an exception should be thrown
      * - no export should happen
      */
     @Test(expected = RuntimeException::class)
     fun testExportSettingsToNonUniqueNoteId() {
+        // Given
         testUtils.setupBook(
             "book1",
             """
@@ -37,8 +38,11 @@ class DataRepositoryTest : OrgzlyTest() {
         )
         assertEquals(2, dataRepository.getNotes("book1").size)
         AppPreferences.settingsExportAndImportNoteId(context, "not-unique-value")
+        val targetNote = dataRepository.getNotes("book1")[0].note
+        
+        // Expect
         try {
-            dataRepository.exportSettingsAndSearchesToSelectedNote()
+            dataRepository.exportSettingsAndSearchesToNote(targetNote)
         } catch (e: java.lang.RuntimeException) {
             assertTrue(e.message!!.contains("Found multiple"))
             throw e
@@ -50,44 +54,40 @@ class DataRepositoryTest : OrgzlyTest() {
 
     /**
      * If the user attempts to import app settings from a note with a non-unique "ID" value, then
-     * - a runtime exception should be thrown
-     * - no import should happen
+     * the import should happen, but the note ID should not be stored to preferences.
      */
-    @Test(expected = RuntimeException::class)
+    @Test
     fun testImportSettingsFromNonUniqueNoteId() {
-        // Assert that a setting is in its default state
-        assertEquals("TODO", AppPreferences.getFirstTodoState(context))
-        // Create book with exported settings JSON
+        // Given
+        val noteId = "non-unique-value"
         testUtils.setupBook(
             "book1",
             """
                 * Note 1
                 :PROPERTIES:
-                :ID: not-unique-value
+                :ID: $noteId
                 :END:
                 
                 content
 
                 * Note 2
                 :PROPERTIES:
-                :ID: not-unique-value
+                :ID: $noteId
                 :END:
                 
                 {"settings":{"pref_key_states":"NEXT | DONE"},"saved_searches":{}}
                 
            """.trimIndent()
         )
-        assertEquals(2, dataRepository.getNotes("book1").size)
-        AppPreferences.settingsExportAndImportNoteId(context, "not-unique-value")
-        try {
-            dataRepository.importSettingsAndSearchesFromSelectedNote()
-        } catch (e: java.lang.RuntimeException) {
-            assertTrue(e.message!!.contains("Found multiple"))
-            throw e
-        } finally {
-            // Check that the setting was not changed
-            assertEquals("TODO", AppPreferences.getFirstTodoState(context))
-        }
+        assertEquals("TODO NEXT | DONE", AppPreferences.states(context))
+        val sourceNote = dataRepository.getNotes("book1")[1].note
+
+        // Expect
+        dataRepository.importSettingsAndSearchesFromNote(sourceNote)
+        // Settings should have changed
+        assertEquals("NEXT | DONE", AppPreferences.states(context))
+        // No note ID should have been stored to preferences
+        assertEquals("", AppPreferences.settingsExportAndImportNoteId(context))
     }
 
     /**
@@ -97,42 +97,47 @@ class DataRepositoryTest : OrgzlyTest() {
     @Test
     fun testImportSettingsWithInvalidEntries() {
         // Given
+        val noteId = "my-export-note"
         testUtils.setupBook(
             "book1",
             """
                 * Note 1
                 :PROPERTIES:
-                :ID: myexportnote
+                :ID: $noteId
                 :END:
 
                 {"settings":{"pref_key_states":"NEXT | DONE","invalid_key":"invalid_value"},"saved_searches":{}}
 
            """.trimIndent()
         )
-        AppPreferences.settingsExportAndImportNoteId(context, "myexportnote")
+        val searchesBeforeImport = dataRepository.getSavedSearches()
         // Check that a setting has its default value
         assertEquals("TODO NEXT | DONE", AppPreferences.states(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
 
         // When
-        dataRepository.importSettingsAndSearchesFromSelectedNote()
+        dataRepository.importSettingsAndSearchesFromNote(sourceNote)
 
         // Then
-        // Check that the setting was changed
+        // The setting should have changed
         assertEquals("NEXT | DONE", AppPreferences.states(context))
+        // Searches should not have changed
+        assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
     }
 
     /**
-     * An attempt to import completely invalid data must fail gracefully.
+     * An attempt to import completely invalid data must fail gracefully, with no changes.
      */
-    @Test
+    @Test(expected = RuntimeException::class)
     fun testImportInvalidSettingsData() {
         // Given
+        val noteId = "my-export-note"
         testUtils.setupBook(
             "book1",
             """
                 * Note 1
                 :PROPERTIES:
-                :ID: myexportnote
+                :ID: $noteId
                 :END:
 
                 Sorry, I'm just a little note. I may even look a little bit like
@@ -140,82 +145,127 @@ class DataRepositoryTest : OrgzlyTest() {
 
            """.trimIndent()
         )
-        AppPreferences.settingsExportAndImportNoteId(context, "myexportnote")
+        val searchesBeforeImport = dataRepository.getSavedSearches()
+        val settingsBeforeImport = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
 
         // Expect
-        assertEquals(false, dataRepository.importSettingsAndSearchesFromSelectedNote())
+        try {
+            dataRepository.importSettingsAndSearchesFromNote(sourceNote)
+        } catch (e: java.lang.RuntimeException) {
+            assertTrue(e.message!!.contains("valid JSON"))
+            throw e
+        } finally {
+            // Searches have not changed
+            assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
+            // Settings have not changed
+            assertEquals(settingsBeforeImport, Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context)))
+        }
     }
 
     /**
-     * If any of the "settings" or "saved_searches" keys is missing, no import should happen.
+     * If the "settings" key is missing, no import should happen.
      */
-    @Test
-    fun testImportSettingsOneKeyMissing() {
+    @Test(expected = RuntimeException::class)
+    fun testImportSettingsNoSettingsKey() {
         // Given
+        val noteId = "my-export-note"
         testUtils.setupBook(
             "book1",
             """
                 * Note 1
                 :PROPERTIES:
-                :ID: settingsnote1
-                :END:
-
-                {"settings":{"pref_key_states":"NEXT | DONE"}}
-
-           """.trimIndent()
-        )
-        testUtils.setupBook(
-            "book2",
-            """
-                * Note 2
-                :PROPERTIES:
-                :ID: settingsnote2
+                :ID: $noteId
                 :END:
 
                 {"saved_searches":{"Agenda":".it.done ad.7"}}
 
            """.trimIndent()
         )
+        val searchesBeforeImport = dataRepository.getSavedSearches()
+        val settingsBeforeImport = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
 
-        // When
-        AppPreferences.settingsExportAndImportNoteId(context, "exportnote1")
         // Expect
-        assertEquals(false, dataRepository.importSettingsAndSearchesFromSelectedNote())
-        // When
-        AppPreferences.settingsExportAndImportNoteId(context, "exportnote2")
-        // Expect
-        assertEquals(false, dataRepository.importSettingsAndSearchesFromSelectedNote())
+        try {
+            dataRepository.importSettingsAndSearchesFromNote(sourceNote)
+        } catch (e: java.lang.RuntimeException) {
+            assertTrue(e.message!!.contains("missing mandatory fields"))
+            throw e
+        } finally {
+            // Searches have not changed
+            assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
+            // Settings have not changed
+            assertEquals(settingsBeforeImport, Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context)))
+        }
     }
 
     /**
-     * Either of the "settings" or "saved_searches" keys may be empty.
+     * If the "searches" key is missing, no import should happen.
+     */
+    @Test(expected = RuntimeException::class)
+    fun testImportSettingsNoSearchesKey() {
+        // Given
+        val noteId = "my-export-note"
+        testUtils.setupBook(
+            "book1",
+            """
+                * Note 1
+                :PROPERTIES:
+                :ID: $noteId
+                :END:
+
+                {"settings":{"pref_key_states":"NEXT | DONE"}}
+
+           """.trimIndent()
+        )
+        val searchesBeforeImport = dataRepository.getSavedSearches()
+        val settingsBeforeImport = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
+
+        // Expect
+        try {
+            dataRepository.importSettingsAndSearchesFromNote(sourceNote)
+        } catch (e: java.lang.RuntimeException) {
+            assertTrue(e.message!!.contains("missing mandatory fields"))
+            throw e
+        } finally {
+            // Searches have not changed
+            assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
+            // Settings have not changed
+            assertEquals(settingsBeforeImport, Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context)))
+        }
+    }
+
+    /**
+     * The "settings" and "saved_searches" keys must be present, but they may be empty.
      */
 
     @Test
     fun testImportSettingsWithSettingsDataWithoutSearchesData() {
         // Given
+        val noteId = "my-export-note"
         testUtils.setupBook(
             "book1", """
                 * Note 1
                 :PROPERTIES:
-                :ID: myexportnote
+                :ID: $noteId
                 :END:
 
                 {"settings":{"pref_key_states":"NEXT | DONE"},"saved_searches":{}}
 
            """.trimIndent()
         )
-        AppPreferences.settingsExportAndImportNoteId(context, "myexportnote")
-        // Check that searches and settings are the defaults
-        val searches = dataRepository.getSavedSearches()
-        assertEquals(4, searches.size)
+        val searchesBeforeImport = dataRepository.getSavedSearches()
+        // Check that the setting has the default value
         assertEquals("TODO NEXT | DONE", AppPreferences.states(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
 
         // Expect
         // Import should happen
-        assertEquals(true, dataRepository.importSettingsAndSearchesFromSelectedNote())
+        dataRepository.importSettingsAndSearchesFromNote(sourceNote)
         // Searches have not changed
-        assertEquals(searches, dataRepository.getSavedSearches())
+        assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
         // Settings have changed
         assertEquals("NEXT | DONE", AppPreferences.states(context))
     }
@@ -223,59 +273,67 @@ class DataRepositoryTest : OrgzlyTest() {
     @Test
     fun testImportSettingsWithSearchesDataWithoutSettingsData() {
         // Given
+        val noteId = "my-export-note"
         testUtils.setupBook(
             "book1", """
                 * Note 1
                 :PROPERTIES:
-                :ID: myexportnote
+                :ID: $noteId
                 :END:
 
                 {"settings":{},"saved_searches":{"Agenda":".it.done ad.7"}}
 
            """.trimIndent()
         )
-        AppPreferences.settingsExportAndImportNoteId(context, "myexportnote")
-        // Store searches
-        val searches = dataRepository.getSavedSearches()
+        val searchesBeforeImport = dataRepository.getSavedSearches()
         // Assert default number of searches
-        assertEquals(4, searches.size)
-        // Store settings
-        val settings = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        assertEquals(4, searchesBeforeImport.size)
+        // Store current settings
+        val settingsBeforeImport = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
+
 
         // Expect
         // Import should happen
-        assertEquals(true, dataRepository.importSettingsAndSearchesFromSelectedNote())
+        dataRepository.importSettingsAndSearchesFromNote(sourceNote)
         // Searches have changed
         assertEquals(1, dataRepository.getSavedSearches().size)
         // Settings have not changed
-        assertEquals(settings, Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context)))
+        assertEquals(settingsBeforeImport, Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context)))
     }
 
-    @Test
+    @Test(expected = RuntimeException::class)
     fun testImportSettingsValidJsonButNoData() {
+        val noteId = "my-export-note"
         testUtils.setupBook(
             "book1", """
                 * Note 1
                 :PROPERTIES:
-                :ID: myexportnote
+                :ID: $noteId
                 :END:
 
                 {"settings":{},"saved_searches":{}}
 
            """.trimIndent()
         )
-        AppPreferences.settingsExportAndImportNoteId(context, "myexportnote")
-        // Store searches
-        val searches = dataRepository.getSavedSearches()
-        // Store settings
-        val settings = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        val searchesBeforeImport = dataRepository.getSavedSearches()
+        val settingsBeforeImport = Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+        val sourceNote = dataRepository.getNotes("book1")[0].note
 
         // Expect
-        // Import should not happen
-        assertEquals(false, dataRepository.importSettingsAndSearchesFromSelectedNote())
-        // Searches have not changed
-        assertEquals(searches, dataRepository.getSavedSearches())
-        // Settings have not changed
-        assertEquals(settings, Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context)))
+        try {
+            dataRepository.importSettingsAndSearchesFromNote(sourceNote)
+        } catch (e: java.lang.RuntimeException) {
+            assertTrue(e.message!!.contains("Found no settings or saved searches to import"))
+            throw e
+        } finally {
+            // Searches have not changed
+            assertEquals(searchesBeforeImport, dataRepository.getSavedSearches())
+            // Settings have not changed
+            assertEquals(
+                settingsBeforeImport,
+                Gson().toJson(AppPreferences.getDefaultPrefsAsJsonObject(context))
+            )
+        }
     }
 }

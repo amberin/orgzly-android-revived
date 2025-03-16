@@ -2012,52 +2012,87 @@ class DataRepository @Inject constructor(
         }
     }
 
-    fun exportSettingsAndSearchesToSelectedNote() {
-        val targetNote = findUniqueNoteHavingProperty("ID", AppPreferences.settingsExportAndImportNoteId(context))
-        if (targetNote != null) {
-            // Get settings as JSON
-            val settingsJsonObject = AppPreferences.getDefaultPrefsAsJsonObject(context)
-            // Get saved searches as JSON
-            val savedSearchesJsonObject = Gson().fromJson("{}", JsonObject::class.java)
-            getSavedSearches().forEach {
-                savedSearchesJsonObject.addProperty(it.name, it.query)
-            }
-            // Put them together
-            val finalMap = mapOf("settings" to settingsJsonObject, "saved_searches" to savedSearchesJsonObject)
-            val finalJsonString = Gson().toJson(finalMap)
-            updateNoteContent(targetNote.bookId, targetNote.noteId, finalJsonString)
+    fun exportSettingsAndSearchesToNote(note: Note) {
+        val notePayload = getNotePayload(note.id) ?: throw RuntimeException(context.getString(R.string.failed_to_get_note_payload))
+        var noteIdPropertyValue = notePayload.properties.get("ID")
+        if (noteIdPropertyValue == null) {
+            // Note has no "ID" property - let's add one
+            noteIdPropertyValue = UUID.randomUUID().toString()
+            notePayload.properties.put("ID", noteIdPropertyValue)
+            updateNote(note.id, notePayload)
         }
+        // Ensure that the note's "ID" property value is unique
+        val targetNote = findUniqueNoteHavingProperty("ID", noteIdPropertyValue)
+        // Get settings as JSON
+        val settingsJsonObject = AppPreferences.getDefaultPrefsAsJsonObject(context)
+        // Get saved searches as JSON
+        val savedSearchesJsonObject = Gson().fromJson("{}", JsonObject::class.java)
+        getSavedSearches().forEach {
+            savedSearchesJsonObject.addProperty(it.name, it.query)
+        }
+        // Put them together
+        val finalMap = mapOf("settings" to settingsJsonObject, "saved_searches" to savedSearchesJsonObject)
+        val finalJsonString = Gson().toJson(finalMap)
+        updateNoteContent(targetNote!!.bookId, targetNote.noteId, finalJsonString)
+        AppPreferences.settingsExportAndImportNoteId(context, noteIdPropertyValue)
     }
 
-    fun importSettingsAndSearchesFromSelectedNote(): Boolean {
-        var somethingWasImported = false
-        val sourceNote = findUniqueNoteHavingProperty("ID", AppPreferences.settingsExportAndImportNoteId(context))
-        if (sourceNote != null) {
-            val notePayload = getNotePayload(sourceNote.noteId)
-            if (notePayload != null) {
-                try {
-                    val gson = Gson().fromJson(notePayload.content, Map::class.java)
-                    if ("settings" in gson.keys && "saved_searches" in gson.keys) { // Both keys must be present
-                        val settings = gson["settings"] as Map<String, *>
-                        if (settings.isNotEmpty()) {
-                            AppPreferences.setDefaultPrefsFromJsonMap(context, settings)
-                            somethingWasImported = true
-                        }
-                        val savedSearches: List<SavedSearch> = (gson["saved_searches"] as Map<String, String>)
-                            .entries
-                            .mapIndexed { index, entry ->
-                                SavedSearch(0, entry.key, entry.value, index + 1)
-                            }
-                        if (savedSearches.isNotEmpty()) {
-                            replaceSavedSearches(savedSearches)
-                            somethingWasImported = true
-                        }
-                    }
-                } catch (_: JsonSyntaxException) {}
-            }
+    fun importSettingsAndSearchesFromNote(note: Note) {
+        var importedSomething = false
+        val notePayload = getNotePayload(note.id) ?: throw RuntimeException(
+            context.getString(R.string.failed_to_get_note_payload))
+        if (notePayload.content.isNullOrEmpty())
+            throw RuntimeException(context.getString(R.string.note_has_no_content))
+        val gson: Map<*, *>
+        try {
+            gson = Gson().fromJson(notePayload.content, Map::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw RuntimeException(context.getString(R.string.note_does_not_contain_valid_json))
         }
-        return somethingWasImported
+        if (!("settings" in gson.keys && "saved_searches" in gson.keys)) // Both keys must be present
+            throw RuntimeException(context.getString(R.string.imported_json_is_missing_mandatory_fields))
+        val settings = gson["settings"] as Map<String, *>
+        if (settings.isNotEmpty()) {
+            AppPreferences.setDefaultPrefsFromJsonMap(context, settings)
+            importedSomething = true
+        }
+        val savedSearches: List<SavedSearch> = (gson["saved_searches"] as Map<String, String>)
+            .entries
+            .mapIndexed { index, entry ->
+                SavedSearch(0, entry.key, entry.value, index + 1)
+            }
+        if (savedSearches.isNotEmpty()) {
+            replaceSavedSearches(savedSearches)
+            importedSomething = true
+        }
+        if (!importedSomething)
+            throw RuntimeException("Found no settings or saved searches to import.")
     }
+
+/*
+    fun importSettingsAndSearchesFromNotePayload(notePayload: NotePayload) {
+        val gson: Map<*, *>
+        try {
+            gson = Gson().fromJson(notePayload.content, Map::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw RuntimeException(context.getString(R.string.note_does_not_contain_valid_json))
+        }
+        if (!("settings" in gson.keys && "saved_searches" in gson.keys)) // Both keys must be present
+            throw RuntimeException(context.getString(R.string.imported_json_is_missing_mandatory_fields))
+        val settings = gson["settings"] as Map<String, *>
+        if (settings.isNotEmpty()) {
+            AppPreferences.setDefaultPrefsFromJsonMap(context, settings)
+        }
+        val savedSearches: List<SavedSearch> = (gson["saved_searches"] as Map<String, String>)
+            .entries
+            .mapIndexed { index, entry ->
+                SavedSearch(0, entry.key, entry.value, index + 1)
+            }
+        if (savedSearches.isNotEmpty()) {
+            replaceSavedSearches(savedSearches)
+        }
+    }
+*/
 
     /*
      * Saved search

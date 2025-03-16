@@ -18,7 +18,6 @@ import com.orgzly.android.data.DataRepository
 import com.orgzly.android.db.entity.Book
 import com.orgzly.android.db.entity.Note
 import com.orgzly.android.ui.Breadcrumbs
-import com.orgzly.android.ui.note.NotePayload
 import com.orgzly.android.ui.showSnackbar
 import com.orgzly.android.ui.util.styledAttributes
 import com.orgzly.android.util.LogUtils
@@ -121,19 +120,14 @@ class SettingsExportFragment : DialogFragment() {
         }
 
         viewModel.exportedEvent.observeSingle(viewLifecycleOwner) { result ->
-            if (result.userData is RuntimeException) {
+            if (result.userData is Exception) {
                 (result.userData).let {
-                    activity?.showSnackbar(it.localizedMessage)
+                    activity?.showSnackbar(getString(R.string.error) + ": " + it.localizedMessage)
                 }
             } else {
                 dismiss()
-
-                (result.userData as NotePayload).let {
-                    activity?.showSnackbar(
-                        getString(
-                            R.string.settings_exported_to, it.title
-                        )
-                    )
+                (result.userData as String).let { noteTitle ->
+                    activity?.showSnackbar(getString(R.string.settings_exported_to, noteTitle))
                 }
             }
         }
