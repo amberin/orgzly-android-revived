@@ -104,17 +104,17 @@ public class BookName {
             DocumentFile targetFile = DocumentFile.fromSingleUri(context, fileUri);
             assert(targetFile != null);
             DocumentFile foundFile = getFileWithParentInfo(repoRootDir, targetFile);
-            if (foundFile == null)
+            if (foundFile == null || foundFile.getName() == null)
                 throw new IOException("Failed to find " + fileUri + " in " + repoUri);
-            String repoRelativePath = foundFile.getName();
+            StringBuilder repoRelativePath = new StringBuilder(foundFile.getName());
             DocumentFile parentDir = foundFile.getParentFile();
             assert parentDir != null;
             while (parentDir != repoRootDir) {
-                repoRelativePath = parentDir.getName() + "/" + repoRelativePath;
+                repoRelativePath.insert(0, parentDir.getName() + "/");
                 parentDir = parentDir.getParentFile();
                 assert parentDir != null;
             }
-            return repoRelativePath;
+            return repoRelativePath.toString();
         } else {
             // Just return the decoded fileUri stripped of the repoUri (if present), and stripped
             // of any leading / (if present).
@@ -156,7 +156,7 @@ public class BookName {
                 String name = m.group(1);
                 String extension = m.group(2);
 
-                if (extension.equals("org")) {
+                if (extension != null && extension.equals("org")) {
                     return new BookName(repoRelativePath, name, BookFormat.ORG);
                 }
             }
