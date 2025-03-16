@@ -121,7 +121,7 @@ public class DocumentRepo implements SyncRepo {
             DocumentFile parentDir = currentDir.getParentFile();
             if (parentDir != null) {
                 if (parentDir == repoDocumentFile) {
-                    repoRelativePath = new StringBuilder(currentDir.getName());
+                    repoRelativePath = new StringBuilder(Objects.requireNonNull(currentDir.getName()));
                 } else {
                     repoRelativePath.append("/").append(currentDir.getName());
                 }
