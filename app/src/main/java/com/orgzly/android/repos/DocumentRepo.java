@@ -85,12 +85,6 @@ public class DocumentRepo implements SyncRepo {
                             "file.getUri()", file.getUri(),
                             "file.getParentFile()", file.getParentFile().getUri());
                 }
-                if (Build.VERSION.SDK_INT >= 26) {
-                    // Get the file's relative path and check if it matches an ignore rule
-                    if (ignoreNode.isPathIgnored(BookName.getRepoRelativePath(repoUri,
-                            file.getUri()), false))
-                        continue;
-                }
                 result.add(new VersionedRook(
                         repoId,
                         RepoType.DOCUMENT,
@@ -108,7 +102,7 @@ public class DocumentRepo implements SyncRepo {
     }
 
     /**
-     * @return All ORG files found in the file tree
+     * @return All file nodes in the repo tree which are not excluded by .orgzlyignore
      */
     private List<DocumentFile> walkFileTree() {
         List<DocumentFile> result = new ArrayList<>();
