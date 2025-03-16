@@ -62,7 +62,7 @@ interface SyncRepoTest {
 
             // Then
             assertEquals(1, books.size)
-            assertEquals(rookUri, books[0].uri.toString())
+            assertEquals(rookUri, books[0].uri)
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
             assertEquals(fileName, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
         }
@@ -81,7 +81,7 @@ interface SyncRepoTest {
 
             // Then
             assertEquals(1, books.size)
-            assertEquals(rookUri, books[0].uri.toString())
+            assertEquals(rookUri, books[0].uri)
             assertEquals(repoFilePath, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
         }
@@ -258,7 +258,7 @@ interface SyncRepoTest {
                     // as long as URLs work as expected.
                     repoManipulationPoint as DropboxClient
                     val retrievedFile = kotlin.io.path.createTempFile().toFile()
-                    repoManipulationPoint.download(syncRepo.uri, Uri.parse(repositoryPath), retrievedFile)
+                    repoManipulationPoint.download(syncRepo.uri, syncRepo.uri.buildUpon().appendPath(repositoryPath).build(), retrievedFile)
                     assertEquals(testBookContent, retrievedFile.readText())
                 }
             }
@@ -303,12 +303,11 @@ interface SyncRepoTest {
 
         fun testRenameBook_repoFileAlreadyExists(repoManipulationPoint: Any, syncRepo: SyncRepo) {
             // Given
-            for (fileName in arrayOf("Original.org", "Renamed.org")) {
-                writeFileToRepo("...", syncRepo, repoManipulationPoint, fileName)
-            }
+            val firstExistingRookUri = writeFileToRepo("...", syncRepo, repoManipulationPoint, "Original.org")
+            val secondExistingRookUri = writeFileToRepo("...", syncRepo, repoManipulationPoint, "Renamed.org")
             val retrievedBookFile = kotlin.io.path.createTempFile().toFile()
             // When
-            val originalRook = syncRepo.retrieveBook(Uri.parse("Original.org"), retrievedBookFile)
+            val originalRook = syncRepo.retrieveBook(firstExistingRookUri, retrievedBookFile)
             try {
                 syncRepo.renameBook(originalRook.uri, "Renamed")
             } catch (e: IOException) {
