@@ -30,6 +30,7 @@ import com.orgzly.android.util.LogUtils;
 
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.RebaseResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -41,6 +42,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.jgit.util.FileUtils;
@@ -51,10 +53,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
     private final static String TAG = "repos.GitRepo";
@@ -403,14 +403,13 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
 
         boolean localChanges = false;
         Map<BookView, BookSyncStatus> bookStatusMap = new HashMap<BookView, BookSyncStatus>();
+        SyncState syncStateToReturn = null;
         for (VersionedRook rook : getBooks()) {
             String fileName = rook.uri.getPath().replaceFirst("^/", ""); // TODO: Align with #312
-            BookView bookView =
-                    dataRepository.getBookView(dataRepository.getBook(BookName.fromRook(rook).getName()).getId());
+            BookView bookView = dataRepository.getBookView(dataRepository.getBook(BookName.fromRook(rook).getName()).getId());
             BookSyncStatus status;
             if (bookView == null) {
-                bookView = dataRepository.loadBookFromRepo(repoId, rook.repoType,
-                        repoUri.toString(), fileName);
+                bookView = dataRepository.loadBookFromRepo(repoId, rook.repoType, repoUri.toString(), fileName);
                 status = BookSyncStatus.NO_BOOK_ONE_ROOK;
             } else {
                 if (bookView.isOutOfSync() || !bookView.hasSync()) {
@@ -429,21 +428,38 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             boolean pushFailed = false;
             if (localChanges) {
                 synchronizer.commitCurrentIndex();
-                if (!synchronizer.tryPush(transportSetter)) {
+                try {
+                    synchronizer.push(transportSetter);
+                } catch (GitAPIException ignored) {
                     pushFailed = true;
                 }
             }
             if (!localChanges || pushFailed) {
                 if (synchronizer.fetch(transportSetter)) { // Always fetch the default branch only
-                    // Remote has changed. Try to rebase.
-                    if (rebaseFailed) {
+                    // There are changes on remote. Try to rebase.
+                    RebaseResult rebaseResult = synchronizer.tryRebaseOnRemoteHead();
+                    if (rebaseResult.getStatus().isSuccessful()) {
+                        // Rebasing on the remote changes succeeded.
+                        if (localChanges) {
+                            synchronizer.push(transportSetter);
+                        }
+                        // TODO: Build a diff list and update book statuses.
+                    } else {
                         // There is a conflict between local and remote.
                         // Push local HEAD to the conflict branch on remote.
                         // Set conflict state on the relevant books.
+                        synchronizer.forcePushLocalHeadToRemoteConflictBranch(transportSetter);
+                        syncStateToReturn = SyncState.getInstance(
+                                SyncState.Type.FINISHED_WITH_CONFLICTS,
+                                context.getString(
+                                        R.string.merge_conflict_pushed_to,
+                                        context.getString(R.string.orgzly_conflict_branch)));
                     }
                 }
             }
         }
+        return syncStateToReturn;
+    }
         // Update status of all books
 
         /*
@@ -611,8 +627,8 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         long duration = endTime - startTime;
         Log.i(TAG, String.format("Synced repo %s in %s ms", repoUri.toString(), duration));
         return syncStateToReturn;
-        */
     }
+    */
 
     private void updateBookStatusInDataRepository(DataRepository dataRepository,
                                                   BookView bookView,

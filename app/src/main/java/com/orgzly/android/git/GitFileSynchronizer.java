@@ -4,13 +4,19 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.orgzly.BuildConfig;
+import com.orgzly.R;
+import com.orgzly.android.App;
 import com.orgzly.android.util.LogUtils;
 import com.orgzly.android.util.MiscUtils;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.RebaseCommand;
+import org.eclipse.jgit.api.RebaseResult;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Constants;
@@ -22,6 +28,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -253,6 +261,29 @@ public class GitFileSynchronizer {
         }
     }
 
+    public void push(GitTransportSetter transportSetter) throws GitAPIException {
+        final var pushCommand = transportSetter.setTransport(
+                git.push().setRemote(preferences.remoteName()));
+        pushCommand.call();
+    }
+
+    public void forcePushLocalHeadToRemoteConflictBranch(GitTransportSetter transportSetter) throws GitAPIException {
+        final var pushCommand = transportSetter.setTransport(git.push()
+            .setRefSpecs(new RefSpec("HEAD:" + App.getAppContext().getString(R.string.orgzly_conflict_branch)))
+            .setForce(true));
+        pushCommand.call();
+    }
+
+    public RebaseResult tryRebaseOnRemoteHead() throws IOException, GitAPIException {
+        RebaseCommand command =
+                git.rebase().setUpstream("origin/" + git.getRepository().getBranch());
+        RebaseResult result = command.call();
+        if (!result.getStatus().isSuccessful()) {
+            command.setOperation(RebaseCommand.Operation.ABORT).call();
+        }
+        return result;
+    }
+
     public void tryPush(GitTransportSetter transportSetter) throws RuntimeException {
         long startTime = System.currentTimeMillis();
         final var pushCommand = transportSetter.setTransport(
@@ -337,14 +368,10 @@ public class GitFileSynchronizer {
         }
     }
 
-    public void commitCurrentIndex() {
+    public void commitCurrentIndex() throws GitAPIException {
         if (gitRepoIsClean())
-            return
+            return;
         git.commit().call();
-    }
-
-    public void tryRebase() {
-        git.rebase().call();
     }
 
     /**

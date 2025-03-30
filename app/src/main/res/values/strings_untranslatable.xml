@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Orgzly Revived Dev</string>
+    <string name="app_name" translatable="false">Orgzly Revived</string>
 
     <string name="day_night" translatable="false">day</string>
 
@@ -47,4 +47,5 @@
     <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur</string>
     <string name="lorem_ipsum_rich" translatable="false">Lorem *ipsum* dolor sit amet, /consectetur/</string>
     <string name="lorem_ipsum_longer" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nunc tellus</string>
+    <string name="orgzly_conflict_branch">ORGZLY_CONFLICT_BRANCH</string>
 </resources>

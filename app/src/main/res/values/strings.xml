@@ -815,4 +815,5 @@
     <string name="note_does_not_contain_valid_json">Note does not contain valid JSON.</string>
     <string name="imported_json_is_missing_mandatory_fields">Imported JSON is missing mandatory fields.</string>
     <string name="note_has_no_content">Note has no content.</string>
+    <string name="merge_conflict_pushed_to">Merge conflict; force-pushed to remote branch “%1$s”.</string>
 </resources>
