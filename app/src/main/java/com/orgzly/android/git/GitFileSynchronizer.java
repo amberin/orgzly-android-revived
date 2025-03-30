@@ -6,6 +6,10 @@ import android.util.Log;
 import com.orgzly.BuildConfig;
 import com.orgzly.R;
 import com.orgzly.android.App;
+import com.orgzly.android.NotesOrgExporter;
+import com.orgzly.android.data.DataRepository;
+import com.orgzly.android.db.entity.Book;
+import com.orgzly.android.db.entity.BookView;
 import com.orgzly.android.util.LogUtils;
 import com.orgzly.android.util.MiscUtils;
 
@@ -355,12 +359,13 @@ public class GitFileSynchronizer {
         updateAndCommitFile(sourceFile, repositoryPath);
     }
 
-    public void updateFileAndAddToIndex(File sourceFile, String repositoryPath) {
-        File destinationFile = repoDirectoryFile(repositoryPath);
+    public void updateFileAndAddToIndex(DataRepository dataRepository, Book book,
+                                        String repositoryPath) throws IOException {
+        File destinationFile = workTreeFile(repositoryPath);
         if (!destinationFile.exists()) {
-            throw new FileNotFoundException("File " + destinationFile + " does not exist");
+            throw new FileNotFoundException("File " + destinationFile + " does not exist"); // TODO: string resource
         }
-        MiscUtils.copyFile(sourceFile, destinationFile);
+        new NotesOrgExporter(dataRepository).exportBook(book, destinationFile);
         try {
             git.add().addFilepattern(repositoryPath).call();
         } catch (GitAPIException e) {

@@ -414,9 +414,10 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             } else {
                 if (bookView.isOutOfSync() || !bookView.hasSync()) {
                     localChanges = true;
-                    File tmpFile = getTempBookFile(context);
-                    new NotesOrgExporter(dataRepository).exportBook(bookView.getBook(), tmpFile);
-                    synchronizer.updateFileAndAddToIndex(tmpFile, fileName); // Just add, we will commit later
+                    synchronizer.updateFileAndAddToIndex(
+                            dataRepository,
+                            bookView.getBook(),
+                            fileName); // Just add; we will commit later
                     status = BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED;
                 } else {
                     status = BookSyncStatus.NO_CHANGE;

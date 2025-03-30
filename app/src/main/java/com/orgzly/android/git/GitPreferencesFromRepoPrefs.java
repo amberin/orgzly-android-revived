@@ -6,6 +6,8 @@ import com.orgzly.R;
 import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.prefs.RepoPreferences;
 
+import java.util.Objects;
+
 public class GitPreferencesFromRepoPrefs implements GitPreferences {
     private RepoPreferences repoPreferences;
 
@@ -16,15 +18,14 @@ public class GitPreferencesFromRepoPrefs implements GitPreferences {
     @Override
     public GitTransportSetter createTransportSetter() {
         String scheme = remoteUri().getScheme();
-        switch (scheme) {
-            case "https":
-                String username = repoPreferences.getStringValue(R.string.pref_key_git_https_username, "");
-                String password = repoPreferences.getStringValue(R.string.pref_key_git_https_password, "");
-                return new HTTPSTransportSetter(username, password);
-            case "file":
-                return tc -> tc;
-            default:
-                return new GitSshKeyTransportSetter();
+        if (Objects.equals(scheme, "https")) {
+            String username = repoPreferences.getStringValue(R.string.pref_key_git_https_username, "");
+            String password = repoPreferences.getStringValue(R.string.pref_key_git_https_password, "");
+            return new HTTPSTransportSetter(username, password);
+        } else {
+            //            case "file":
+            //                return tc -> tc;
+            return new GitSshKeyTransportSetter();
         }
     }
 
