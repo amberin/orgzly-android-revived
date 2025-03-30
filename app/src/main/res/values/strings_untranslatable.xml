@@ -47,5 +47,5 @@
     <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur</string>
     <string name="lorem_ipsum_rich" translatable="false">Lorem *ipsum* dolor sit amet, /consectetur/</string>
     <string name="lorem_ipsum_longer" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nunc tellus</string>
-    <string name="orgzly_conflict_branch">ORGZLY_CONFLICT_BRANCH</string>
+    <string name="git_conflict_branch_name_on_remote">ORGZLY_CONFLICT_BRANCH</string>
 </resources>

@@ -107,7 +107,7 @@ object SyncUtils {
             BookSyncStatus.CONFLICT_LAST_SYNCED_ROOK_AND_LATEST_ROOK_ARE_DIFFERENT,
             BookSyncStatus.ROOK_AND_VROOK_HAVE_DIFFERENT_REPOS,
             BookSyncStatus.ONLY_DUMMY,
-            BookSyncStatus.CONFLICT_STAYING_ON_TEMPORARY_BRANCH,
+            BookSyncStatus.CONFLICT_PUSHED_TO_CONFLICT_BRANCH,
             BookSyncStatus.BOOK_WITH_PREVIOUS_ERROR_AND_NO_LINK ->
                 bookAction = BookAction.forNow(BookAction.Type.ERROR, namesake.status.msg())
 

@@ -9,18 +9,15 @@ import com.orgzly.android.App;
 import com.orgzly.android.NotesOrgExporter;
 import com.orgzly.android.data.DataRepository;
 import com.orgzly.android.db.entity.Book;
-import com.orgzly.android.db.entity.BookView;
 import com.orgzly.android.util.LogUtils;
 import com.orgzly.android.util.MiscUtils;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
-import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.RebaseCommand;
 import org.eclipse.jgit.api.RebaseResult;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Constants;
@@ -32,7 +29,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
@@ -273,7 +269,7 @@ public class GitFileSynchronizer {
 
     public void forcePushLocalHeadToRemoteConflictBranch(GitTransportSetter transportSetter) throws GitAPIException {
         final var pushCommand = transportSetter.setTransport(git.push()
-            .setRefSpecs(new RefSpec("HEAD:" + App.getAppContext().getString(R.string.orgzly_conflict_branch)))
+            .setRefSpecs(new RefSpec("HEAD:" + App.getAppContext().getString(R.string.git_conflict_branch_name_on_remote)))
             .setForce(true));
         pushCommand.call();
     }
@@ -359,17 +355,17 @@ public class GitFileSynchronizer {
         updateAndCommitFile(sourceFile, repositoryPath);
     }
 
-    public void updateFileAndAddToIndex(DataRepository dataRepository, Book book,
-                                        String repositoryPath) throws IOException {
+    public void writeFileAndAddToIndex(DataRepository dataRepository, Book book,
+                                       String repositoryPath) throws IOException {
+        // TODO: String resources
         File destinationFile = workTreeFile(repositoryPath);
-        if (!destinationFile.exists()) {
-            throw new FileNotFoundException("File " + destinationFile + " does not exist"); // TODO: string resource
-        }
+        if (!(destinationFile.exists() || destinationFile.createNewFile()))
+            throw new IOException("Failed to create file " + repositoryPath + " in work tree");
         new NotesOrgExporter(dataRepository).exportBook(book, destinationFile);
         try {
             git.add().addFilepattern(repositoryPath).call();
         } catch (GitAPIException e) {
-            throw new IOException("Failed to commit changes."); // TODO: String resource
+            throw new IOException("Failed to add file to index.");
         }
     }
 

@@ -230,12 +230,20 @@ class DataRepository @Inject constructor(
         }
     }
 
+    fun getBooksLinkedToRepo(id: Long): List<BookView> {
+        return db.bookView().getAllLinkedToRepo(id)
+    }
+
     fun getBooksWithError(): List<Book> {
         return db.book().getWithActionType(BookAction.Type.ERROR)
     }
 
     fun getBookView(id: Long): BookView? {
         return db.bookView().get(id)
+    }
+
+    fun getBookView(name: String): BookView? {
+        return db.bookView().get(name)
     }
 
     private fun doesBookExist(name: String): Boolean {
