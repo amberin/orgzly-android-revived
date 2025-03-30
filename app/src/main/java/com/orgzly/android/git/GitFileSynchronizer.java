@@ -317,6 +317,29 @@ public class GitFileSynchronizer {
         updateAndCommitFile(sourceFile, repositoryPath);
     }
 
+    public void updateFileAndAddToIndex(File sourceFile, String repositoryPath) {
+        File destinationFile = repoDirectoryFile(repositoryPath);
+        if (!destinationFile.exists()) {
+            throw new FileNotFoundException("File " + destinationFile + " does not exist");
+        }
+        MiscUtils.copyFile(sourceFile, destinationFile);
+        try {
+            git.add().addFilepattern(repositoryPath).call();
+        } catch (GitAPIException e) {
+            throw new IOException("Failed to commit changes."); // TODO: String resource
+        }
+    }
+
+    public void commitCurrentIndex() {
+        if (gitRepoIsClean())
+            return
+        git.commit().call();
+    }
+
+    public void tryRebase() {
+        git.rebase().call();
+    }
+
     /**
      * Add a new file to the repository, while ensuring that it didn't already exist.
      * @param sourceFile This will become the contents of the added file
