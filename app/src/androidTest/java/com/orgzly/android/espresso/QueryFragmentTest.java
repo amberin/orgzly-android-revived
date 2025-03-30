@@ -14,7 +14,9 @@ import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withParent;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static com.orgzly.android.espresso.util.EspressoUtils.contextualToolbarOverflowMenu;
+import static com.orgzly.android.espresso.util.EspressoUtils.grantAlarmsAndRemindersSpecialPermission;
 import static com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick;
 import static com.orgzly.android.espresso.util.EspressoUtils.onBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
@@ -23,7 +25,8 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onNotesInSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.recyclerViewItemCount;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.scroll;
-import static com.orgzly.android.espresso.util.EspressoUtils.searchForText;
+import static com.orgzly.android.espresso.util.EspressoUtils.searchForTextCloseKeyboard;
+import static com.orgzly.android.espresso.util.EspressoUtils.waitId;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
@@ -31,10 +34,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assume.assumeTrue;
 
+import android.icu.util.Calendar;
 import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.os.SystemClock;
 
 import androidx.test.core.app.ActivityScenario;
 
@@ -44,12 +50,24 @@ import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.ui.main.MainActivity;
 import com.orgzly.org.datetime.OrgDateTime;
 
+import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 
 public class QueryFragmentTest extends OrgzlyTest {
+    private ActivityScenario<MainActivity> scenario;
+
+    @After
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+        if (scenario != null) {
+            scenario.close();
+        }
+    }
+
     private void defaultSetUp() {
         testUtils.setupBook("book-one",
                 "First book used for testing\n" +
@@ -100,7 +118,7 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note #28.\n" +
                 "");
 
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
     }
 
     @Test
@@ -108,7 +126,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         defaultSetUp();
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(click());
-        searchForText("b.book-one another note");
+        searchForTextCloseKeyboard("b.book-one another note");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(1)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText("Another note."), isDisplayed())));
@@ -119,7 +137,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         defaultSetUp();
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(click());
-        searchForText("b.book-one note");
+        searchForTextCloseKeyboard("b.book-one note");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(7)));
     }
@@ -128,10 +146,10 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testSearchTwice() {
         defaultSetUp();
 
-        searchForText("different");
+        searchForTextCloseKeyboard("different");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
-        searchForText("another");
+        searchForTextCloseKeyboard("another");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(1)));
     }
@@ -140,7 +158,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testSearchExpressionTodo() {
         defaultSetUp();
 
-        searchForText("i.todo");
+        searchForTextCloseKeyboard("i.todo");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(3)));
     }
@@ -149,7 +167,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testSearchExpressionsToday() {
         defaultSetUp();
 
-        searchForText("s.today");
+        searchForTextCloseKeyboard("s.today");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
     }
@@ -158,7 +176,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testSearchExpressionsPriority() {
         defaultSetUp();
 
-        searchForText("p.a");
+        searchForTextCloseKeyboard("p.a");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
 
         onNotesInSearch().check(matches(recyclerViewItemCount(3)));
@@ -172,7 +190,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testNotPriority() {
         defaultSetUp();
 
-        searchForText(".p.b");
+        searchForTextCloseKeyboard(".p.b");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
 
         onNotesInSearch().check(matches(recyclerViewItemCount(4)));
@@ -188,7 +206,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testSearchInBook() {
         defaultSetUp();
 
-        searchForText("b.book-one note");
+        searchForTextCloseKeyboard("b.book-one note");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(7)));
     }
@@ -212,9 +230,9 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testToggleState() {
         testUtils.setupBook("book-one", "* Note");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("Note");
+        searchForTextCloseKeyboard("Note");
         onNoteInSearch(0).perform(longClick());
         onView(withId(R.id.toggle_state)).perform(click());
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(withText(startsWith("DONE"))));
@@ -228,7 +246,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         defaultSetUp();
 
         onView(allOf(withText("book-two"), isDisplayed())).perform(click());
-        searchForText("b.book-two Note");
+        searchForTextCloseKeyboard("b.book-two Note");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(29)));
         onNoteInSearch(27).perform(click());
@@ -239,6 +257,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testSchedulingNote() {
         defaultSetUp();
+        grantAlarmsAndRemindersSpecialPermission();
 
         onView(withId(R.id.drawer_layout)).perform(open());
         onView(withText("Scheduled")).perform(click());
@@ -249,6 +268,8 @@ public class QueryFragmentTest extends OrgzlyTest {
         onView(withId(R.id.date_picker_button)).perform(click());
         onView(withClassName(equalTo(DatePicker.class.getName()))).perform(setDate(2014, 4, 1));
         onView(withText(android.R.string.ok)).perform(click());
+        SystemClock.sleep(500);
+        onView(isRoot()).perform(waitId(R.id.time_picker_button, 5000));
         onView(withId(R.id.time_picker_button)).perform(scroll(), click());
         onView(withClassName(equalTo(TimePicker.class.getName()))).perform(setTime(9, 15));
         onView(withText(android.R.string.ok)).perform(click());
@@ -268,9 +289,9 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** [#C] Note D.\n" +
                 "*** TODO Note E.");
         testUtils.setupBook("book-two", "* Note #1.\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("p.b");
+        searchForTextCloseKeyboard("p.b");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
 
         onNotesInSearch().check(matches(recyclerViewItemCount(4)));
@@ -292,9 +313,9 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** DONE Note #5.\n" +
                 "CLOSED: [2014-06-03 Tue 13:34]\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText(".i.todo .i.done");
+        searchForTextCloseKeyboard(".i.todo .i.done");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(5)));
     }
@@ -307,9 +328,9 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testNotesWithSameScheduledTimeString() throws IOException {
         testUtils.setupBook("notebook-1", "* Note A\nSCHEDULED: <2014-01-01>");
         testUtils.setupBook("notebook-2", "* Note B\nSCHEDULED: <2014-01-01>");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("s.today");
+        searchForTextCloseKeyboard("s.today");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
     }
@@ -318,9 +339,9 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testNotesWithSameDeadlineTimeString() throws IOException {
         testUtils.setupBook("notebook-1", "* Note A\nDEADLINE: <2014-01-01>");
         testUtils.setupBook("notebook-2", "* Note B\nDEADLINE: <2014-01-01>");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("d.today");
+        searchForTextCloseKeyboard("d.today");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
     }
@@ -328,9 +349,9 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testClosedTimeSearch() {
         testUtils.setupBook("notebook-1", "* Note A\nCLOSED: [2014-01-01]");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("c.ge.-2d");
+        searchForTextCloseKeyboard("c.ge.-2d");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onView(withText(R.string.no_notes_found_after_search)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(0)));
@@ -344,10 +365,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** Note C\n" +
                 "*** Note D\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
-        searchForText("t.tag");
+        searchForTextCloseKeyboard("t.tag");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(4)));
     }
@@ -360,10 +381,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** Note C\n" +
                 "*** Note D\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
-        searchForText("t.tag1 t.tag2");
+        searchForTextCloseKeyboard("t.tag1 t.tag2");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(3)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(startsWith("Note B")), isDisplayed())));
@@ -379,7 +400,7 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** Note C :tag3:\n" +
                 "*** Note D :tag3:\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
 
@@ -390,7 +411,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         pressBack();
         pressBack();
 
-        searchForText("t.tag3");
+        searchForTextCloseKeyboard("t.tag3");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view)
@@ -407,7 +428,7 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note C :tag3:\n" +
                 "** Note D :tag3:\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
 
@@ -418,7 +439,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         pressBack();
         pressBack();
 
-        searchForText("t.tag3");
+        searchForTextCloseKeyboard("t.tag3");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view)
@@ -435,7 +456,7 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note C :tag3:\n" +
                 "** Note D :tag3:\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
 
@@ -449,7 +470,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         onActionItemClick(R.id.paste, R.string.paste);
         onView(withText(R.string.heads_action_menu_item_paste_under)).perform(click());
 
-        searchForText("t.tag3");
+        searchForTextCloseKeyboard("t.tag3");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view)
@@ -468,10 +489,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** Note C\n" +
                 "*** Note D\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
-        searchForText("note o.scheduled");
+        searchForTextCloseKeyboard("note o.scheduled");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(withText("Note B")));
         onNoteInSearch(1, R.id.item_head_title_view).check(matches(withText("Note A")));
@@ -489,10 +510,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** DONE Note D\n" +
                 "SCHEDULED: <2014-01-03>\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
-        searchForText("s.today .i.done o.s");
+        searchForTextCloseKeyboard("s.today .i.done o.s");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(withText("Note A")));
         onNoteInSearch(1, R.id.item_head_title_view).check(matches(withText("Note C")));
@@ -511,10 +532,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** DONE Note D\n" +
                 "DEADLINE: <2014-01-03>\n" +
                 "");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
-        searchForText("d.today .i.done .o.d");
+        searchForTextCloseKeyboard("d.today .i.done .o.d");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(withText("Note B")));
         onNoteInSearch(1, R.id.item_head_title_view).check(matches(withText("Note C")));
@@ -525,7 +546,7 @@ public class QueryFragmentTest extends OrgzlyTest {
     public void testOrderOfBooksAfterRenaming() {
         defaultSetUp();
 
-        searchForText("note");
+        searchForTextCloseKeyboard("note");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNoteInSearch(0, R.id.item_head_book_name_text).check(matches(withText("book-one")));
 
@@ -558,10 +579,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note B :b:\n" +
                 "*** Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText(".t.c");
+        searchForTextCloseKeyboard(".t.c");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(4)));
     }
@@ -573,10 +594,11 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note B :b:\n" +
                 "*** Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
+        SystemClock.sleep(500);
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText(".t.b");
+        searchForTextCloseKeyboard(".t.b");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText("Note A  a"), isDisplayed())));
@@ -590,10 +612,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note B :b:\n" +
                 "*** Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText("tn.a or tn.b");
+        searchForTextCloseKeyboard("tn.a or tn.b");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(startsWith("Note A")), isDisplayed())));
@@ -607,10 +629,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** [#A] Note B :b:\n" +
                 "*** [#C] Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText("o.p");
+        searchForTextCloseKeyboard("o.p");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note B")), isDisplayed())));
         onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note A")), isDisplayed())));
@@ -625,10 +647,11 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** [#A] Note B :b:\n" +
                 "*** [#C] Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
+        SystemClock.sleep(200);
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText(".o.p");
+        searchForTextCloseKeyboard(".o.p");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note C")), isDisplayed())));
         onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note D")), isDisplayed())));
@@ -644,10 +667,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** NEXT Note B :b:\n" +
                 "* DONE Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText(".it.todo");
+        searchForTextCloseKeyboard(".it.todo");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note C")), isDisplayed())));
@@ -662,10 +685,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** NEXT Note B :b:\n" +
                 "* DONE Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText("it.todo");
+        searchForTextCloseKeyboard("it.todo");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(2)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note A")), isDisplayed())));
@@ -680,10 +703,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** NEXT Note B :b:\n" +
                 "* DONE Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText("it.none");
+        searchForTextCloseKeyboard("it.none");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(1)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note D")), isDisplayed())));
@@ -697,10 +720,10 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** NEXT Note B :b:\n" +
                 "* DONE Note C\n" +
                 "* Note D\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        searchForText(".it.none");
+        searchForTextCloseKeyboard(".it.none");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(3)));
         onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note A")), isDisplayed())));
@@ -716,11 +739,11 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note B\n" +
                 "Content for Note B\n" +
                 "* Note C\n");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("notebook"), isDisplayed())).perform(click());
         onNoteInBook(1, R.id.item_head_fold_button).perform(click());
-        searchForText("note");
+        searchForTextCloseKeyboard("note");
         onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
         onNotesInSearch().check(matches(recyclerViewItemCount(3)));
         onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note B")), isDisplayed())));
@@ -730,9 +753,9 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testDeSelectRemovedNoteInSearch() {
         testUtils.setupBook("notebook", "* TODO Note A\n* TODO Note B");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("i.todo");
+        searchForTextCloseKeyboard("i.todo");
 
         onNoteInSearch(0).perform(longClick());
 
@@ -755,8 +778,9 @@ public class QueryFragmentTest extends OrgzlyTest {
 
     @Test
     public void testNoNotesFoundMessageIsDisplayedInSearch() {
-        ActivityScenario.launch(MainActivity.class);
-        searchForText("Note");
+        scenario = ActivityScenario.launch(MainActivity.class);
+        searchForTextCloseKeyboard("Note");
+        SystemClock.sleep(200);
         onView(withText(R.string.no_notes_found_after_search)).check(matches(isDisplayed()));
     }
 
@@ -764,9 +788,9 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testPreselectedStateOfSelectedNote() {
         testUtils.setupBook("notebook", "* TODO Note A\n* TODO Note B");
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
-        searchForText("i.todo");
+        searchForTextCloseKeyboard("i.todo");
 
         onNoteInSearch(1).perform(longClick());
 
@@ -778,32 +802,35 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testSearchAndClickOnNoteWithTwoDifferentEvents() {
         testUtils.setupBook("notebook", "* Note\n<2000-01-01>\n<2000-01-02>");
-        ActivityScenario.launch(MainActivity.class);
-        searchForText("e.lt.now");
+        scenario = ActivityScenario.launch(MainActivity.class);
+        searchForTextCloseKeyboard("e.lt.now");
         onNoteInSearch(0).perform(click());
     }
 
     @Test
     public void testInactiveScheduled() {
         testUtils.setupBook("notebook-1", "* Note A\nSCHEDULED: [2020-07-01]");
-        ActivityScenario.launch(MainActivity.class);
-        searchForText("s.le.today");
+        scenario = ActivityScenario.launch(MainActivity.class);
+        searchForTextCloseKeyboard("s.le.today");
         onNotesInSearch().check(matches(recyclerViewItemCount(0)));
     }
 
     @Test
     public void testInactiveDeadline() {
         testUtils.setupBook("notebook-1", "* Note A\nDEADLINE: [2020-07-01]");
-        ActivityScenario.launch(MainActivity.class);
-        searchForText("d.le.today");
+        scenario = ActivityScenario.launch(MainActivity.class);
+        searchForTextCloseKeyboard("d.le.today");
         onNotesInSearch().check(matches(recyclerViewItemCount(0)));
     }
 
-    // FIXME: Fails at an hour (or less) from midnight
     @Test
     public void testScheduledTimestamp() {
+        Calendar calendar = Calendar.getInstance();
+        // Skip this test if current time is less than an hour before midnight
+        assumeTrue(calendar.get(Calendar.HOUR_OF_DAY) < 23);
+        final long currentTime = calendar.getTimeInMillis();
         String inOneHour = new OrgDateTime.Builder()
-                .setDateTime(System.currentTimeMillis() + 1000 * 60 * 60)
+                .setDateTime(currentTime + 1000 * 60 * 60)
                 .setHasTime(true)
                 .setIsActive(true)
                 .build()
@@ -811,7 +838,7 @@ public class QueryFragmentTest extends OrgzlyTest {
 
         testUtils.setupBook("notebook-1", "* Note A\nSCHEDULED: " + inOneHour);
 
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
 
         onBook(0).perform(click());
 
@@ -822,7 +849,7 @@ public class QueryFragmentTest extends OrgzlyTest {
         onView(withText(R.string.set)).perform(click());
         pressBack();
 
-        searchForText("s.now");
+        searchForTextCloseKeyboard("s.now");
 
         onNotesInSearch().check(matches(recyclerViewItemCount(1)));
     }
@@ -830,8 +857,8 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testNotScheduled() {
         testUtils.setupBook("notebook-1", "* Note A");
-        ActivityScenario.launch(MainActivity.class);
-        searchForText("s.no");
+        scenario = ActivityScenario.launch(MainActivity.class);
+        searchForTextCloseKeyboard("s.no");
         onNotesInSearch().check(matches(recyclerViewItemCount(1)));
     }
 }

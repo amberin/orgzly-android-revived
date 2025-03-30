@@ -1,6 +1,7 @@
 package com.orgzly.android.repos;
 
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import com.orgzly.android.BookName;
@@ -12,8 +13,10 @@ import com.orgzly.android.util.UriUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,10 +84,21 @@ public class DirectoryRepo implements SyncRepo {
 
     @Override
     public List<VersionedRook> getBooks() {
+        RepoIgnoreNode ignores = new RepoIgnoreNode(this);
+
         List<VersionedRook> result = new ArrayList<>();
 
-        File[] files = mDirectory.listFiles((dir, filename) ->
-                BookName.isSupportedFormatFileName(filename));
+        File[] files;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            files = mDirectory.listFiles(
+                (dir, filename) -> BookName.isSupportedFormatFileName(filename)
+                    && !ignores.isPathIgnored(filename, false)
+            );
+        } else {
+            files = mDirectory.listFiles(
+                (dir, filename) -> BookName.isSupportedFormatFileName(filename)
+            );
+        }
 
         if (files != null) {
             Arrays.sort(files);
@@ -110,8 +124,8 @@ public class DirectoryRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(String fileName, File destinationFile) throws IOException {
-        Uri uri = repoUri.buildUpon().appendPath(fileName).build();
+    public VersionedRook retrieveBook(String repoRelativePath, File destinationFile) throws IOException {
+        Uri uri = repoUri.buildUpon().appendPath(repoRelativePath).build();
 
         String path = uri.getPath();
 
@@ -131,12 +145,17 @@ public class DirectoryRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook storeBook(File file, String fileName) throws IOException {
+    public InputStream openRepoFileInputStream(String repoRelativePath) throws IOException {
+        return new FileInputStream(repoUri.buildUpon().appendPath(repoRelativePath).build().getPath());
+    }
+
+    @Override
+    public VersionedRook storeBook(File file, String repoRelativePath) throws IOException {
         if (!file.exists()) {
             throw new FileNotFoundException("File " + file + " does not exist");
         }
 
-        File destinationFile = new File(mDirectory, fileName);
+        File destinationFile = new File(mDirectory, repoRelativePath);
 
         File destinationFileParent = destinationFile.getParentFile();
 
@@ -153,21 +172,21 @@ public class DirectoryRepo implements SyncRepo {
         String rev = String.valueOf(destinationFile.lastModified());
         long mtime = destinationFile.lastModified();
 
-        Uri uri = repoUri.buildUpon().appendPath(fileName).build();
+        Uri uri = repoUri.buildUpon().appendPath(repoRelativePath).build();
 
         return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, rev, mtime);
     }
 
     @Override
-    public VersionedRook renameBook(Uri fromUri, String name) throws IOException {
-        String fromFilePath = fromUri.getPath();
+    public VersionedRook renameBook(Uri oldFullUri, String newName) throws IOException {
+        String fromFilePath = oldFullUri.getPath();
         if (fromFilePath == null) {
-            throw new IllegalArgumentException("No path in " + fromUri);
+            throw new IllegalArgumentException("No path in " + oldFullUri);
         }
 
         File fromFile = new File(fromFilePath);
 
-        Uri newUri = UriUtils.getUriForNewName(fromUri, name);
+        Uri newUri = UriUtils.getUriForNewName(oldFullUri, newName);
 
         String toFilePath = newUri.getPath();
         if (toFilePath == null) {

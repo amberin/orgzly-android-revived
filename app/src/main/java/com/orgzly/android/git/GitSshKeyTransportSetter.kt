@@ -3,7 +3,6 @@ package com.orgzly.android.git
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.orgzly.android.App
-import org.apache.sshd.common.util.OsUtils
 import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.internal.transport.sshd.OpenSshServerKeyDatabase
@@ -75,8 +74,6 @@ class GitSshKeyTransportSetter: GitTransportSetter {
 
         // org.apache.sshd.common.config.keys.IdentityUtils freaks out if user.home is not set
         System.setProperty("user.home", context.filesDir.toString())
-        // org.apache.sshd.common.util.OsUtils has trouble recognizing Android
-        OsUtils.setAndroid(true)
 
         configCallback = TransportConfigCallback { transport: Transport ->
             val sshTransport = transport as SshTransport

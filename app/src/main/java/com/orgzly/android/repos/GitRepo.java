@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.orgzly.BuildConfig;
+import com.orgzly.R;
+import com.orgzly.android.App;
 import com.orgzly.android.BookFormat;
 import com.orgzly.android.BookName;
 import com.orgzly.android.LocalStorage;
@@ -20,6 +22,7 @@ import com.orgzly.android.git.GitFileSynchronizer;
 import com.orgzly.android.git.GitPreferences;
 import com.orgzly.android.git.GitPreferencesFromRepoPrefs;
 import com.orgzly.android.git.GitTransportSetter;
+import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.prefs.RepoPreferences;
 import com.orgzly.android.sync.BookSyncStatus;
 import com.orgzly.android.sync.SyncState;
@@ -43,12 +46,14 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.jgit.util.FileUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
@@ -92,7 +97,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         config.setString("remote", prefs.remoteName(), "url", prefs.remoteUri().toString());
         config.setString("user", null, "name", prefs.getAuthor());
         config.setString("user", null, "email", prefs.getEmail());
-        config.setString("gc", null, "auto", "500");
+        config.setString("gc", null, "auto", "256");
         config.save();
 
         return new GitRepo(id, git, prefs);
@@ -178,7 +183,6 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-            Log.e(TAG, "JGit error:", e);
             throw new IOException(e);
         }
     }
@@ -204,14 +208,15 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         return true;
     }
 
-    public VersionedRook storeBook(File file, String fileName) throws IOException {
-        File destination = synchronizer.repoDirectoryFile(fileName);
+    public VersionedRook storeBook(File file, String repoRelativePath) throws IOException {
+        File destination = synchronizer.workTreeFile(repoRelativePath);
+
         if (destination.exists()) {
-            synchronizer.updateAndCommitExistingFile(file, fileName);
+            synchronizer.updateAndCommitExistingFile(file, repoRelativePath);
         } else {
-            synchronizer.addAndCommitNewFile(file, fileName);
+            synchronizer.addAndCommitNewFile(file, repoRelativePath);
         }
-        return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(fileName).build());
+        return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(repoRelativePath).build());
     }
 
     private RevWalk walk() {
@@ -223,13 +228,19 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(String fileName, File destination) throws IOException {
+    public VersionedRook retrieveBook(String repoRelativePath, File destination) throws IOException {
 
-        Uri sourceUri = Uri.parse(fileName);
+        Uri sourceUri = Uri.parse("/" + repoRelativePath);
 
         synchronizer.retrieveLatestVersionOfFile(sourceUri.getPath(), destination);
 
         return currentVersionedRook(sourceUri);
+    }
+
+    @Override
+    public InputStream openRepoFileInputStream(String repoRelativePath) throws IOException {
+        Uri sourceUri = Uri.parse(repoRelativePath);
+        return synchronizer.openRepoFileInputStream(sourceUri.getPath());
     }
 
     private VersionedRook currentVersionedRook(Uri uri) {
@@ -245,20 +256,6 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         return new VersionedRook(repoId, RepoType.GIT, getUri(), uri, commit.name(), mtime);
     }
 
-    private IgnoreNode getIgnores() throws IOException {
-        IgnoreNode ignores = new IgnoreNode();
-        File ignoreFile = synchronizer.repoDirectoryFile(".orgzlyignore");
-        if (ignoreFile.exists()) {
-            FileInputStream in = new FileInputStream(ignoreFile);
-            try {
-                ignores.parse(in);
-            } finally {
-                in.close();
-            }
-        }
-        return ignores;
-    }
-
     public List<VersionedRook> getBooks() throws IOException {
         List<VersionedRook> result = new ArrayList<>();
         if (synchronizer.currentHead() == null) {
@@ -269,14 +266,19 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         walk.reset();
         walk.setRecursive(true);
         walk.addTree(synchronizer.currentHead().getTree());
-        final IgnoreNode ignores = getIgnores();
+        final RepoIgnoreNode ignores = new RepoIgnoreNode(this);
+        boolean supportsSubFolders = AppPreferences.subfolderSupport(App.getAppContext());
         walk.setFilter(new TreeFilter() {
             @Override
             public boolean include(TreeWalk walker) {
-                final FileMode mode = walker.getFileMode(0);
-                final String filePath = walker.getPathString();
+                final FileMode mode = walk.getFileMode();
                 final boolean isDirectory = mode == FileMode.TREE;
-                return !(ignores.isIgnored(filePath, isDirectory) == IgnoreNode.MatchResult.IGNORED);
+                final String repoRelativePath = walk.getPathString();
+                if (ignores.isIgnored(repoRelativePath, isDirectory) == IgnoreNode.MatchResult.IGNORED)
+                    return false;
+                if (isDirectory)
+                    return supportsSubFolders;
+                return BookName.isSupportedFormatFileName(repoRelativePath);
             }
 
             @Override
@@ -290,15 +292,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             }
         });
         while (walk.next()) {
-            final FileMode mode = walk.getFileMode(0);
-            final boolean isDirectory = mode == FileMode.TREE;
-            final String filePath = walk.getPathString();
-            if (isDirectory)
-                continue;
-            if (BookName.isSupportedFormatFileName(filePath))
-                result.add(
-                        currentVersionedRook(
-                                Uri.withAppendedPath(Uri.EMPTY, walk.getPathString())));
+            result.add(currentVersionedRook(Uri.withAppendedPath(Uri.EMPTY, walk.getPathString())));
         }
         return result;
     }
@@ -315,31 +309,37 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         }
     }
 
-    public VersionedRook renameBook(Uri oldUri, String newRookName) throws Exception {
-        String oldFileName = oldUri.toString().replaceFirst("^/", "");
-        String newFileName = newRookName + ".org";
-        try (GitTransportSetter transportSetter = preferences.createTransportSetter()) {
-            if (synchronizer.renameFileInRepo(oldFileName, newFileName, transportSetter)) {
-                synchronizer.tryPush(transportSetter);
-                return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(newFileName).build());
-            }
+    public VersionedRook renameBook(Uri oldFullUri, String newName) throws IOException {
+        Context context = App.getAppContext();
+        if (newName.contains("/") && !AppPreferences.subfolderSupport(context)) {
+            throw new IOException(context.getString(R.string.subfolder_support_disabled));
         }
-        throw new IOException(String.format("Failed to rename %s to %s", oldFileName, newFileName));
+        String oldPath = oldFullUri.toString().replaceFirst("^/", "");
+        String newPath = BookName.repoRelativePath(newName, BookFormat.ORG);
+        try (GitTransportSetter transportSetter = preferences.createTransportSetter()) {
+            if (synchronizer.renameFileInRepo(oldPath, newPath, transportSetter)) {
+                synchronizer.tryPush(transportSetter);
+                return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(newPath).build());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        throw new IOException(String.format("Failed to rename %s to %s", oldPath, newPath));
     }
 
     @Override
     public TwoWaySyncResult syncBook(
             Uri uri, VersionedRook current, File fromDB) throws IOException {
-        String fileName = uri.getPath().replaceFirst("^/", "");
+        String repoRelativePath = uri.getPath().replaceFirst("^/", "");
         boolean merged = true;
         if (current != null) {
             RevCommit rookCommit = getCommitFromRevisionString(current.getRevision());
             if (BuildConfig.LOG_DEBUG) {
-                LogUtils.d(TAG, String.format("Syncing file %s, rookCommit: %s", fileName, rookCommit));
+                LogUtils.d(TAG, String.format("Syncing file %s, rookCommit: %s", repoRelativePath, rookCommit));
             }
             merged = synchronizer.updateAndCommitFileFromRevisionAndMerge(
-                    fromDB, fileName,
-                    synchronizer.getFileRevision(fileName, rookCommit),
+                    fromDB, repoRelativePath,
+                    synchronizer.getFileRevision(repoRelativePath, rookCommit),
                     rookCommit);
 
             if (merged) {
@@ -352,9 +352,9 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         } else {
             Log.w(TAG, "Unable to find previous commit, loading from repository.");
         }
-        File writeBackFile = synchronizer.repoDirectoryFile(fileName);
+        File writeBackFile = synchronizer.workTreeFile(repoRelativePath);
         return new TwoWaySyncResult(
-                currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(fileName).build()), merged,
+                currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(repoRelativePath).build()), merged,
                 writeBackFile);
     }
 
@@ -405,7 +405,8 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         Map<BookView, BookSyncStatus> bookStatusMap = new HashMap<BookView, BookSyncStatus>();
         for (VersionedRook rook : getBooks()) {
             String fileName = rook.uri.getPath().replaceFirst("^/", ""); // TODO: Align with #312
-            BookView bookView = dataRepository.getBookView(BookName.fromFileName(fileName).getName());
+            BookView bookView =
+                    dataRepository.getBookView(dataRepository.getBook(BookName.fromRook(rook).getName()).getId());
             BookSyncStatus status;
             if (bookView == null) {
                 bookView = dataRepository.loadBookFromRepo(repoId, rook.repoType,
@@ -415,7 +416,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                 if (bookView.isOutOfSync() || !bookView.hasSync()) {
                     localChanges = true;
                     File tmpFile = getTempBookFile(context);
-                    NotesOrgExporter(dataRepository).exportBook(bookView.book, tmpFile);
+                    new NotesOrgExporter(dataRepository).exportBook(bookView.getBook(), tmpFile);
                     synchronizer.updateFileAndAddToIndex(tmpFile, fileName); // Just add, we will commit later
                     status = BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED;
                 } else {
@@ -488,6 +489,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             - updateDataRepositoryFromStatus
         - tryPushIfHeadDiffersFromRemote
         */
+        /*
         long startTime = System.currentTimeMillis();
         SyncState syncStateToReturn = null;
         Repo repo = Objects.requireNonNull(dataRepository.getRepo(repoId));
@@ -511,9 +513,9 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                 RevCommit headBeforeMerge = synchronizer.currentHead();
                 boolean mergeSucceeded = true;
                 try {
-                    /* We have always switched to a new temp branch at this point. Try to merge with
-                    the main branch first, and if that fails, try to merge with the starting branch, in
-                    case we were on a temp branch when the sync started. */
+                    // We have always switched to a new temp branch at this point. Try to merge with
+                    // the main branch first, and if that fails, try to merge with the starting
+                    // branch, in case we were on a temp branch when the sync started.
                     if (synchronizer.attemptReturnToBranch(mainBranch())) {
                         if (startingBranch != mainBranch()) {
                             // Clean up obsolete sync branch
@@ -609,6 +611,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         long duration = endTime - startTime;
         Log.i(TAG, String.format("Synced repo %s in %s ms", repoUri.toString(), duration));
         return syncStateToReturn;
+        */
     }
 
     private void updateBookStatusInDataRepository(DataRepository dataRepository,

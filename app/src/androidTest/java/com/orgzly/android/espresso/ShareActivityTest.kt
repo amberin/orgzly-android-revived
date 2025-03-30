@@ -3,10 +3,12 @@ package com.orgzly.android.espresso
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
+import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
@@ -91,6 +93,8 @@ class ShareActivityTest : OrgzlyTest() {
 
         onView(withId(R.id.location_button)).perform(scroll(), click())
         onView(withText("book-two")).perform(click())
+        SystemClock.sleep(100)
+        onView(isRoot()).perform(waitId(R.id.location_button, 5000))
         onView(withId(R.id.location_button)).check(matches(withText("book-two")))
 
         scenario.onActivity { activity ->
@@ -133,6 +137,7 @@ class ShareActivityTest : OrgzlyTest() {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
 
+        SystemClock.sleep(1000)
         onView(withId(R.id.done)).perform(click()); // Note done
     }
 

@@ -1,0 +1,125 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+    paths-ignore:
+      - 'README.org'
+      - 'metadata/**'
+      - 'app/src/main/res/raw-*/*'
+      - 'app/src/main/res/values-*/*'
+  workflow_dispatch:
+  schedule:
+    - cron: "03 03 * * sun"
+
+jobs:
+
+  localUnitTests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Gradle build Fdroid
+        run: ./gradlew assembleFdroidDebug
+
+      - name: Gradle test Fdroid
+        run: ./gradlew testFdroidDebugUnitTest
+
+      - name: Add Dropbox API credentials (for DropboxRepo tests)
+        shell: bash
+        run: |
+          echo "dropbox.refresh_token = \"${{ secrets.DROPBOX_REFRESH_TOKEN }}\"" >> app.properties
+          echo "dropbox.app_key = \"${{ secrets.DROPBOX_APP_KEY }}\"" >> app.properties
+
+      - name: Gradle test Premium
+        run: ./gradlew testPremiumDebugUnitTest
+
+  instrumentedTests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # TODO: Run on lowest and highest supported API
+        api-level: [29, 34]
+        flavor: [Fdroid, Premium]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore AVD cache if present
+        uses: actions/cache/restore@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}
+
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          disable-spellchecker: true
+          profile: Nexus 6
+          script: echo "Generated AVD snapshot for caching."
+
+      - name: Save AVD to cache
+        if: always() && steps.avd-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}
+
+      - name: Add Dropbox API credentials
+        shell: bash
+        run: |
+          echo "dropbox.refresh_token = \"${{ secrets.DROPBOX_REFRESH_TOKEN }}\"" >> app.properties
+          echo "dropbox.app_key = \"${{ secrets.DROPBOX_APP_KEY }}\"" >> app.properties
+
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -metrics-collection
+          disable-animations: true
+          disable-spellchecker: true
+          profile: Nexus 6
+          # Tests should use the build which includes Dropbox code.
+          script: ./gradlew --no-configuration-cache connected${{matrix.flavor}}DebugAndroidTest --no-watch-fs --build-cache --info

@@ -13,7 +13,9 @@ import com.orgzly.android.data.logs.AppLogsRepository
 import com.orgzly.android.db.entity.BookAction
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.reminders.RemindersScheduler
-import com.orgzly.android.repos.*
+import com.orgzly.android.repos.DirectoryRepo
+import com.orgzly.android.repos.RepoUtils
+import com.orgzly.android.repos.SyncRepo
 import com.orgzly.android.ui.notifications.SyncNotifications
 import com.orgzly.android.ui.util.haveNetworkConnection
 import com.orgzly.android.util.AppPermissions
@@ -54,6 +56,7 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
             Result.success(state.toData())
         }
 
+        SyncNotifications.cancelSyncInProgressNotification(context)
         showNotificationOnFailures(state)
 
         if (BuildConfig.LOG_DEBUG)
@@ -85,6 +88,7 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
     private suspend fun tryDoWork(): SyncState {
 
         SyncNotifications.cancelSyncFailedNotification(context)
+        SyncNotifications.showSyncInProgressNotification(context)
 
         sendProgress(SyncState.getInstance(SyncState.Type.STARTING))
 

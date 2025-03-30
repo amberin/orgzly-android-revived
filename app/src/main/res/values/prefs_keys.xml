@@ -205,6 +205,9 @@
     <string name="pref_key_new_note_state" translatable="false">pref_key_new_note_state</string>
     <string name="pref_default_new_note_state" translatable="false">NOTE</string>
 
+    <string name="pref_key_new_note_add_id" translatable="false">pref_key_new_note_add_id</string>
+    <bool name="pref_default_new_note_add_id" translatable="false">false</bool>
+
     <string name="pref_key_is_new_note_scheduled" translatable="false">pref_key_is_new_note_scheduled</string>
     <bool name="pref_default_is_new_note_scheduled" translatable="false">false</bool>
 
@@ -253,6 +256,12 @@
 
     <string name="pref_key_reminders_sound" translatable="false">pref_key_reminders_sound</string>
     <bool name="pref_default_reminders_sound" translatable="false">true</bool>
+
+    <string name="pref_key_reminders_alarm" translatable="false">pref_key_reminders_alarm</string>
+    <bool name="pref_default_reminders_alarm" translatable="false">false</bool>
+
+    <string name="pref_key_reminders_alarm_tags" translatable="false">pref_key_reminders_alarm_tags</string>
+    <string name="pref_default_reminders_alarm_tags" translatable="false">alarm</string>
 
     <string name="pref_key_reminders_vibrate" translatable="false">pref_key_reminders_vibrate</string>
     <bool name="pref_default_reminders_vibrate" translatable="false">false</bool>
@@ -317,7 +326,7 @@
     <string name="pref_key_reminders_notification_settings_V26" translatable="false">pref_key_reminders_notification_settings_v26</string>
 
     <string name="pref_key_show_sync_notifications" translatable="false">pref_key_show_sync_notifications</string>
-    <bool name="pref_default_show_sync_notifications" translatable="false">false</bool>
+    <bool name="pref_default_show_sync_notifications" translatable="false">true</bool>
 
     <string name="pref_key_note_metadata_folded" translatable="false">pref_key_note_metadata_folded</string>
     <bool name="pref_default_note_metadata_folded" translatable="false">false</bool>
@@ -561,6 +570,10 @@
     <string name="pref_key_highlight_edited_rich_text" translatable="false">pref_key_highlight_edited_rich_text</string>
     <bool name="pref_default_highlight_edited_rich_text" translatable="false">false</bool>
 
+    <!-- Subfolder support -->
+    <string name="pref_key_enable_repo_subfolders" translatable="false">pref_key_enable_repo_subfolders</string>
+    <bool name="pref_default_enable_repo_subfolders" translatable="false">false</bool>
+
     <!-- Git preferences -->
     <string name="pref_key_git_ssh_key_type" translatable="false">pref_key_git_ssh_key_type</string>
     <string name="pref_key_git_author" traslatable="false">pref_key_git_author</string>
@@ -582,16 +595,21 @@
 
     <string name="pref_key_major_events_logs" translatable="false">pref_key_major_events_logs</string>
 
+    <string name="pref_key_note_id_for_settings_export_and_import" translatable="false">pref_key_settings_export_note_id</string>
+
     <!-- These do not store any data. -->
     <string name="pref_key_repos" translatable="false">pref_key_repos</string>
     <string name="pref_key_ssh_keygen" translatable="false">pref_key_ssh_keygen</string>
     <string name="pref_key_ssh_show_public_key" translatable="false">pref_key_ssh_show_public_key</string>
     <string name="pref_key_version" translatable="false">pref_key_version</string>
+    <string name="pref_key_git_commit" translatable="false">pref_key_git_commit</string>
     <string name="pref_key_reload_getting_started" translatable="false">pref_key_reload_getting_started</string>
     <string name="pref_key_clear_database" translatable="false">pref_key_clear_database</string>
+    <string name="pref_key_export_settings" translatable="false">pref_key_export_settings</string>
+    <string name="pref_key_import_settings" translatable="false">pref_key_import_settings</string>
 
     <!-- State-type preferences, not changeable by user. They have no defaults. -->
-    <string name="pref_key_dropbox_token" translatable="false">pref_key_dropbox_token</string>
+    <string name="pref_key_dropbox_credential" translatable="false">pref_key_dropbox_token</string>
     <string name="pref_key_is_getting_started_notebook_loaded" translatable="false">pref_key_is_getting_started_notebook_loaded</string>
     <string name="pref_key_last_used_version_code" translatable="false">pref_key_last_used_version_code</string>
     <string name="pref_key_last_successful_sync_time" translatable="false">pref_key_last_successful_sync_time</string>

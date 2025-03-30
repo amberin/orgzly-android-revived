@@ -9,6 +9,8 @@ import android.os.Environment;
 
 import androidx.annotation.StringRes;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.orgzly.R;
 import com.orgzly.android.App;
 import com.orgzly.android.LocalStorage;
@@ -20,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -60,6 +64,16 @@ public class AppPreferences {
         return values;
     }
 
+    public static void setDefaultPrefsFromJsonMap(Context context, Map<String, ?> parsedMap) {
+        SharedPreferences prefs = getDefaultSharedPreferences(context);
+        setPrefsFromValues(prefs, parsedMap);
+    }
+
+    public static JsonElement getDefaultPrefsAsJsonObject(Context context) {
+        Gson gson = new Gson();
+        return gson.toJsonTree(getDefaultSharedPreferences(context).getAll());
+    }
+
     public static void setAllFromValues(Context context, AppPreferencesValues values) {
         AppPreferences.clearAllSharedPreferences(context);
 
@@ -92,6 +106,10 @@ public class AppPreferences {
 
             } else if (value instanceof Set) {
                 edit.putStringSet(key, (Set) value);
+
+            } else if (value instanceof ArrayList) {
+                HashSet<String> set = new HashSet<>((Collection<? extends String>) value);
+                edit.putStringSet(key, set);
             }
         }
 
@@ -233,6 +251,17 @@ public class AppPreferences {
         getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
     }
 
+    public static boolean addIdToNewNotes(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_new_note_add_id),
+                context.getResources().getBoolean(R.bool.pref_default_new_note_add_id));
+    }
+
+    public static void addIdToNewNotes(Context context, boolean value) {
+        String key = context.getResources().getString(R.string.pref_key_new_note_add_id);
+        getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
+    }
+
     public static String createdAtProperty(Context context) {
         return getDefaultSharedPreferences(context).getString(
                 context.getResources().getString(R.string.pref_key_created_at_property),
@@ -307,10 +336,32 @@ public class AppPreferences {
         getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
     }
 
+    public static boolean anyNotificationsEnabled(Context context) {
+        return (
+                showSyncNotifications(context) ||
+                newNoteNotification(context) ||
+                remindersForScheduledEnabled(context) ||
+                remindersForDeadlineEnabled(context) ||
+                remindersForEventsEnabled(context)
+        );
+    }
+
     public static boolean remindersSound(Context context) {
         return getDefaultSharedPreferences(context).getBoolean(
                 context.getResources().getString(R.string.pref_key_reminders_sound),
                 context.getResources().getBoolean(R.bool.pref_default_reminders_sound));
+    }
+
+    public static boolean remindersAlarm(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_reminders_alarm),
+                context.getResources().getBoolean(R.bool.pref_default_reminders_alarm));
+    }
+
+    public static String remindersAlarmTags(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_reminders_alarm_tags),
+                context.getResources().getString(R.string.pref_default_reminders_alarm_tags));
     }
 
     public static boolean remindersLed(Context context) {
@@ -892,13 +943,13 @@ public class AppPreferences {
      * Dropbox token.
      */
 
-    public static String dropboxToken(Context context) {
-        String key = context.getResources().getString(R.string.pref_key_dropbox_token);
+    public static String dropboxSerializedCredential(Context context) {
+        String key = context.getResources().getString(R.string.pref_key_dropbox_credential);
         return getStateSharedPreferences(context).getString(key, null);
     }
 
-    public static void dropboxToken(Context context, String value) {
-        String key = context.getResources().getString(R.string.pref_key_dropbox_token);
+    public static void dropboxSerializedCredential(Context context, String value) {
+        String key = context.getResources().getString(R.string.pref_key_dropbox_credential);
         SharedPreferences.Editor editor = getStateSharedPreferences(context).edit();
         if (value == null) {
             editor.remove(key);
@@ -925,6 +976,10 @@ public class AppPreferences {
         return getDefaultSharedPreferences(context).getBoolean(
                 context.getResources().getString(R.string.pref_key_git_is_enabled),
                 context.getResources().getBoolean(R.bool.pref_default_git_is_enabled));
+    }
+
+    public static void gitIsEnabled(Context context, Boolean value) {
+        getDefaultSharedPreferences(context).edit().putBoolean(context.getResources().getString(R.string.pref_key_git_is_enabled), value).apply();
     }
     
     public static String defaultRepositoryStorageDirectory(Context context) {
@@ -1090,6 +1145,34 @@ public class AppPreferences {
     public static void refileLastLocation(Context context, String value) {
         String key = context.getResources().getString(R.string.pref_key_refile_last_location);
         getStateSharedPreferences(context).edit().putString(key, value).apply();
+    }
+
+    /*
+     * Subfolder support
+     */
+    public static boolean subfolderSupport(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_enable_repo_subfolders),
+                context.getResources().getBoolean(R.bool.pref_default_enable_repo_subfolders));
+    }
+
+    public static void subfolderSupport(Context context, boolean value) {
+        String key = context.getResources().getString(R.string.pref_key_enable_repo_subfolders);
+        getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
+    }
+
+    /*
+     * Export and import of user settings
+     */
+
+    public static String settingsExportAndImportNoteId(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_note_id_for_settings_export_and_import), "");
+    }
+
+    public static void settingsExportAndImportNoteId(Context context, String value) {
+        String key = context.getResources().getString(R.string.pref_key_note_id_for_settings_export_and_import);
+        getDefaultSharedPreferences(context).edit().putString(key, value).apply();
     }
 
     /*

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MenuItem;
@@ -31,6 +32,7 @@ import com.orgzly.android.db.entity.Book;
 import com.orgzly.android.db.entity.Note;
 import com.orgzly.android.db.entity.SavedSearch;
 import com.orgzly.android.prefs.AppPreferences;
+import com.orgzly.android.reminders.AlarmSoundService;
 import com.orgzly.android.sync.AutoSync;
 import com.orgzly.android.ui.AppSnackbarUtils;
 import com.orgzly.android.ui.CommonActivity;
@@ -71,6 +73,7 @@ import com.orgzly.android.usecase.SavedSearchUpdate;
 import com.orgzly.android.usecase.UseCase;
 import com.orgzly.android.usecase.UseCaseResult;
 import com.orgzly.android.usecase.UseCaseWorker;
+import com.orgzly.android.util.AppPermissions;
 import com.orgzly.android.util.LogUtils;
 import com.orgzly.org.datetime.OrgDateTime;
 
@@ -143,6 +146,13 @@ public class MainActivity extends CommonActivity
 
         setupDisplay(savedInstanceState);
 
+        if (AppPreferences.anyNotificationsEnabled(this)) {
+            if (Build.VERSION.SDK_INT >= 33) {
+                // Ensure we have the POST_NOTIFICATIONS permission
+                AppPermissions.isGrantedOrRequest(this, AppPermissions.Usage.POST_NOTIFICATIONS);
+            }
+        }
+
         if (AppPreferences.newNoteNotification(this)) {
             Notifications.showOngoingNotification(this);
         }
@@ -204,8 +214,8 @@ public class MainActivity extends CommonActivity
     private void handleOrgProtocolIntent(Intent intent) {
         OrgProtocol.handleOrgProtocol(intent, new OrgProtocol.Listener() {
             @Override
-            public void onNoteWithId(@NonNull String id) {
-                viewModel.followLinkToNoteWithProperty("ID", id);
+            public void onNoteOrBookWithId(@NonNull String id) {
+                viewModel.followLinkToNoteOrBookWithProperty("ID", id);
             }
 
             @Override
@@ -452,6 +462,8 @@ public class MainActivity extends CommonActivity
         viewModel.refresh(AppPreferences.notebooksSortOrder(this));
 
         autoSync.trigger(AutoSync.Type.APP_RESUMED);
+
+        stopService(new Intent(this, AlarmSoundService.class));
     }
 
     private void performIntros() {
@@ -566,7 +578,7 @@ public class MainActivity extends CommonActivity
 
         LocalBroadcastManager bm = LocalBroadcastManager.getInstance(this);
         bm.registerReceiver(receiver, new IntentFilter(AppIntent.ACTION_OPEN_NOTE));
-        bm.registerReceiver(receiver, new IntentFilter(AppIntent.ACTION_FOLLOW_LINK_TO_NOTE_WITH_PROPERTY));
+        bm.registerReceiver(receiver, new IntentFilter(AppIntent.ACTION_FOLLOW_LINK_TO_NOTE_OR_BOOK_WITH_PROPERTY));
         bm.registerReceiver(receiver, new IntentFilter(AppIntent.ACTION_FOLLOW_LINK_TO_FILE));
         bm.registerReceiver(receiver, new IntentFilter(AppIntent.ACTION_OPEN_SAVED_SEARCHES));
         bm.registerReceiver(receiver, new IntentFilter(AppIntent.ACTION_OPEN_QUERY));
@@ -887,8 +899,8 @@ public class MainActivity extends CommonActivity
         LocalBroadcastManager.getInstance(App.getAppContext()).sendBroadcast(intent);
     }
 
-    public static void followLinkToNoteWithProperty(String name, String value) {
-        Intent intent = new Intent(AppIntent.ACTION_FOLLOW_LINK_TO_NOTE_WITH_PROPERTY);
+    public static void followLinkToNoteOrBookWithProperty(String name, String value) {
+        Intent intent = new Intent(AppIntent.ACTION_FOLLOW_LINK_TO_NOTE_OR_BOOK_WITH_PROPERTY);
         intent.putExtra(AppIntent.EXTRA_PROPERTY_NAME, name);
         intent.putExtra(AppIntent.EXTRA_PROPERTY_VALUE, value);
         LocalBroadcastManager.getInstance(App.getAppContext()).sendBroadcast(intent);
@@ -962,10 +974,10 @@ public class MainActivity extends CommonActivity
                     break;
                 }
 
-                case AppIntent.ACTION_FOLLOW_LINK_TO_NOTE_WITH_PROPERTY: {
+                case AppIntent.ACTION_FOLLOW_LINK_TO_NOTE_OR_BOOK_WITH_PROPERTY: {
                     String name = intent.getStringExtra(AppIntent.EXTRA_PROPERTY_NAME);
                     String value = intent.getStringExtra(AppIntent.EXTRA_PROPERTY_VALUE);
-                    viewModel.followLinkToNoteWithProperty(name, value);
+                    viewModel.followLinkToNoteOrBookWithProperty(name, value);
                     break;
                 }
 

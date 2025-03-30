@@ -1,22 +1,26 @@
 package com.orgzly.android.repos;
 
-import com.orgzly.BuildConfig;
+import com.orgzly.android.App;
 import com.orgzly.android.BookName;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.db.entity.BookView;
-import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.util.MiscUtils;
 
-import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.net.Uri;
 
 public class DropboxRepoTest extends OrgzlyTest {
     private static final String DROPBOX_TEST_DIR = "/orgzly-android-tests";
@@ -24,10 +28,11 @@ public class DropboxRepoTest extends OrgzlyTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Assume.assumeTrue(BuildConfig.IS_DROPBOX_ENABLED);
-
-        AppPreferences.dropboxToken(context, BuildConfig.DROPBOX_TOKEN);
+        testUtils.dropboxTestPreflight();
     }
+
+    @Rule
+    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Test
     public void testUrl() {
@@ -37,55 +42,9 @@ public class DropboxRepoTest extends OrgzlyTest {
     }
 
     @Test
-    public void testSyncingUrlWithTrailingSlash() throws IOException {
+    public void testSyncingUrlWithTrailingSlash() {
         testUtils.setupRepo(RepoType.DROPBOX, randomUrl() + "/");
         assertNotNull(testUtils.sync());
-    }
-
-    @Test
-    public void testRenameBook() throws IOException {
-        BookView bookView;
-        String repoUriString = testUtils.repoInstance(RepoType.DROPBOX, randomUrl()).getUri().toString();
-
-        testUtils.setupRepo(RepoType.DROPBOX, repoUriString);
-        testUtils.setupBook("booky", "");
-
-        testUtils.sync();
-        bookView = dataRepository.getBookView("booky");
-
-        assertEquals(repoUriString, bookView.getLinkRepo().getUrl());
-        assertEquals(repoUriString, bookView.getSyncedTo().getRepoUri().toString());
-        assertEquals(repoUriString + "/booky.org", bookView.getSyncedTo().getUri().toString());
-
-        dataRepository.renameBook(bookView, "booky-renamed");
-        bookView = dataRepository.getBookView("booky-renamed");
-
-        assertEquals(repoUriString, bookView.getLinkRepo().getUrl());
-        assertEquals(repoUriString, bookView.getSyncedTo().getRepoUri().toString());
-        assertEquals(repoUriString + "/booky-renamed.org", bookView.getSyncedTo().getUri().toString());
-    }
-
-    @Test
-    public void testDropboxFileRename() throws IOException {
-        SyncRepo repo = testUtils.repoInstance(RepoType.DROPBOX, randomUrl());
-
-        assertNotNull(repo);
-        assertEquals(0, repo.getBooks().size());
-
-        File file = File.createTempFile("notebook.", ".org");
-        MiscUtils.writeStringToFile("1 2 3", file);
-
-        VersionedRook vrook = repo.storeBook(file, file.getName());
-
-        file.delete();
-
-        assertEquals(1, repo.getBooks().size());
-
-        repo.renameBook(vrook.getUri(), "notebook-renamed");
-
-        assertEquals(1, repo.getBooks().size());
-        assertEquals(repo.getUri() + "/notebook-renamed.org", repo.getBooks().get(0).getUri().toString());
-        assertEquals("notebook-renamed.org", BookName.getInstance(context, repo.getBooks().get(0)).getFileName());
     }
 
     private String randomUrl() {

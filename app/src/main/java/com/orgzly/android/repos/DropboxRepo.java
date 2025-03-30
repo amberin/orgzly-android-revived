@@ -3,11 +3,16 @@ package com.orgzly.android.repos;
 import android.content.Context;
 import android.net.Uri;
 
-import com.orgzly.android.util.UriUtils;
+import androidx.annotation.NonNull;
+
+import com.orgzly.R;
+import com.orgzly.android.App;
+import com.orgzly.android.BookName;
+import com.orgzly.android.prefs.AppPreferences;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.io.InputStream;
 import java.util.List;
 
 public class DropboxRepo implements SyncRepo {
@@ -38,23 +43,38 @@ public class DropboxRepo implements SyncRepo {
 
     @Override
     public List<VersionedRook> getBooks() throws IOException {
-        return client.getBooks(repoUri);
+        RepoIgnoreNode ignores = new RepoIgnoreNode(this);
+        return client.getBooks(repoUri, ignores);
     }
 
     @Override
-    public VersionedRook retrieveBook(String fileName, File file) throws IOException {
-        return client.download(repoUri, fileName, file);
+    public VersionedRook retrieveBook(String repoRelativePath, File file) throws IOException {
+        return client.download(repoUri, repoRelativePath, file);
     }
 
     @Override
-    public VersionedRook storeBook(File file, String fileName) throws IOException {
-        return client.upload(file, repoUri, fileName);
+    public InputStream openRepoFileInputStream(String repoRelativePath) throws IOException {
+        return client.streamFile(repoUri, repoRelativePath);
     }
 
     @Override
-    public VersionedRook renameBook(Uri fromUri, String name) throws IOException {
-        Uri toUri = UriUtils.getUriForNewName(fromUri, name);
-        return client.move(repoUri, fromUri, toUri);
+    public VersionedRook storeBook(File file, String repoRelativePath) throws IOException {
+        Context context = App.getAppContext();
+        if (repoRelativePath.contains("/") && !AppPreferences.subfolderSupport(context))
+            throw new IOException(context.getString(R.string.subfolder_support_disabled));
+        return client.upload(file, repoUri, repoRelativePath);
+    }
+
+    @Override
+    public VersionedRook renameBook(Uri oldFullUri, String newName) throws IOException {
+        Context context = App.getAppContext();
+        if (newName.contains("/") && !AppPreferences.subfolderSupport(context))
+            throw new IOException(context.getString(R.string.subfolder_support_disabled));
+        BookName oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(repoUri, oldFullUri));
+        String newRelativePath = BookName.repoRelativePath(newName, oldBookName.getFormat());
+        String newEncodedRelativePath = Uri.encode(newRelativePath, "/");
+        Uri newFullUri = repoUri.buildUpon().appendEncodedPath(newEncodedRelativePath).build();
+        return client.move(repoUri, oldFullUri, newFullUri);
     }
 
     @Override
@@ -62,6 +82,14 @@ public class DropboxRepo implements SyncRepo {
         client.delete(uri.getPath());
     }
 
+    /**
+     * Only used by tests. The delete() method does not allow deleting directories.
+     */
+    public void deleteDirectory(Uri uri) throws IOException {
+        client.deleteFolder(uri.getPath());
+    }
+
+    @NonNull
     @Override
     public String toString() {
         return repoUri.toString();
