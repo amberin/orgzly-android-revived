@@ -58,6 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
     private final static String TAG = "repos.GitRepo";
@@ -470,24 +471,23 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         // Ensure new repo books are loaded, after applying any ignore rules.
         for (var rook : getBooks()) {
             String bookName = BookName.fromRook(rook).getName();
-            if (!bookSyncStatusMap.containsKey(bookName))
+            if (!bookSyncStatusMap.containsKey(bookName)) {
                 bookSyncStatusMap.put(bookName, BookSyncStatus.NO_BOOK_ONE_ROOK);
+                dataRepository.loadBookFromRepo(rook);
+            } else {
+                if (Set.of(BookSyncStatus.BOOK_WITH_LINK_AND_ROOK_MODIFIED,
+                        BookSyncStatus.CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED).contains(bookSyncStatusMap.get(bookName))) {
+                    dataRepository.loadBookFromRepo(rook);
+                }
+            }
         }
         for (var entry : bookSyncStatusMap.entrySet()) {
             assert entry.getValue() != null; // If there is no status at this point, our logic is
             // broken
-            switch (entry.getValue()) {
-                case BOOK_WITH_LINK_AND_ROOK_MODIFIED, CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED,
-                     NO_BOOK_ONE_ROOK: {
-                    dataRepository.loadBookFromRepo(repoId, RepoType.GIT, repoUri.toString(),
-                            BookName.repoRelativePath(entry.getKey(), BookFormat.ORG));
-                    break;
-                }
-                case ROOK_NO_LONGER_EXISTS: {
-                    Book book = dataRepository.getBook(entry.getKey());
-                    dataRepository.setLink(Objects.requireNonNull(book).getId(), null);
-                    dataRepository.removeBookSyncedTo(book.getId());
-                }
+            if (entry.getValue() == BookSyncStatus.ROOK_NO_LONGER_EXISTS) {
+                Book book = dataRepository.getBook(entry.getKey());
+                dataRepository.setLink(Objects.requireNonNull(book).getId(), null);
+                dataRepository.removeBookSyncedTo(book.getId());
             }
             updateBookStatusInDataRepository(dataRepository, entry.getKey(), entry.getValue());
         }

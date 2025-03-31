@@ -459,7 +459,7 @@ class DataRepository @Inject constructor(
         db.bookSync().delete(bookId)
     }
 
-    private fun updateBookIsModified(bookId: Long, isModified: Boolean, time: Long = System.currentTimeMillis()) {
+    fun updateBookIsModified(bookId: Long, isModified: Boolean, time: Long = System.currentTimeMillis()) {
         updateBookIsModified(setOf(bookId), isModified, time)
     }
 

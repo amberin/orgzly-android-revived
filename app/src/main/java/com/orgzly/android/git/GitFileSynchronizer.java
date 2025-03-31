@@ -372,7 +372,7 @@ public class GitFileSynchronizer {
     public void commitCurrentIndex() throws GitAPIException {
         if (gitRepoIsClean())
             return;
-        git.commit().call();
+        git.commit().setMessage("Orgzly repository sync").call(); // TODO: strings.xml
     }
 
     /**
