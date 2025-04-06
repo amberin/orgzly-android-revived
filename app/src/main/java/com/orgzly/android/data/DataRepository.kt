@@ -229,11 +229,7 @@ class DataRepository @Inject constructor(
             else -> db.bookView().getAllFOrderByName()
         }
     }
-
-    fun getBooksLinkedToRepo(id: Long): List<BookView> {
-        return db.bookView().getAllLinkedToRepo(id)
-    }
-
+    
     fun getBooksWithError(): List<Book> {
         return db.book().getWithActionType(BookAction.Type.ERROR)
     }
