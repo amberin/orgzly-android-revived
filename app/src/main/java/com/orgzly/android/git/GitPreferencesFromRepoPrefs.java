@@ -50,18 +50,6 @@ public class GitPreferencesFromRepoPrefs implements GitPreferences {
     }
 
     @Override
-    public String remoteName() {
-        return repoPreferences.getStringValueWithGlobalDefault(
-                R.string.pref_key_git_remote_name, "origin");
-    }
-
-    @Override
-    public String branchName() {
-        return repoPreferences.getStringValueWithGlobalDefault(
-                R.string.pref_key_git_branch_name, "master");
-    }
-
-    @Override
     public Uri remoteUri() {
         return repoPreferences.getRepoUri();
     }

@@ -92,11 +92,8 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
                 Field(
                         binding.activityRepoGitEmail,
                         binding.activityRepoGitEmailLayout,
-                        R.string.pref_key_git_email),
-                Field(
-                        binding.activityRepoGitBranch,
-                        binding.activityRepoGitBranchLayout,
-                        R.string.pref_key_git_branch_name))
+                        R.string.pref_key_git_email)
+        )
 
         /* Clear error after field value has been modified. */
         MiscUtils.clearErrorOnTextChange(binding.activityRepoGitUrl, binding.activityRepoGitUrlLayout)
@@ -124,7 +121,6 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
             /* Set default values for new repo being added. */
             createDefaultRepoFolder()
             binding.activityRepoGitAuthor.setText("Orgzly")
-            binding.activityRepoGitBranch.setText(R.string.git_default_branch)
             val userDeviceName: String = try {
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
                     Settings.Global.getString(contentResolver, Settings.Global.DEVICE_NAME)
@@ -433,15 +429,6 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
         }
     }
 
-    override fun remoteName(): String {
-        // TODO: Update this if remote selection is ever allowed.
-        return withDefault("", R.string.pref_key_git_remote_name)
-    }
-
-    override fun branchName(): String {
-        return withDefault(binding.activityRepoGitBranch.text.toString(), R.string.pref_key_git_branch_name)
-    }
-
     override fun remoteUri(): Uri {
         val remoteUriString = binding.activityRepoGitUrl.text.toString()
         return Uri.parse(remoteUriString)
@@ -488,7 +475,13 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
 
         override fun doInBackground(vararg params: Void): IOException? {
             try {
-                GitRepo.ensureRepositoryExists(fragment, true, this)
+                val git = GitRepo.ensureRepositoryExists(fragment, true, this)
+                val config = git.repository.config
+                config.setString("remote", "origin", "url", remoteUri().toString())
+                config.setString("user", null, "name", author)
+                config.setString("user", null, "email", email)
+                config.setString("gc", null, "auto", "256")
+                config.save()
             } catch (e: IOException) {
                 return e
             }

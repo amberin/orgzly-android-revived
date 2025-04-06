@@ -3,18 +3,15 @@ package com.orgzly.android.repos;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import com.orgzly.BuildConfig;
 import com.orgzly.R;
 import com.orgzly.android.App;
 import com.orgzly.android.BookFormat;
 import com.orgzly.android.BookName;
-import com.orgzly.android.LocalStorage;
 import com.orgzly.android.data.DataRepository;
 import com.orgzly.android.db.entity.Book;
 import com.orgzly.android.db.entity.BookAction;
@@ -29,7 +26,6 @@ import com.orgzly.android.prefs.RepoPreferences;
 import com.orgzly.android.sync.BookNamesake;
 import com.orgzly.android.sync.BookSyncStatus;
 import com.orgzly.android.sync.SyncState;
-import com.orgzly.android.util.LogUtils;
 
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -39,11 +35,9 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.ignore.IgnoreNode;
 import org.eclipse.jgit.lib.FileMode;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
@@ -61,10 +55,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
-    private final static String TAG = "repos.GitRepo";
     private final long repoId;
     private final Uri repoUri;
-    private final RepoType repoType = RepoType.GIT;
 
     /**
      * Used as cause when we try to clone into a non-empty directory
@@ -77,10 +69,6 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         }
     }
 
-    private String mainBranch() {
-        return preferences.branchName();
-    }
-
     public static GitRepo getInstance(RepoWithProps props, Context context) throws IOException {
         // TODO: This doesn't seem to be implemented in the same way as WebdavRepo.kt, do
         //  we want to store configuration data the same way they do?
@@ -91,19 +79,11 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
 
         // TODO: Build from info
 
-        return build(props.getRepo().getId(), prefs, false);
+        return build(props.getRepo().getId(), prefs);
     }
 
-    private static GitRepo build(long id, GitPreferences prefs, boolean clone) throws IOException {
-        Git git = ensureRepositoryExists(prefs, clone, null);
-
-        StoredConfig config = git.getRepository().getConfig();
-        config.setString("remote", prefs.remoteName(), "url", prefs.remoteUri().toString());
-        config.setString("user", null, "name", prefs.getAuthor());
-        config.setString("user", null, "email", prefs.getEmail());
-        config.setString("gc", null, "auto", "256");
-        config.save();
-
+    private static GitRepo build(long id, GitPreferences prefs) throws IOException {
+        Git git = ensureRepositoryExists(prefs, false, null);
         return new GitRepo(id, git, prefs);
     }
 
@@ -223,14 +203,6 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(repoRelativePath).build());
     }
 
-    private RevWalk walk() {
-        return new RevWalk(git.getRepository());
-    }
-
-    RevCommit getCommitFromRevisionString(String revisionString) throws IOException {
-        return walk().parseCommit(ObjectId.fromString(revisionString));
-    }
-
     @Override
     public VersionedRook retrieveBook(String repoRelativePath, File destination) throws IOException {
 
@@ -331,43 +303,8 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         throw new IOException(String.format("Failed to rename %s to %s", oldPath, newPath));
     }
 
-    @Override
-    public TwoWaySyncResult syncBook(
-            Uri uri, VersionedRook current, File fromDB) throws IOException {
-        String repoRelativePath = uri.getPath().replaceFirst("^/", "");
-        boolean merged = true;
-        if (current != null) {
-            RevCommit rookCommit = getCommitFromRevisionString(current.getRevision());
-            if (BuildConfig.LOG_DEBUG) {
-                LogUtils.d(TAG, String.format("Syncing file %s, rookCommit: %s", repoRelativePath, rookCommit));
-            }
-            merged = synchronizer.updateAndCommitFileFromRevisionAndMerge(
-                    fromDB, repoRelativePath,
-                    synchronizer.getFileRevision(repoRelativePath, rookCommit),
-                    rookCommit);
-
-            if (merged) {
-                // Our change was successfully merged. Make an attempt
-                // to return to the main branch, if we are not on it.
-                if (!git.getRepository().getBranch().equals(preferences.branchName())) {
-                    synchronizer.attemptReturnToBranch(mainBranch());
-                }
-            }
-        } else {
-            Log.w(TAG, "Unable to find previous commit, loading from repository.");
-        }
-        File writeBackFile = synchronizer.workTreeFile(repoRelativePath);
-        return new TwoWaySyncResult(
-                currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(repoRelativePath).build()), merged,
-                writeBackFile);
-    }
-
     private String currentBranch() throws IOException {
         return git.getRepository().getBranch();
-    }
-
-    private File getTempBookFile(Context context) throws IOException {
-        return new LocalStorage(context).getTempBookFile();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -383,20 +320,18 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
           - git push
           - if push failed or if there were no local changes:
             - fetch
-            - try rebase if HEAD and FETCH_HEAD differ
-            - if rebase succeeds:
-              - reload books with remote changes (updating them in the "status map")
-              - load any new books, adding them to the "status map"
-                - unlink deleted books (and update status map)
-            - else:
-              - force-push to conflict branch
-              - set conflict status on the relevant books
-        - Close SSH session.
+            - if HEAD and remote HEAD differ
+              - try rebase
+              - if rebase succeeds:
+                - reload books with remote changes (updating them in the "status map")
+                - load any new books, adding them to the "status map"
+                  - unlink deleted books (and update status map)
+              - else:
+                - force-push to conflict branch
+                - set conflict status on the relevant books
+          - Close SSH session.
+        - Loop through all books in repo to ensure we are not missing anything (e.g. first sync).
         - Loop through the status map and update all books' displayed statuses.
-        
-        questions:
-        - do we need to also handle books with no link? looking at BookSyncStatus, one would
-        think so
 
         sync statuses handled so far:
         - NO_CHANGE
@@ -409,13 +344,13 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         - ONLY_BOOK_WITHOUT_LINK_AND_ONE_REPO
         - ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS
 
-        left to handle/test:
+        test cases:
         - trying to save a book to the repo resulting in a file name collision (respecting ignore
          rules)
         - trying to load a file from the repo resulting in a book name collision
         - "sync modification time" must update properly
-        - remotely deleted book is not re-linked to the repo
-        - ability to recover even when there are no remote changes ("always" try to rebase or
+        - remotely deleted book must not be re-synced to the repo
+        - ability to recover when there are no remote changes ("always" try to rebase or
         verify that we are synced with remote)
         - failed push or fetch must result in nice snackbars
 
@@ -558,8 +493,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                     break;
                 }
                 case DELETE: {
-                    // It's important that we set the right status here, to avoid adding the file
-                    // back to the repo.
+                    // This status is important to avoid re-syncing remotely deleted files.
                     namesake.setStatus(BookSyncStatus.ROOK_NO_LONGER_EXISTS);
                     break;
                 }
