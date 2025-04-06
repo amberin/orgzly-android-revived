@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class GitFileSynchronizer {
@@ -440,8 +441,8 @@ public class GitFileSynchronizer {
         return getCommit(Constants.HEAD);
     }
 
-    public RevCommit currentFetchHead() throws IOException {
-        return getCommit(Constants.FETCH_HEAD);
+    public RevCommit currentRemoteHead() throws IOException {
+        return getCommit(Constants.R_REMOTES + "origin/" + git.getRepository().getBranch());
     }
 
     public RevCommit getCommit(String identifier) throws IOException {

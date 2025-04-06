@@ -376,14 +376,14 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                                         @NonNull DataRepository dataRepository) throws Exception {
         /*
 
-        v2:
         - Loop over all existing books, adding them to a "status map" with their
           preliminary status (locally modified or NO_CHANGE). If there are changes, git add the file.
         - Make one commit with all changed files.
         - Open SSH session and
           - git push
           - if push failed or if there were no local changes:
-            - fetch and try rebase
+            - fetch
+            - try rebase if HEAD and FETCH_HEAD differ
             - if rebase succeeds:
               - reload books with remote changes (updating them in the "status map")
               - load any new books, adding them to the "status map"
@@ -417,6 +417,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         - remotely deleted book is not re-linked to the repo
         - ability to recover even when there are no remote changes ("always" try to rebase or
         verify that we are synced with remote)
+        - failed push or fetch must result in nice snackbars
 
         */
 
@@ -466,7 +467,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             }
             if (!pushNeeded || pushFailed) {
                 synchronizer.fetch(transportSetter);
-                if (synchronizer.currentHead() != synchronizer.currentFetchHead()) {
+                if (!synchronizer.currentHead().toString().equals(synchronizer.currentRemoteHead().toString())) {
                     // We are out of sync with the remote. Try to rebase.
                     RevCommit headBeforeRebase = synchronizer.currentHead();
                     RebaseResult rebaseResult = synchronizer.tryRebaseOnFetchHead();
