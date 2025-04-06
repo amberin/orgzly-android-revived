@@ -26,7 +26,7 @@ abstract class BookViewDao {
     @Query("$QUERY GROUP BY books.id ORDER BY $ORDER_BY_TIME")
     abstract fun getAllOrderByTime(): List<BookView>
 
-    @Query("$QUERY WHERE book_links.repo_id = :repoId")
+    @Query("$QUERY WHERE book_links.repo_id = :repoId GROUP BY books.id")
     abstract fun getAllLinkedToRepo(repoId: Long): List<BookView>
 
     companion object {
