@@ -401,16 +401,22 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         sync statuses handled so far:
         - NO_CHANGE
         - NO_BOOK_ONE_ROOK
+        - ONLY_BOOK_WITH_LINK
         - BOOK_WITH_LINK_LOCAL_MODIFIED
         - BOOK_WITH_LINK_ROOK_MODIFIED
         - ROOK_NO_LONGER_EXISTS
         - CONFLICT_PUSHED_TO_CONFLICT_BRANCH
+        - ONLY_BOOK_WITHOUT_LINK_AND_ONE_REPO
+        - ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS
 
         left to handle/test:
-        - trying to save a book to the repo with an already existing file name (respecting ignore
+        - trying to save a book to the repo resulting in a file name collision (respecting ignore
          rules)
-        - trying to load a file from the repo resulting in an already existing book name
+        - trying to load a file from the repo resulting in a book name collision
         - "sync modification time" must update properly
+        - remotely deleted book is not re-linked to the repo
+        - ability to recover even when there are no remote changes ("always" try to rebase or
+        verify that we are synced with remote)
 
         */
 
@@ -418,38 +424,52 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         SyncState syncStateToReturn = null;
         Map<String, BookNamesake> nameSakes = new HashMap<>();
         // Ensure all linked local books are synced to repo
-        for (BookView bookView : dataRepository.getBooksLinkedToRepo(repoId)) {
+        for (BookView bookView : dataRepository.getBooks()) { // N.B. loops over all books...
+            BookSyncStatus status = BookSyncStatus.NO_CHANGE; // default status
+            Repo linkRepo = bookView.getLinkRepo();
+            if (linkRepo == null) {
+                BookAction lastAction = bookView.getBook().getLastAction();
+                if (lastAction != null && lastAction.getType() == BookAction.Type.ERROR) {
+                    // Book is already in an error state - avoid re-linking to the repo.
+                    status = BookSyncStatus.BOOK_WITH_PREVIOUS_ERROR_AND_NO_LINK;
+                } else if (dataRepository.getRepos().size() > 1) {
+                    status = BookSyncStatus.ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS;
+                } else {
+                    dataRepository.setLink(bookView.getBook().getId(), new Repo(repoId, RepoType.GIT, repoUri.toString()));
+                    status = BookSyncStatus.ONLY_BOOK_WITHOUT_LINK_AND_ONE_REPO;
+                }
+            } else {
+                if (linkRepo.getId() != repoId)
+                    continue; // Book is linked to another repo; ignore it.
+            }
             String bookName = bookView.getBook().getName();
             BookNamesake namesake = new BookNamesake(bookName);
             namesake.setBook(bookView);
-            namesake.setStatus(BookSyncStatus.NO_CHANGE);
-            if (!bookView.hasSync() || bookView.isOutOfSync()) {
-                if (!bookView.hasSync())
-                    namesake.setStatus(BookSyncStatus.ONLY_BOOK_WITH_LINK);
+            if (bookView.isOutOfSync() || (!bookView.hasSync() && status != BookSyncStatus.BOOK_WITH_PREVIOUS_ERROR_AND_NO_LINK)) {
                 if (bookView.isOutOfSync())
-                    namesake.setStatus(BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED);
+                    status = BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED;
+                else if (!bookView.hasSync())
+                    status = BookSyncStatus.ONLY_BOOK_WITH_LINK;
                 // Just add; we will commit later
                 synchronizer.writeFileAndAddToIndex(dataRepository, bookView.getBook(),
                         BookName.repoRelativePath(bookName, BookFormat.ORG));
                 pushNeeded = true;
             }
+            namesake.setStatus(status);
             nameSakes.put(bookName, namesake);
         }
         try (GitTransportSetter transportSetter = preferences.createTransportSetter()) {
             boolean pushFailed = false;
             if (pushNeeded) {
                 synchronizer.commitCurrentIndex();
-                try {
-                    synchronizer.push(transportSetter);
-                } catch (GitAPIException ignored) {
-                    pushFailed = true;
-                }
+                pushFailed = !synchronizer.push(transportSetter);
             }
             if (!pushNeeded || pushFailed) {
-                if (synchronizer.fetch(transportSetter)) { // Always fetch the default branch only
-                    // There are changes on remote. Try to rebase.
+                synchronizer.fetch(transportSetter);
+                if (synchronizer.currentHead() != synchronizer.currentFetchHead()) {
+                    // We are out of sync with the remote. Try to rebase.
                     RevCommit headBeforeRebase = synchronizer.currentHead();
-                    RebaseResult rebaseResult = synchronizer.tryRebaseOnRemoteHead();
+                    RebaseResult rebaseResult = synchronizer.tryRebaseOnFetchHead();
                     if (rebaseResult.getStatus().isSuccessful()) {
                         // Rebasing on the remote changes succeeded.
                         if (pushNeeded) {
@@ -462,7 +482,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                         // Set conflict state on all locally changed books (although we don't
                         // actually know exactly which files have conflicts).
                         for (var nameSake : nameSakes.values()) {
-                            if (nameSake.getStatus() == BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED)
+                            if (nameSake.getBook().isModified())
                                 nameSake.setStatus(BookSyncStatus.CONFLICT_PUSHED_TO_CONFLICT_BRANCH);
                         }
                         synchronizer.forcePushLocalHeadToRemoteConflictBranch(transportSetter);
@@ -495,14 +515,16 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             namesake.setLatestLinkedRook(rook);
         }
         for (var namesake : nameSakes.values()) {
-            assert namesake.getStatus() != null; // If there is no status at this point, our
-            // logic is broken
-            assert namesake.getLatestLinkedRook() != null;
             Book book = namesake.getBook().getBook();
-            if (namesake.getStatus() == BookSyncStatus.ROOK_NO_LONGER_EXISTS) {
+            if (namesake.getLatestLinkedRook() == null) {
                 // Handle remote deletions
-                dataRepository.setLink(Objects.requireNonNull(book).getId(), null);
-                dataRepository.removeBookSyncedTo(book.getId());
+                if (namesake.getStatus() == BookSyncStatus.ROOK_NO_LONGER_EXISTS) {
+                    dataRepository.setLink(Objects.requireNonNull(book).getId(), null);
+                    dataRepository.removeBookSyncedTo(book.getId());
+                } else {
+                    if (namesake.getStatus() != BookSyncStatus.BOOK_WITH_PREVIOUS_ERROR_AND_NO_LINK)
+                        throw new RuntimeException("Something is wrong");
+                }
             }
             // Update link and status of all books
             updateDataRepository(dataRepository, book, namesake);
@@ -561,7 +583,7 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                 actionMessageArgument = String.format("branch \"%s\"", currentBranch());
                 dataRepository.updateBookLinkAndSync(book.getId(), namesake.getLatestLinkedRook());
                 break;
-            case ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS:
+            case ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS, ROOK_NO_LONGER_EXISTS, BOOK_WITH_PREVIOUS_ERROR_AND_NO_LINK:
                 actionType = BookAction.Type.ERROR;
                 break;
             case CONFLICT_PUSHED_TO_CONFLICT_BRANCH:

@@ -29,7 +29,9 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -261,22 +263,38 @@ public class GitFileSynchronizer {
         }
     }
 
-    public void push(GitTransportSetter transportSetter) throws GitAPIException {
+    /**
+     * Push the current HEAD to the corresponding branch on the remote
+     * @param transportSetter
+     * @return True if push succeeded, false otherwise
+     */
+    public boolean push(GitTransportSetter transportSetter) {
         final var pushCommand = transportSetter.setTransport(
                 git.push().setRemote(preferences.remoteName()));
-        pushCommand.call();
+        try {
+            Iterable<PushResult> pushResults = (Iterable<PushResult>) pushCommand.call();
+            for (PushResult result : pushResults) {
+                for (RemoteRefUpdate remoteRefUpdate : result.getRemoteUpdates()) {
+                    if (remoteRefUpdate.getStatus() != RemoteRefUpdate.Status.OK)
+                        return false;
+                }
+            }
+            return true;
+        } catch (GitAPIException ignored) {
+            return false;
+        }
     }
 
     public void forcePushLocalHeadToRemoteConflictBranch(GitTransportSetter transportSetter) throws GitAPIException {
         final var pushCommand = transportSetter.setTransport(git.push()
-            .setRefSpecs(new RefSpec("HEAD:" + App.getAppContext().getString(R.string.git_conflict_branch_name_on_remote)))
+            .setRefSpecs(new RefSpec(Constants.HEAD + ":" + Constants.R_HEADS + App.getAppContext().getString(R.string.git_conflict_branch_name_on_remote)))
             .setForce(true));
         pushCommand.call();
     }
 
-    public RebaseResult tryRebaseOnRemoteHead() throws IOException, GitAPIException {
+    public RebaseResult tryRebaseOnFetchHead() throws GitAPIException {
         RebaseCommand command =
-                git.rebase().setUpstream("origin/" + git.getRepository().getBranch());
+                git.rebase().setUpstream(Constants.FETCH_HEAD);
         RebaseResult result = command.call();
         if (!result.getStatus().isSuccessful()) {
             command.setOperation(RebaseCommand.Operation.ABORT).call();
@@ -420,6 +438,10 @@ public class GitFileSynchronizer {
 
     public RevCommit currentHead() throws IOException {
         return getCommit(Constants.HEAD);
+    }
+
+    public RevCommit currentFetchHead() throws IOException {
+        return getCommit(Constants.FETCH_HEAD);
     }
 
     public RevCommit getCommit(String identifier) throws IOException {

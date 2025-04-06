@@ -72,7 +72,7 @@ enum class BookSyncStatus {
                 return "Both local and remote notebook have been modified"
 
             CONFLICT_PUSHED_TO_CONFLICT_BRANCH ->
-                return "Merge conflict; saved to remote branch " + context.getString(R.string.git_conflict_branch_name_on_remote)
+                return context.getString(R.string.merge_conflict_pushed_to, context.getString(R.string.git_conflict_branch_name_on_remote))
 
             CONFLICT_BOOK_WITH_LINK_AND_ROOK_BUT_NEVER_SYNCED_BEFORE ->
                 return "Link and remote notebook exist but notebook hasn't been synced before"
