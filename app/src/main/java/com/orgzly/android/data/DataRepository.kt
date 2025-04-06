@@ -459,6 +459,7 @@ class DataRepository @Inject constructor(
         db.bookSync().delete(bookId)
     }
 
+    @JvmOverloads
     fun updateBookIsModified(bookId: Long, isModified: Boolean, time: Long = System.currentTimeMillis()) {
         updateBookIsModified(setOf(bookId), isModified, time)
     }
