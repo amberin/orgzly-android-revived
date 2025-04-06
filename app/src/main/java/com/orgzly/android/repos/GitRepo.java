@@ -204,13 +204,9 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(String repoRelativePath, File destination) throws IOException {
-
-        Uri sourceUri = Uri.parse("/" + repoRelativePath);
-
-        synchronizer.retrieveLatestVersionOfFile(sourceUri.getPath(), destination);
-
-        return currentVersionedRook(sourceUri);
+    public VersionedRook retrieveBook(Uri uri, File destination) throws IOException {
+        synchronizer.retrieveLatestVersionOfFile(uri.getPath(), destination);
+        return currentVersionedRook(uri);
     }
 
     @Override
