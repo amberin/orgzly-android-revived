@@ -24,7 +24,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -71,25 +73,27 @@ public class DocumentRepo implements SyncRepo {
     @Override
     public List<VersionedRook> getBooks() throws IOException {
         List<VersionedRook> result = new ArrayList<>();
-        List<DocumentFile> files = walkFileTree();
+        Map<String, DocumentFile> files = walkFileTree();
         if (!files.isEmpty()) {
-            for (DocumentFile file : files) {
+            for (Map.Entry<String, DocumentFile> entry : files.entrySet()) {
                 if (BuildConfig.LOG_DEBUG) {
                     LogUtils.d(TAG,
-                            "file.getName()", file.getName(),
+                            "file.getName()", entry.getValue().getName(),
                             "getUri()", getUri(),
                             "repoDocumentFile.getUri()", repoDocumentFile.getUri(),
-                            "file", file,
-                            "file.getUri()", file.getUri(),
-                            "file.getParentFile()", Objects.requireNonNull(file.getParentFile()).getUri());
+                            "file", entry.getValue(),
+                            "file.getUri()", entry.getValue().getUri(),
+                            "file.getParentFile()",
+                            Objects.requireNonNull(entry.getValue().getParentFile()).getUri());
                 }
                 result.add(new VersionedRook(
                         repoId,
                         RepoType.DOCUMENT,
                         getUri(),
-                        file.getUri(),
-                        String.valueOf(file.lastModified()),
-                        file.lastModified()
+                        entry.getValue().getUri(),
+                        entry.getKey(),
+                        String.valueOf(entry.getValue().lastModified()),
+                        entry.getValue().lastModified()
                 ));
             }
         } else {
@@ -99,10 +103,11 @@ public class DocumentRepo implements SyncRepo {
     }
 
     /**
-     * @return All file nodes in the repo tree which are not excluded by .orgzlyignore
+     * @return All file nodes in the repo tree which are not excluded by .orgzlyignore, mapped to
+     * their repo-relative path.
      */
-    private List<DocumentFile> walkFileTree() {
-        List<DocumentFile> result = new ArrayList<>();
+    private Map<String, DocumentFile> walkFileTree() {
+        Map<String, DocumentFile> result = new HashMap<>();
         List<DocumentFile> directoryNodes = new ArrayList<>();
         directoryNodes.add(repoDocumentFile);
         RepoIgnoreNode ignoreNode = new RepoIgnoreNode(this);
@@ -135,7 +140,7 @@ public class DocumentRepo implements SyncRepo {
                             if (ignoreNode.isPathIgnored(repoRelativePath.toString(), false))
                                 continue;
                         }
-                        result.add(node);
+                        result.put(repoRelativePath.toString(), node);
                     }
                 }
             }

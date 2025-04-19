@@ -235,7 +235,7 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
         }
         assert commit != null;
         long mtime = (long)commit.getCommitTime()*1000;
-        return new VersionedRook(repoId, RepoType.GIT, getUri(), uri, commit.name(), mtime);
+        return new VersionedRook(repoId, RepoType.GIT, getUri(), uri, uri.getPath(), commit.name(), mtime);
     }
 
     public boolean isUnchanged() throws IOException {
@@ -317,10 +317,14 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
         }
     }
 
+    private String getFileRelativePathFromUri(Uri uri) {
+        return uri.getPath().replaceFirst("^/", "");
+    }
+
     @Override
     public TwoWaySyncResult syncBook(
             Uri uri, VersionedRook current, File fromDB) throws IOException {
-        String repoRelativePath = uri.getPath().replaceFirst("^/", "");
+        String repoRelativePath = getFileRelativePathFromUri(uri);
         boolean merged = true;
         if (current != null) {
             RevCommit rookCommit = getCommitFromRevisionString(current.getRevision());

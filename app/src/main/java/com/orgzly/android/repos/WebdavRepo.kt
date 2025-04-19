@@ -274,6 +274,7 @@ class WebdavRepo(
                 RepoType.WEBDAV,
                 uri,
                 Uri.parse(this.getFullUrlString()),
+                this.getRelativePath(),
                 this.modified.time.toString(),
                 this.modified.time
         )
@@ -289,7 +290,7 @@ class WebdavRepo(
             // absolute-URI - return the href as-is
             return this.href.toString()
         } else {
-            // path-absolute - build the absolut URI
+            // path-absolute - build the absolute URI
             return uri.scheme + "://" + uri.authority + this.href.toString()
         }
     }

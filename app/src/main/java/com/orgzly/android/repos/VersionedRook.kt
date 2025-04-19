@@ -7,12 +7,13 @@ class VersionedRook(
         repoType: RepoType,
         repoUri: Uri,
         uri: Uri,
+        repoRelativePath: String,
         val revision: String,
         val mtime: Long
-) : Rook(repoId, repoType, repoUri, uri) {
+) : Rook(repoId, repoType, repoUri, uri, repoRelativePath) {
 
     constructor(rook: Rook, revision: String, mtime: Long) :
-            this(rook.repoId, rook.repoType, rook.getRepoUri(), rook.getUri(), revision, mtime)
+            this(rook.repoId, rook.repoType, rook.getRepoUri(), rook.getUri(), rook.repoRelativePath, revision, mtime)
 
     override fun toString(): String {
         return uri.buildUpon()

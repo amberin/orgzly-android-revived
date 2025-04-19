@@ -111,6 +111,7 @@ public class DirectoryRepo implements SyncRepo {
                         RepoType.DIRECTORY,
                         repoUri,
                         uri,
+                        uri.getPath(),
                         String.valueOf(file.lastModified()),
                         file.lastModified()
                 ));
@@ -139,7 +140,7 @@ public class DirectoryRepo implements SyncRepo {
         String rev = String.valueOf(sourceFile.lastModified());
         long mtime = sourceFile.lastModified();
 
-        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, rev, mtime);
+        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, uri.getPath(), rev, mtime);
     }
 
     @Override
@@ -172,7 +173,7 @@ public class DirectoryRepo implements SyncRepo {
 
         Uri uri = repoUri.buildUpon().appendPath(repoRelativePath).build();
 
-        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, rev, mtime);
+        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, uri.getPath(), rev, mtime);
     }
 
     @Override
@@ -204,7 +205,7 @@ public class DirectoryRepo implements SyncRepo {
         String rev = String.valueOf(toFile.lastModified());
         long mtime = toFile.lastModified();
 
-        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, newUri, rev, mtime);
+        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, newUri, newUri.getPath(), rev, mtime);
     }
 
     @Override
