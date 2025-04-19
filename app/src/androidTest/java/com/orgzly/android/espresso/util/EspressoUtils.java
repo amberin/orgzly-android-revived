@@ -341,7 +341,7 @@ public class EspressoUtils {
     }
 
     public static void searchForTextCloseKeyboard(String str) {
-        SystemClock.sleep(300);
+        SystemClock.sleep(400);
         onView(isRoot()).perform(waitId(R.id.search_view, 5000));
         onView(allOf(withId(R.id.search_view), isDisplayed())).perform(click());
         SystemClock.sleep(300);
