@@ -3,7 +3,6 @@ package com.orgzly.android.repos;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orgzly.android.BookFormat;
 import com.orgzly.android.BookName;
 import com.orgzly.android.NotesOrgExporter;
 import com.orgzly.android.OrgzlyTest;
@@ -58,7 +57,7 @@ public class LocalDbRepoTest extends OrgzlyTest {
         try {
             new NotesOrgExporter(dataRepository).exportBook(book, tmpFile);
             repo = testUtils.repoInstance(RepoType.MOCK, "mock://repo-a");
-            repo.storeBook(tmpFile, BookName.repoRelativePath(book.getName(), BookFormat.ORG));
+            repo.storeBook(tmpFile, BookName.repoRelativePathFromName(book.getName()));
         } finally {
             tmpFile.delete();
         }
@@ -82,7 +81,7 @@ public class LocalDbRepoTest extends OrgzlyTest {
 
         File tmpFile = dataRepository.getTempBookFile();
         try {
-            syncRepo.retrieveBook(vrook.uri, tmpFile);
+            syncRepo.retrieveBook(vrook.repoRelativePath, tmpFile);
             String content = MiscUtils.readStringFromFile(tmpFile);
             assertEquals("book content\n" + "\n" + "* First note\n" + "** Second note", content);
         } finally {

@@ -7,7 +7,7 @@ class VersionedRook(
         repoType: RepoType,
         repoUri: Uri,
         uri: Uri,
-        repoRelativePath: String,
+        repoRelativePath: String?, // N.B. Not stored in database
         val revision: String,
         val mtime: Long
 ) : Rook(repoId, repoType, repoUri, uri, repoRelativePath) {

@@ -17,16 +17,17 @@ class DbRepoBookRepository @Inject constructor(db: OrgzlyDatabase) {
 
     fun getBooks(repoId: Long, repoUri: Uri): List<VersionedRook> {
         return dbRepoBook.getAllByRepo(repoUri.toString()).map {
-            VersionedRook(repoId, RepoType.MOCK, Uri.parse(it.repoUrl), Uri.parse(it.url), it.revision, it.mtime)
+            VersionedRook(repoId, RepoType.MOCK, Uri.parse(it.repoUrl), Uri.parse(it.url), Uri.parse(it.url).path!!, it.revision, it.mtime)
         }
     }
 
-    fun retrieveBook(repoId: Long, repoUri: Uri, uri: Uri, file: File): VersionedRook {
+    fun retrieveBook(repoId: Long, repoUri: Uri, repoRelativePath: String, file: File): VersionedRook {
+        val uri = repoUri.buildUpon().path(repoRelativePath).build()
         val book = dbRepoBook.getByUrl(uri.toString()) ?: throw IOException()
 
         MiscUtils.writeStringToFile(book.content, file)
 
-        return VersionedRook(repoId, RepoType.MOCK, repoUri, uri, book.revision, book.mtime)
+        return VersionedRook(repoId, RepoType.MOCK, repoUri, uri, repoRelativePath, book.revision, book.mtime)
     }
 
     fun createBook(repoId: Long, vrook: VersionedRook, content: String): VersionedRook {
@@ -47,6 +48,7 @@ class DbRepoBookRepository @Inject constructor(db: OrgzlyDatabase) {
                 RepoType.MOCK,
                 Uri.parse(book.repoUrl),
                 Uri.parse(book.url),
+                vrook.repoRelativePath,
                 book.revision,
                 book.mtime)
     }
@@ -67,6 +69,7 @@ class DbRepoBookRepository @Inject constructor(db: OrgzlyDatabase) {
                 RepoType.MOCK,
                 Uri.parse(renamedBook.repoUrl),
                 Uri.parse(renamedBook.url),
+                Uri.parse(renamedBook.url).path!!,
                 renamedBook.revision,
                 renamedBook.mtime)
     }

@@ -11,7 +11,6 @@ import com.orgzly.android.prefs.AppPreferences;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,9 +63,9 @@ public class MockRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File file) throws IOException {
+    public VersionedRook retrieveBook(String repoRelativePath, File file) throws IOException {
         SystemClock.sleep(SLEEP_FOR_RETRIEVE_BOOK);
-        return databaseRepo.retrieveBook(uri, file);
+        return databaseRepo.retrieveBook(repoRelativePath, file);
     }
 
     @Override

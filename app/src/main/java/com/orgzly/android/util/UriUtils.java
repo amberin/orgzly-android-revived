@@ -50,7 +50,7 @@ public class UriUtils {
         BookName bookName = BookName.fromRepoRelativePath(uri.getLastPathSegment());
         BookFormat format = bookName.getFormat();
 
-        String newFilename = BookName.repoRelativePath(name, format);
+        String newFilename = BookName.repoRelativePathFromName(name);
 
         return UriUtils.dirUri(uri) // Old Uri without file name
                 .buildUpon()

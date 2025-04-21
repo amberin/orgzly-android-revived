@@ -89,7 +89,7 @@ class DataRepository @Inject constructor(
                     BookAction.Type.PROGRESS,
                     resources.getString(R.string.force_loading_from_uri, book.linkRepo.url)))
 
-            val loadedBook = loadBookFromRepo(book.linkRepo.id, book.linkRepo.type, book.linkRepo.url, book.syncedTo.uri)
+            val loadedBook = loadBookFromRepo(book.linkRepo.id, book.linkRepo.type, book.linkRepo.url, BookName.repoRelativePathFromName(book.book.name))
 
             setBookLastActionAndSyncStatus(loadedBook!!.book.id, BookAction.forNow(
                     BookAction.Type.INFO,
@@ -110,7 +110,7 @@ class DataRepository @Inject constructor(
         val book = getBookView(bookId)
                 ?: throw IOException(resources.getString(R.string.book_does_not_exist_anymore))
 
-        val repositoryPath: String = BookName.getRepoRelativePath(book)
+        val repoRelativePath: String = BookName.repoRelativePathFromName(book.book.name)
 
         try {
             /* Prefer link. */
@@ -120,7 +120,7 @@ class DataRepository @Inject constructor(
                     BookAction.Type.PROGRESS,
                     resources.getString(R.string.force_saving_to_uri, repoEntity)))
 
-            saveBookToRepo(repoEntity, repositoryPath, book, BookFormat.ORG)
+            saveBookToRepo(repoEntity, repoRelativePath, book, BookFormat.ORG)
 
             val savedBook = getBookView(bookId)
 
@@ -150,10 +150,10 @@ class DataRepository @Inject constructor(
      */
     @Throws(IOException::class)
     fun saveBookToRepo(
-            repoEntity: Repo,
-            repositoryPath: String,
-            bookView: BookView,
-            @Suppress("UNUSED_PARAMETER") format: BookFormat) {
+        repoEntity: Repo,
+        repoRelativePath: String,
+        bookView: BookView,
+        @Suppress("UNUSED_PARAMETER") format: BookFormat) {
 
         val uploadedBook: VersionedRook
 
@@ -165,7 +165,7 @@ class DataRepository @Inject constructor(
             NotesOrgExporter(this).exportBook(bookView.book, tmpFile)
 
             /* Upload to repo. */
-            uploadedBook = repo.storeBook(tmpFile, repositoryPath)
+            uploadedBook = repo.storeBook(tmpFile, repoRelativePath)
 
         } finally {
             /* Delete temporary file. */
@@ -393,7 +393,7 @@ class DataRepository @Inject constructor(
 
             /* Do not rename if the new filename will be ignored */
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                RepoUtils.ensurePathIsNotIgnored(repo, BookName.repoRelativePath(name, BookFormat.ORG))
+                RepoUtils.ensurePathIsNotIgnored(repo, BookName.repoRelativePathFromName(name))
 
             val movedVrook = repo.renameBook(vrook.uri, name)
 
@@ -521,7 +521,7 @@ class DataRepository @Inject constructor(
             // Ensure that the resulting file name is not ignored in this repo
             val syncRepo = getRepoInstance(repo.id, repo.type, repo.url)
             val bookName = getBook(bookId)!!.name
-            val repoRelativePath = BookName.repoRelativePath(bookName, BookFormat.ORG)
+            val repoRelativePath = BookName.repoRelativePathFromName(bookName)
             RepoUtils.ensurePathIsNotIgnored(syncRepo, repoRelativePath)
         }
 
@@ -1719,11 +1719,13 @@ class DataRepository @Inject constructor(
 
     @Throws(IOException::class)
     fun loadBookFromRepo(rook: Rook): BookView? {
-        return loadBookFromRepo(rook.repoId, rook.repoType, rook.repoUri.toString(), rook.uri)
+        if (rook.repoRelativePath != null)
+            return loadBookFromRepo(rook.repoId, rook.repoType, rook.repoUri.toString(), rook.repoRelativePath!!)
+        return null
     }
 
     @Throws(IOException::class)
-    fun loadBookFromRepo(repoId: Long, repoType: RepoType, repoUrl: String, uri: Uri): BookView? {
+    fun loadBookFromRepo(repoId: Long, repoType: RepoType, repoUrl: String, repoRelativePath: String): BookView? {
         val book: BookView?
 
         val repo = getRepoInstance(repoId, repoType, repoUrl)
@@ -1731,9 +1733,9 @@ class DataRepository @Inject constructor(
         val tmpFile = getTempBookFile()
         try {
             /* Download from repo. */
-            val vrook = repo.retrieveBook(uri, tmpFile)
+            val vrook = repo.retrieveBook(repoRelativePath, tmpFile)
 
-            val bookName = BookName.fromRook(vrook)
+            val bookName = BookName.fromRepoRelativePath(repoRelativePath)
 
             /* Store from file to Shelf. */
             book = loadBookFromFile(bookName.name, bookName.format, tmpFile, vrook)

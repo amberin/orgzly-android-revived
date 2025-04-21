@@ -48,8 +48,8 @@ public class DropboxRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File file) throws IOException {
-        return client.download(repoUri, uri, file);
+    public VersionedRook retrieveBook(String repoRelativePath, File file) throws IOException {
+        return client.download(repoUri, repoRelativePath, file);
     }
 
     @Override
@@ -71,10 +71,8 @@ public class DropboxRepo implements SyncRepo {
         if (newName.contains("/") && !AppPreferences.subfolderSupport(context))
             throw new IOException(context.getString(R.string.subfolder_support_disabled));
         BookName oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(repoUri, oldFullUri));
-        String newRelativePath = BookName.repoRelativePath(newName, oldBookName.getFormat());
-        String newEncodedRelativePath = Uri.encode(newRelativePath, "/");
-        Uri newFullUri = repoUri.buildUpon().appendEncodedPath(newEncodedRelativePath).build();
-        return client.move(repoUri, oldFullUri, newFullUri);
+        String newRelativePath = BookName.repoRelativePathFromName(newName);
+        return client.move(repoUri, oldFullUri, newRelativePath);
     }
 
     @Override

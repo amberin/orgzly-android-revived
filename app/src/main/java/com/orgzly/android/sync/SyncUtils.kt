@@ -155,7 +155,7 @@ object SyncUtils {
             BookSyncStatus.ONLY_BOOK_WITHOUT_LINK_AND_ONE_REPO -> {
                 repoEntity = dataRepository.getRepos().iterator().next()
                 repoUrl = repoEntity.url
-                repositoryPath = BookName.repoRelativePath(namesake.book.book.name, BookFormat.ORG)
+                repositoryPath = BookName.repoRelativePathFromName(namesake.book.book.name)
                 /* Set repo link before saving to ensure repo ignore rules are checked */
                 dataRepository.setLink(namesake.book.book.id, repoEntity)
                 dataRepository.saveBookToRepo(repoEntity, repositoryPath, namesake.book, BookFormat.ORG)
@@ -173,7 +173,7 @@ object SyncUtils {
             BookSyncStatus.ONLY_BOOK_WITH_LINK -> {
                 repoEntity = namesake.book.linkRepo
                 repoUrl = repoEntity!!.url
-                repositoryPath = BookName.repoRelativePath(namesake.book.book.name, BookFormat.ORG)
+                repositoryPath = BookName.repoRelativePathFromName(namesake.book.book.name)
                 dataRepository.saveBookToRepo(repoEntity, repositoryPath, namesake.book, BookFormat.ORG)
                 bookAction = BookAction.forNow(BookAction.Type.INFO, namesake.status.msg(repoUrl))
             }

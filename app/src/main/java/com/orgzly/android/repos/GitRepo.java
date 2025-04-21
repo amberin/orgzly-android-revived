@@ -9,7 +9,6 @@ import android.util.Log;
 import com.orgzly.BuildConfig;
 import com.orgzly.R;
 import com.orgzly.android.App;
-import com.orgzly.android.BookFormat;
 import com.orgzly.android.BookName;
 import com.orgzly.android.db.entity.Repo;
 import com.orgzly.android.git.GitFileSynchronizer;
@@ -197,7 +196,7 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
             synchronizer.addAndCommitNewFile(file, repoRelativePath);
         }
         synchronizer.tryPush();
-        return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(repoRelativePath).build());
+        return currentVersionedRook(Uri.EMPTY.buildUpon().path(repoRelativePath).build());
     }
 
     private RevWalk walk() {
@@ -209,14 +208,14 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File destination) throws IOException {
+    public VersionedRook retrieveBook(String repoRelativePath, File destination) throws IOException {
 
         // Ensure our repo copy is up-to-date. This is necessary when force-loading a book.
         synchronizer.mergeWithRemote();
 
-        synchronizer.retrieveLatestVersionOfFile(uri.getPath(), destination);
+        synchronizer.retrieveLatestVersionOfFile(repoRelativePath, destination);
 
-        return currentVersionedRook(uri);
+        return currentVersionedRook(Uri.EMPTY.buildUpon().path(repoRelativePath).build());
     }
 
     @Override
@@ -289,7 +288,8 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
             }
         });
         while (walk.next()) {
-            result.add(currentVersionedRook(Uri.withAppendedPath(Uri.EMPTY, walk.getPathString())));
+            result.add(currentVersionedRook(Uri.EMPTY.buildUpon().path(walk.getPathString()).build()));
+
         }
         return result;
     }
@@ -308,10 +308,10 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
             throw new IOException(context.getString(R.string.subfolder_support_disabled));
         }
         String oldPath = oldFullUri.toString().replaceFirst("^/", "");
-        String newPath = BookName.repoRelativePath(newName, BookFormat.ORG);
+        String newPath = BookName.repoRelativePathFromName(newName);
         if (synchronizer.renameFileInRepo(oldPath, newPath)) {
             synchronizer.tryPush();
-            return currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(newPath).build());
+            return currentVersionedRook(Uri.EMPTY.buildUpon().path(newPath).build());
         } else {
             return null;
         }
@@ -348,7 +348,7 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
         }
         File writeBackFile = synchronizer.workTreeFile(repoRelativePath);
         return new TwoWaySyncResult(
-                currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(repoRelativePath).build()), merged,
+                currentVersionedRook(Uri.EMPTY.buildUpon().path(repoRelativePath).build()), merged,
                 writeBackFile);
     }
 

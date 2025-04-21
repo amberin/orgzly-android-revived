@@ -111,22 +111,22 @@ public class DocumentRepo implements SyncRepo {
         List<DocumentFile> directoryNodes = new ArrayList<>();
         directoryNodes.add(repoDocumentFile);
         RepoIgnoreNode ignoreNode = new RepoIgnoreNode(this);
-        StringBuilder repoRelativePath = new StringBuilder();
+        StringBuilder leadingDirectory = new StringBuilder();
         while (!directoryNodes.isEmpty()) {
             DocumentFile currentDir = directoryNodes.remove(0);
             DocumentFile parentDir = currentDir.getParentFile();
             if (parentDir != null) {
                 if (parentDir == repoDocumentFile) {
-                    repoRelativePath = new StringBuilder(Objects.requireNonNull(currentDir.getName()));
+                    leadingDirectory = new StringBuilder(Objects.requireNonNull(currentDir.getName()));
                 } else {
-                    repoRelativePath.append("/").append(currentDir.getName());
+                    leadingDirectory.append("/").append(currentDir.getName());
                 }
             }
             for (DocumentFile node : currentDir.listFiles()) {
                 if (node.isDirectory() && AppPreferences.subfolderSupport(context)) {
                     // Avoid descending into completely ignored directories
                     if (Build.VERSION.SDK_INT >= 26) {
-                        if (!ignoreNode.isPathIgnored(repoRelativePath.toString(), true)) {
+                        if (!ignoreNode.isPathIgnored(leadingDirectory.toString(), true)) {
                             directoryNodes.add(node);
                         }
                     } else {
@@ -134,13 +134,20 @@ public class DocumentRepo implements SyncRepo {
                     }
                 } else {
                     if (BookName.isSupportedFormatFileName(node.getName())) {
-                        // Check for matching ignore rules
+                        String nodePath;
+                        // Avoid adding leading /
+                        if (leadingDirectory.length() > 0) {
+                            nodePath = leadingDirectory + "/" + node.getName();
+                        } else {
+                            nodePath = node.getName();
+                        }
+                        assert nodePath != null;
                         if (Build.VERSION.SDK_INT >= 26) {
-                            repoRelativePath.append("/").append(node.getName());
-                            if (ignoreNode.isPathIgnored(repoRelativePath.toString(), false))
+                            // Check for matching ignore rules
+                            if (ignoreNode.isPathIgnored(nodePath, false))
                                 continue;
                         }
-                        result.put(repoRelativePath.toString(), node);
+                        result.put(nodePath, node);
                     }
                 }
             }
@@ -148,22 +155,29 @@ public class DocumentRepo implements SyncRepo {
         return result;
     }
 
-    private DocumentFile getDocumentFileFromPath(String path) {
-        String fullUri = repoDocumentFile.getUri() + Uri.encode("/" + path);
-        return DocumentFile.fromSingleUri(context, Uri.parse(fullUri));
+    private DocumentFile getDocumentFileFromRelativePath(String repoRelativePath) throws FileNotFoundException {
+        DocumentFile currentDir = repoDocumentFile;
+        String targetFile = repoRelativePath;
+        if (repoRelativePath.contains("/")) {
+            List<String> levels = new ArrayList<>(Arrays.asList(repoRelativePath.split("/")));
+            while (levels.size() > 1) {
+                String nextDirName = levels.remove(0);
+                currentDir = Objects.requireNonNull(currentDir).findFile(nextDirName);
+            }
+            targetFile = levels.remove(0);
+        }
+        assert currentDir != null;
+        DocumentFile result = currentDir.findFile(targetFile);
+        if (result == null)
+            throw new FileNotFoundException("File " + repoRelativePath + " not found in " + repoUri);
+        return result;
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File destinationFile) throws IOException {
-        DocumentFile sourceFile = DocumentFile.fromSingleUri(context, uri);
-        assert sourceFile != null;
-        if (!sourceFile.exists()) {
-            throw new FileNotFoundException("File " + sourceFile.getUri() + " not found in " + repoUri);
-        } else {
-            if (BuildConfig.LOG_DEBUG) {
-                LogUtils.d(TAG, "Found DocumentFile for " + sourceFile.getUri());
-            }
-        }
+    public VersionedRook retrieveBook(String repoRelativePath, File destinationFile) throws IOException {
+        DocumentFile sourceFile = getDocumentFileFromRelativePath(repoRelativePath);
+        if (BuildConfig.LOG_DEBUG)
+            LogUtils.d(TAG, "Found DocumentFile for " + sourceFile.getUri());
 
         /* "Download" the file. */
         try (InputStream is = context.getContentResolver().openInputStream(sourceFile.getUri())) {
@@ -174,13 +188,12 @@ public class DocumentRepo implements SyncRepo {
         String rev = String.valueOf(sourceFile.lastModified());
         long mtime = sourceFile.lastModified();
 
-        return new VersionedRook(repoId, RepoType.DOCUMENT, repoUri, sourceFile.getUri(), rev, mtime);
+        return new VersionedRook(repoId, RepoType.DOCUMENT, repoUri, sourceFile.getUri(), repoRelativePath, rev, mtime);
     }
 
     @Override
-    public InputStream openRepoFileInputStream(String repoRelativePath) throws IOException {
-        DocumentFile sourceFile = getDocumentFileFromPath(repoRelativePath);
-        if (!sourceFile.exists()) throw new FileNotFoundException();
+    public InputStream openRepoFileInputStream(String repoRelativePath) throws FileNotFoundException {
+        DocumentFile sourceFile = getDocumentFileFromRelativePath(repoRelativePath);
         return context.getContentResolver().openInputStream(sourceFile.getUri());
     }
 
@@ -215,7 +228,7 @@ public class DocumentRepo implements SyncRepo {
         String rev = String.valueOf(destinationFile.lastModified());
         long mtime = System.currentTimeMillis();
 
-        return new VersionedRook(repoId, RepoType.DOCUMENT, getUri(), destinationFile.getUri(), rev, mtime);
+        return new VersionedRook(repoId, RepoType.DOCUMENT, getUri(), destinationFile.getUri(), repoRelativePath, rev, mtime);
     }
 
     /**
@@ -261,7 +274,7 @@ public class DocumentRepo implements SyncRepo {
                 )
         );
         BookName oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(repoUri, oldFullUri));
-        String newRelativePath = BookName.repoRelativePath(newName, oldBookName.getFormat());
+        String newRelativePath = BookName.repoRelativePathFromName(newName);
         String newDocFileName = Objects.requireNonNull(Uri.parse(newRelativePath).getLastPathSegment());
         DocumentFile newDir;
         Uri newUri = oldFullUri;
@@ -307,7 +320,7 @@ public class DocumentRepo implements SyncRepo {
             assert newUri != null;
         }
 
-        return new VersionedRook(repoId, RepoType.DOCUMENT, repoUri, newUri, rev, mtime);
+        return new VersionedRook(repoId, RepoType.DOCUMENT, repoUri, newUri, newRelativePath, rev, mtime);
     }
 
     @Override

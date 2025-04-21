@@ -173,6 +173,7 @@ public class DropboxClient {
                                             RepoType.DROPBOX,
                                             repoUri,
                                             uri,
+                                            pathRelativeToRepoRoot,
                                             file.getRev(),
                                             file.getServerModified().getTime());
 
@@ -220,15 +221,16 @@ public class DropboxClient {
     }
 
     private Uri getFullUriFromRelativePath(Uri repoUri, String repoRelativePath) {
-        String encodedPath = Uri.encode(repoRelativePath, "/");
-        return Uri.withAppendedPath(repoUri, encodedPath);
+        return repoUri.buildUpon().path(repoRelativePath).build();
     }
 
     /**
      * Download file from Dropbox and store it to a local file.
      */
-    public VersionedRook download(Uri repoUri, Uri uri, File localFile) throws IOException {
+    public VersionedRook download(Uri repoUri, String repoRelativePath, File localFile) throws IOException {
         linkedOrThrow();
+
+        Uri uri = getFullUriFromRelativePath(repoUri, repoRelativePath);
 
         OutputStream out = new BufferedOutputStream(new FileOutputStream(localFile));
 
@@ -243,7 +245,7 @@ public class DropboxClient {
 
                 dbxClient.files().download(metadata.getPathLower(), rev).download(out);
 
-                return new VersionedRook(repoId, RepoType.DROPBOX, repoUri, uri, rev, mtime);
+                return new VersionedRook(repoId, RepoType.DROPBOX, repoUri, uri, repoRelativePath, rev, mtime);
 
             } else {
                 throw new IOException("Failed downloading Dropbox file " + uri + ": Not a file");
@@ -314,7 +316,7 @@ public class DropboxClient {
         String rev = metadata.getRev();
         long mtime = metadata.getServerModified().getTime();
 
-        return new VersionedRook(repoId, RepoType.DROPBOX, repoUri, bookUri, rev, mtime);
+        return new VersionedRook(repoId, RepoType.DROPBOX, repoUri, bookUri, relativePath, rev, mtime);
     }
 
     public void delete(String path) throws IOException {
@@ -338,17 +340,19 @@ public class DropboxClient {
         }
     }
 
-    public VersionedRook move(Uri repoUri, Uri from, Uri to) throws IOException {
+    public VersionedRook move(Uri repoUri, Uri from, String newRelativePath) throws IOException {
         linkedOrThrow();
+
+        Uri newUri = repoUri.buildUpon().path(newRelativePath).build();
 
         /* Abort if destination file already exists. */
         try {
-            if (dbxClient.files().getMetadata(to.getPath()) instanceof FileMetadata)
-                throw new IOException("File at " + to.getPath() + " already exists");
+            if (dbxClient.files().getMetadata(newUri.getPath()) instanceof FileMetadata)
+                throw new IOException("File at " + newUri.getPath() + " already exists");
         } catch (DbxException ignored) {}
 
         try {
-            RelocationResult relocationRes = dbxClient.files().moveV2(from.getPath(), to.getPath());
+            RelocationResult relocationRes = dbxClient.files().moveV2(from.getPath(), newUri.getPath());
             Metadata metadata = relocationRes.getMetadata();
 
             if (! (metadata instanceof FileMetadata)) {
@@ -360,15 +364,15 @@ public class DropboxClient {
             String rev = fileMetadata.getRev();
             long mtime = fileMetadata.getServerModified().getTime();
 
-            return new VersionedRook(repoId, RepoType.DROPBOX, repoUri, to, rev, mtime);
+            return new VersionedRook(repoId, RepoType.DROPBOX, repoUri, newUri, newRelativePath, rev, mtime);
 
         } catch (Exception e) {
             e.printStackTrace();
 
             if (e.getMessage() != null) { // TODO: Move this throwing to utils
-                throw new IOException("Failed moving " + from + " to " + to + ": " + e.getMessage(), e);
+                throw new IOException("Failed moving " + from + " to " + newUri + ": " + e.getMessage(), e);
             } else {
-                throw new IOException("Failed moving " + from + " to " + to + ": " + e.toString(), e);
+                throw new IOException("Failed moving " + from + " to " + newUri + ": " + e.toString(), e);
             }
         }
     }

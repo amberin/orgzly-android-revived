@@ -50,8 +50,8 @@ public class DatabaseRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File file) {
-        return dbRepo.retrieveBook(repoId, repoUri, uri, file);
+    public VersionedRook retrieveBook(String repoRelativePath, File file) {
+        return dbRepo.retrieveBook(repoId, repoUri, repoRelativePath, file);
     }
 
     @Override
@@ -66,9 +66,9 @@ public class DatabaseRepo implements SyncRepo {
         String rev = "MockedRevision-" + System.currentTimeMillis();
         long mtime = System.currentTimeMillis();
 
-        Uri uri = repoUri.buildUpon().appendPath(repoRelativePath).build();
+        Uri uri = repoUri.buildUpon().path(repoRelativePath).build();
 
-        VersionedRook vrook = new VersionedRook(repoId, RepoType.MOCK, repoUri, uri, rev, mtime);
+        VersionedRook vrook = new VersionedRook(repoId, RepoType.MOCK, repoUri, uri, repoRelativePath, rev, mtime);
 
         return dbRepo.createBook(repoId, vrook, content);
     }

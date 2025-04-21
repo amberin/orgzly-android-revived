@@ -42,7 +42,7 @@ public class BookName {
             return getRepoRelativePath(vrook.getRepoUri(), vrook.getUri());
         } else {
             // There is no remote book; we can only guess the repo path from the book's name.
-            return repoRelativePath(bookView.getBook().getName(), BookFormat.ORG);
+            return repoRelativePathFromName(bookView.getBook().getName());
         }
     }
 
@@ -132,12 +132,8 @@ public class BookName {
         return PATTERN.matcher(path).matches() && !SKIP_PATTERN.matcher(path).matches();
     }
 
-    public static String repoRelativePath(String name, BookFormat format) {
-        if (format == BookFormat.ORG) {
-            return name + ".org";
-        } else {
-            throw new IllegalArgumentException("Unsupported format " + format);
-        }
+    public static String repoRelativePathFromName(String name) {
+        return name + ".org";
     }
 
     public static String lastPathSegment(String name, BookFormat format) {

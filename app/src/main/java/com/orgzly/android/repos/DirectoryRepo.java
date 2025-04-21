@@ -111,7 +111,7 @@ public class DirectoryRepo implements SyncRepo {
                         RepoType.DIRECTORY,
                         repoUri,
                         uri,
-                        uri.getPath(),
+                        file.getName(),
                         String.valueOf(file.lastModified()),
                         file.lastModified()
                 ));
@@ -125,11 +125,13 @@ public class DirectoryRepo implements SyncRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File destinationFile) throws IOException {
+    public VersionedRook retrieveBook(String repoRelativePath, File destinationFile) throws IOException {
+        Uri uri = repoUri.buildUpon().path(repoRelativePath).build();
+
         String path = uri.getPath();
 
         if (path == null) {
-            throw new IllegalArgumentException("No path in " + uri);
+            throw new IllegalArgumentException("No path in " + repoRelativePath);
         }
 
         File sourceFile = new File(path);
@@ -140,7 +142,7 @@ public class DirectoryRepo implements SyncRepo {
         String rev = String.valueOf(sourceFile.lastModified());
         long mtime = sourceFile.lastModified();
 
-        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, uri.getPath(), rev, mtime);
+        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, repoRelativePath, rev, mtime);
     }
 
     @Override
@@ -173,7 +175,7 @@ public class DirectoryRepo implements SyncRepo {
 
         Uri uri = repoUri.buildUpon().appendPath(repoRelativePath).build();
 
-        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, uri.getPath(), rev, mtime);
+        return new VersionedRook(repoId, RepoType.DIRECTORY, repoUri, uri, destinationFile.getPath(), rev, mtime);
     }
 
     @Override

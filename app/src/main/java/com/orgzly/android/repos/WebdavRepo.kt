@@ -195,25 +195,27 @@ class WebdavRepo(
                 .toMutableList()
     }
 
-    override fun retrieveBook(uri: Uri, destination: File): VersionedRook {
-        sardine.get(uri.toUrl()).use { inputStream ->
+    override fun retrieveBook(repoRelativePath: String, destination: File): VersionedRook {
+        val fileUrl = uri.buildUpon().path(repoRelativePath).build().toUrl()
+        sardine.get(fileUrl).use { inputStream ->
             FileOutputStream(destination).use { outputStream ->
                 inputStream.copyTo(outputStream)
             }
         }
 
-        return sardine.list(uri.toUrl()).first().toVersionedRook()
+        return sardine.list(fileUrl).first().toVersionedRook()
     }
 
     override fun openRepoFileInputStream(repoRelativePath: String): InputStream {
-        val fileUrl = Uri.withAppendedPath(uri, repoRelativePath).toUrl()
+        val fileUrl = uri.buildUpon().path(repoRelativePath).build().toUrl()
         if (!sardine.exists(fileUrl))
             throw FileNotFoundException()
         return sardine.get(fileUrl)
      }
 
     private fun ensureDirectoryHierarchy(relativePath: String) {
-        val levels: ArrayList<String> = ArrayList(relativePath.split("/"))
+        val encodedRelativePath = Uri.encode(relativePath, "/")
+        val levels: ArrayList<String> = ArrayList(encodedRelativePath.split("/"))
         // N.B. Strip off trailing slash from repo URL, if present
         var currentDir: String = uri.toString().replace(Regex("/$"), "")
         while (levels.size > 1) {
@@ -226,16 +228,13 @@ class WebdavRepo(
     }
 
     override fun storeBook(file: File, repoRelativePath: String): VersionedRook {
-        val encodedRepoPath = Uri.encode(repoRelativePath, "/")
-        if (encodedRepoPath != null) {
-            if (encodedRepoPath.contains("/")) {
-                val context = App.getAppContext()
-                if (!AppPreferences.subfolderSupport(context))
-                    throw IOException(context.getString(R.string.subfolder_support_disabled))
-                ensureDirectoryHierarchy(encodedRepoPath)
-            }
+        if (repoRelativePath.contains("/")) {
+            val context = App.getAppContext()
+            if (!AppPreferences.subfolderSupport(context))
+                throw IOException(context.getString(R.string.subfolder_support_disabled))
+            ensureDirectoryHierarchy(repoRelativePath)
         }
-        val fileUrl = uri.buildUpon().appendEncodedPath(encodedRepoPath).build().toUrl()
+        val fileUrl = uri.buildUpon().path(repoRelativePath).build().toUrl()
 
         sardine.put(fileUrl, file, null)
 
@@ -244,9 +243,8 @@ class WebdavRepo(
 
     override fun renameBook(oldFullUri: Uri, newName: String): VersionedRook {
         val oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(uri, oldFullUri))
-        val newRelativePath = BookName.repoRelativePath(newName, oldBookName.format)
-        val newEncodedRelativePath = Uri.encode(newRelativePath, "/")
-        val newFullUrl = uri.buildUpon().appendEncodedPath(newEncodedRelativePath).build().toUrl()
+        val newRelativePath = BookName.repoRelativePathFromName(newName)
+        val newFullUrl = uri.buildUpon().path(newRelativePath).build().toUrl()
 
         /* Abort if destination file already exists. */
         if (sardine.exists(newFullUrl)) {
@@ -257,7 +255,7 @@ class WebdavRepo(
             val context = App.getAppContext()
             if (!AppPreferences.subfolderSupport(context))
                 throw IOException(context.getString(R.string.subfolder_support_disabled))
-            ensureDirectoryHierarchy(newEncodedRelativePath)
+            ensureDirectoryHierarchy(newRelativePath)
         }
 
         sardine.move(oldFullUri.toUrl(), newFullUrl)

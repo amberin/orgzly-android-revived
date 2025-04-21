@@ -105,8 +105,15 @@ public class TestUtils {
      * Overwrites existing repoUrl / url combinations (due to table definition).
      */
     public void setupRook(Repo repo, String url, String content, String rev, long mtime) {
+        String repoRelativePath = Uri.decode(url.replace(repo.getUrl(), ""));
         VersionedRook vrook = new VersionedRook(
-                repo.getId(), repo.getType(), Uri.parse(repo.getUrl()), Uri.parse(url), rev, mtime);
+                repo.getId(),
+                repo.getType(),
+                Uri.parse(repo.getUrl()),
+                Uri.parse(url),
+                repoRelativePath,
+                rev,
+                mtime);
 
         dbRepoBookRepository.createBook(repo.getId(), vrook, content);
 
