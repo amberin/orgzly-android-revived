@@ -88,6 +88,25 @@ interface SyncRepoTest {
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
         }
 
+        fun testGetBooks_singleFileInNestedSubfolderWhenEnabled(repoManipulationPoint: Any, syncRepo: SyncRepo) {
+            // Given
+            AppPreferences.subfolderSupport(App.getAppContext(), true)
+            val repoFilePath = "Folder 1/Folder 2/Book one.org"
+            val fileContent = "\n\n...\n\n"
+            val rookUri = writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, "Book one.org", "Folder")
+
+            // When
+            val books = syncRepo.books
+            val retrieveBookDestinationFile = kotlin.io.path.createTempFile().toFile()
+            syncRepo.retrieveBook(repoFilePath, retrieveBookDestinationFile)
+
+            // Then
+            assertEquals(1, books.size)
+            assertEquals(rookUri, books[0].uri)
+            assertEquals(repoFilePath, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
+            assertEquals(fileContent, retrieveBookDestinationFile.readText())
+        }
+
         fun testGetBooks_singleFileInSubfolderWhenDisabled(repoManipulationPoint: Any, syncRepo: SyncRepo) {
             // Given
             AppPreferences.subfolderSupport(App.getAppContext(), false)
@@ -465,6 +484,10 @@ interface SyncRepoTest {
                     expectedRookUri = repo.uri.toString() + treeDocumentFileExtraSegment + Uri.encode(fileName)
                     var targetDir = repoManipulationPoint as DocumentFile
                     if (folderName != null) {
+                        if (folderName.contains("/")) {
+                            val levels: List<String> = ArrayList<String>(listOf(*folderName.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()))
+                            
+                        }
                         targetDir = targetDir.createDirectory(folderName)!!
                         expectedRookUri = repo.uri.toString() + treeDocumentFileExtraSegment + Uri.encode("$folderName/$fileName")
                     }

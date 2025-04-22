@@ -169,7 +169,7 @@ public class DocumentRepo implements SyncRepo {
         assert currentDir != null;
         DocumentFile result = currentDir.findFile(targetFile);
         if (result == null)
-            throw new FileNotFoundException("File " + repoRelativePath + " not found in " + repoUri);
+            throw new FileNotFoundException("File " + repoRelativePath + " not found in " + repoUri); // TODO: strings.xml
         return result;
     }
 
