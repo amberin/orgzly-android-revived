@@ -551,6 +551,7 @@ public class SyncingTest extends OrgzlyTest {
         onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
         onView(withText("dropbox:/repo-b")).perform(click());
 
+        SystemClock.sleep(400);
         onBook(0, R.id.item_book_link_repo)
                 .check(matches(allOf(withText("dropbox:/repo-b"), isDisplayed())));
         onBook(0, R.id.item_book_synced_url)
