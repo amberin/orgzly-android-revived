@@ -20,6 +20,7 @@ interface SyncRepoTest {
 
     fun testGetBooks_singleOrgFile()
     fun testGetBooks_singleFileInSubfolderWhenEnabled()
+    fun testGetBooks_singleFileInNestedSubfolderWhenEnabled()
     fun testGetBooks_singleFileInSubfolderWhenDisabled()
     fun testGetBooks_allFilesAreIgnored()
     fun testGetBooks_specificFileInSubfolderIsIgnored()
@@ -74,7 +75,7 @@ interface SyncRepoTest {
             AppPreferences.subfolderSupport(App.getAppContext(), true)
             val repoFilePath = "Folder/Book one.org"
             val fileContent = "\n\n...\n\n"
-            val rookUri = writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, "Book one.org", "Folder")
+            val rookUri = writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, repoFilePath)
 
             // When
             val books = syncRepo.books
@@ -93,7 +94,7 @@ interface SyncRepoTest {
             AppPreferences.subfolderSupport(App.getAppContext(), true)
             val repoFilePath = "Folder 1/Folder 2/Book one.org"
             val fileContent = "\n\n...\n\n"
-            val rookUri = writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, "Book one.org", "Folder")
+            val rookUri = writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, repoFilePath)
 
             // When
             val books = syncRepo.books
@@ -103,6 +104,7 @@ interface SyncRepoTest {
             // Then
             assertEquals(1, books.size)
             assertEquals(rookUri, books[0].uri)
+            assertEquals(repoFilePath, books[0].repoRelativePath)
             assertEquals(repoFilePath, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
         }
@@ -111,7 +113,7 @@ interface SyncRepoTest {
             // Given
             AppPreferences.subfolderSupport(App.getAppContext(), false)
             val fileContent = "\n\n...\n\n"
-            writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, "Book one.org", "Folder")
+            writeFileToRepo(fileContent, syncRepo, repoManipulationPoint, "Folder/Book one.org")
 
             // When
             val books = syncRepo.books
@@ -123,7 +125,7 @@ interface SyncRepoTest {
         fun testGetBooks_allFilesAreIgnored(repoManipulationPoint: Any, syncRepo: SyncRepo) {
             // Given
             val ignoreFileContent = "*\n"
-            writeFileToRepo("...", syncRepo, repoManipulationPoint, "book one.org", "folder")
+            writeFileToRepo("...", syncRepo, repoManipulationPoint, "folder/book one.org")
             writeFileToRepo(ignoreFileContent, syncRepo, repoManipulationPoint, RepoIgnoreNode.IGNORE_FILE)
             // When
             val books = syncRepo.books
@@ -135,7 +137,7 @@ interface SyncRepoTest {
             // Given
             AppPreferences.subfolderSupport(App.getAppContext(), true)
             val ignoreFileContent = "folder/book one.org\n"
-            writeFileToRepo("...", syncRepo, repoManipulationPoint, "book one.org", "folder")
+            writeFileToRepo("...", syncRepo, repoManipulationPoint, "folder/book one.org")
             writeFileToRepo(ignoreFileContent, syncRepo, repoManipulationPoint, RepoIgnoreNode.IGNORE_FILE)
             // When
             val books = syncRepo.books
@@ -149,7 +151,7 @@ interface SyncRepoTest {
             val folderName = "My Folder"
             val fileName = "My file.org"
             val ignoreFileContent = "$folderName/**\n!$folderName/$fileName\n"
-            writeFileToRepo("...", syncRepo, repoManipulationPoint, fileName, folderName)
+            writeFileToRepo("...", syncRepo, repoManipulationPoint, "$folderName/$fileName")
             writeFileToRepo(ignoreFileContent, syncRepo, repoManipulationPoint, RepoIgnoreNode.IGNORE_FILE)
             // When
             val books = syncRepo.books
@@ -179,7 +181,7 @@ interface SyncRepoTest {
             tmpFile.delete()
             // Then
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/Book one.org"
+                is GitRepo -> "Book one.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "Book%20one.org"
                 else -> syncRepo.uri.toString() + "/Book%20one.org"
             }
@@ -218,13 +220,12 @@ interface SyncRepoTest {
             // Given
             AppPreferences.subfolderSupport(App.getAppContext(), true)
             val tmpFile = kotlin.io.path.createTempFile().toFile()
-            val folderName = "A folder"
-            val fileName = "A book.org"
-            writeFileToRepo("...", syncRepo, repoManipulationPoint, fileName, folderName)
+            val repoRelativePath = "A folder/A book.org"
+            writeFileToRepo("...", syncRepo, repoManipulationPoint, repoRelativePath)
             // When
             val gottenBook = syncRepo.books[0]
             MiscUtils.writeStringToFile("......", tmpFile) // N.B. Different content to ensure the repo file is actually changed
-            val storedRook = syncRepo.storeBook(tmpFile, "$folderName/$fileName")
+            val storedRook = syncRepo.storeBook(tmpFile, repoRelativePath)
             tmpFile.delete()
             // Then
             assertEquals(gottenBook.uri, storedRook.uri)
@@ -315,7 +316,7 @@ interface SyncRepoTest {
             // Then
             val renamedVrook = syncRepo.books[0]
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/Renamed book.org"
+                is GitRepo -> "Renamed book.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "Renamed%20book.org"
                 else -> syncRepo.uri.toString() + "/Renamed%20book.org"
             }
@@ -351,7 +352,7 @@ interface SyncRepoTest {
             val renamedRook = syncRepo.renameBook(originalRook.uri, "A folder/Renamed book")
             // Then
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/A folder/Renamed book.org"
+                is GitRepo -> "A folder/Renamed book.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "A%20folder%2FRenamed%20book.org"
                 else -> syncRepo.uri.toString() + "/A%20folder/Renamed%20book.org"
             }
@@ -386,7 +387,7 @@ interface SyncRepoTest {
             val renamedRook = syncRepo.renameBook(originalRook.uri, "Renamed book")
             // Then
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/Renamed book.org"
+                is GitRepo -> "Renamed book.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "Renamed%20book.org"
                 else -> syncRepo.uri.toString() + "/Renamed%20book.org"
             }
@@ -404,7 +405,7 @@ interface SyncRepoTest {
             val renamedRook = syncRepo.renameBook(originalRook.uri, "New folder/Original book")
             // Then
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/New folder/Original book.org"
+                is GitRepo -> "New folder/Original book.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "New%20folder%2FOriginal%20book.org"
                 else -> syncRepo.uri.toString() + "/New%20folder/Original%20book.org"
             }
@@ -422,7 +423,7 @@ interface SyncRepoTest {
             val renamedRook = syncRepo.renameBook(originalRook.uri, "new folder/New book")
             // Then
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/new folder/New book.org"
+                is GitRepo -> "new folder/New book.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "new%20folder%2FNew%20book.org"
                 else -> syncRepo.uri.toString() + "/new%20folder/New%20book.org"
             }
@@ -440,7 +441,7 @@ interface SyncRepoTest {
             val renamedRook = syncRepo.renameBook(originalRook.uri, "old folder/New book")
             // Then
             val expectedRookUri = when (syncRepo) {
-                is GitRepo -> "/old folder/New book.org"
+                is GitRepo -> "old folder/New book.org"
                 is DocumentRepo -> syncRepo.uri.toString() + treeDocumentFileExtraSegment + "old%20folder%2FNew%20book.org"
                 else -> syncRepo.uri.toString() + "/old%20folder/New%20book.org"
             }
@@ -451,58 +452,49 @@ interface SyncRepoTest {
             content: String,
             repo: SyncRepo,
             repoManipulationPoint: Any,
-            fileName: String,
-            folderName: String? = null
+            repoRelativePath: String,
         ): Uri {
-            var expectedRookUri = repo.uri.toString() + "/" + Uri.encode(fileName)
+            var expectedRookUri = repo.uri.toString() + "/" + Uri.encode(repoRelativePath, "/")
             when (repo) {
                 is WebdavRepo -> {
                     var targetDir = repoManipulationPoint as File
-                    if (folderName != null) {
-                        targetDir = File(targetDir.absolutePath + "/$folderName")
+                    val levels = repoRelativePath.split("/").toMutableList()
+                    while (levels.size > 1) {
+                        targetDir = File(targetDir.absolutePath + "/" + levels.removeAt(0))
                         targetDir.mkdir()
-                        expectedRookUri = repo.uri.toString() + "/" + Uri.encode("$folderName/$fileName", "/")
                     }
-                    val remoteBookFile = File(targetDir.absolutePath + "/$fileName")
-                    MiscUtils.writeStringToFile(content, remoteBookFile)
+                    val targetFile = File(targetDir.absolutePath + "/" + levels.removeAt(0))
+                    MiscUtils.writeStringToFile(content, targetFile)
                 }
                 is GitRepo -> {
-                    expectedRookUri = "/$fileName"
+                    expectedRookUri = "$repoRelativePath"
                     var targetDir = repoManipulationPoint as File
-                    if (folderName != null) {
-                        expectedRookUri = "/$folderName/$fileName"
-                        targetDir = File(targetDir.absolutePath + "/$folderName")
+                    val levels = repoRelativePath.split("/").toMutableList()
+                    while (levels.size > 1) {
+                        targetDir = File(targetDir.absolutePath + "/" + levels.removeAt(0))
                         targetDir.mkdir()
                     }
                     MiscUtils.writeStringToFile(
                         content,
-                        File(targetDir.absolutePath + "/$fileName")
+                        File(targetDir.absolutePath + "/" + levels.removeAt(0))
                     )
                     updateGitRepo(repoManipulationPoint)
                 }
                 is DocumentRepo -> {
-                    expectedRookUri = repo.uri.toString() + treeDocumentFileExtraSegment + Uri.encode(fileName)
                     var targetDir = repoManipulationPoint as DocumentFile
-                    if (folderName != null) {
-                        if (folderName.contains("/")) {
-                            val levels: List<String> = ArrayList<String>(listOf(*folderName.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()))
-                            
-                        }
-                        targetDir = targetDir.createDirectory(folderName)!!
-                        expectedRookUri = repo.uri.toString() + treeDocumentFileExtraSegment + Uri.encode("$folderName/$fileName")
+                    val levels = repoRelativePath.split("/").toMutableList()
+                    while (levels.size > 1) {
+                        targetDir = targetDir.createDirectory(levels.removeAt(0))!!
                     }
-                    MiscUtils.writeStringToDocumentFile(content, fileName, targetDir.uri)
+                    expectedRookUri = repo.uri.toString() + treeDocumentFileExtraSegment + Uri.encode(repoRelativePath)
+                    MiscUtils.writeStringToDocumentFile(content, levels.removeAt(0), targetDir.uri)
                 }
                 is DropboxRepo -> {
                     repoManipulationPoint as DropboxClient
                     val tmpFile = kotlin.io.path.createTempFile().toFile()
                     MiscUtils.writeStringToFile(content, tmpFile)
-                    var targetPath = fileName
-                    if (folderName != null) {
-                        targetPath = "$folderName/$fileName"
-                        expectedRookUri = repo.uri.toString() + "/" + Uri.encode("$folderName/$fileName", "/")
-                    }
-                    repoManipulationPoint.upload(tmpFile, repo.uri, targetPath)
+                    expectedRookUri = repo.uri.toString() + "/" + Uri.encode(repoRelativePath, "/")
+                    repoManipulationPoint.upload(tmpFile, repo.uri, repoRelativePath)
                     tmpFile.delete()
                 }
             }

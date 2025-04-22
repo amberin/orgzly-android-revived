@@ -61,6 +61,11 @@ class GitRepoTest : SyncRepoTest {
     }
 
     @Test
+    override fun testGetBooks_singleFileInNestedSubfolderWhenEnabled() {
+        SyncRepoTest.testGetBooks_singleFileInNestedSubfolderWhenEnabled(gitWorkingTree, syncRepo)
+    }
+
+    @Test
     override fun testGetBooks_singleFileInSubfolderWhenDisabled() {
         SyncRepoTest.testGetBooks_singleFileInSubfolderWhenDisabled(gitWorkingTree, syncRepo)
     }

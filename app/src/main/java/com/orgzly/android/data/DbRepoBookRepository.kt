@@ -1,6 +1,7 @@
 package com.orgzly.android.data
 
 import android.net.Uri
+import androidx.core.net.toUri
 import com.orgzly.android.db.OrgzlyDatabase
 import com.orgzly.android.db.entity.DbRepoBook
 import com.orgzly.android.repos.RepoType
@@ -17,7 +18,8 @@ class DbRepoBookRepository @Inject constructor(db: OrgzlyDatabase) {
 
     fun getBooks(repoId: Long, repoUri: Uri): List<VersionedRook> {
         return dbRepoBook.getAllByRepo(repoUri.toString()).map {
-            VersionedRook(repoId, RepoType.MOCK, Uri.parse(it.repoUrl), Uri.parse(it.url), Uri.parse(it.url).path!!, it.revision, it.mtime)
+            val repoRelativePath = it.url.toUri().path!!.replaceFirst("^/".toRegex(), "")
+            VersionedRook(repoId, RepoType.MOCK, Uri.parse(it.repoUrl), Uri.parse(it.url), repoRelativePath, it.revision, it.mtime)
         }
     }
 

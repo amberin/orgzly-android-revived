@@ -55,7 +55,10 @@ class DocumentRepoTest : SyncRepoTest, OrgzlyTest() {
         SyncRepoTest.testGetBooks_singleFileInSubfolderWhenEnabled(repoDirectory, syncRepo)
     }
 
-    // TODO: testGetBooks_singleFileInNestedSubfolderWhenEnabled()
+    @Test
+    override fun testGetBooks_singleFileInNestedSubfolderWhenEnabled() {
+        SyncRepoTest.testGetBooks_singleFileInNestedSubfolderWhenEnabled(repoDirectory, syncRepo)
+    }
 
     @Test
     override fun testGetBooks_singleFileInSubfolderWhenDisabled() {

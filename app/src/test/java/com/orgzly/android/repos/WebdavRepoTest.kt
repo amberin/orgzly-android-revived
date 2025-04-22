@@ -62,6 +62,11 @@ class WebdavRepoTest : SyncRepoTest {
     }
 
     @Test
+    override fun testGetBooks_singleFileInNestedSubfolderWhenEnabled() {
+        SyncRepoTest.testGetBooks_singleFileInNestedSubfolderWhenEnabled(serverRootDir, syncRepo)
+    }
+
+    @Test
     override fun testGetBooks_singleFileInSubfolderWhenDisabled() {
         SyncRepoTest.testGetBooks_singleFileInSubfolderWhenDisabled(serverRootDir, syncRepo)
     }

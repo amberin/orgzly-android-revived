@@ -70,7 +70,6 @@ public class DropboxRepo implements SyncRepo {
         Context context = App.getAppContext();
         if (newName.contains("/") && !AppPreferences.subfolderSupport(context))
             throw new IOException(context.getString(R.string.subfolder_support_disabled));
-        BookName oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(repoUri, oldFullUri));
         String newRelativePath = BookName.repoRelativePathFromName(newName);
         return client.move(repoUri, oldFullUri, newRelativePath);
     }

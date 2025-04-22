@@ -221,7 +221,7 @@ public class DropboxClient {
     }
 
     private Uri getFullUriFromRelativePath(Uri repoUri, String repoRelativePath) {
-        return repoUri.buildUpon().path(repoRelativePath).build();
+        return repoUri.buildUpon().appendEncodedPath(Uri.encode(repoRelativePath, "/")).build();
     }
 
     /**
@@ -343,7 +343,7 @@ public class DropboxClient {
     public VersionedRook move(Uri repoUri, Uri from, String newRelativePath) throws IOException {
         linkedOrThrow();
 
-        Uri newUri = repoUri.buildUpon().path(newRelativePath).build();
+        Uri newUri = repoUri.buildUpon().appendEncodedPath(Uri.encode(newRelativePath, "/")).build();
 
         /* Abort if destination file already exists. */
         try {

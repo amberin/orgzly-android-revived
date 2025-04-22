@@ -59,6 +59,11 @@ class DropboxRepoTest : SyncRepoTest {
     }
 
     @Test
+    override fun testGetBooks_singleFileInNestedSubfolderWhenEnabled() {
+        SyncRepoTest.testGetBooks_singleFileInNestedSubfolderWhenEnabled(client, syncRepo)
+    }
+
+    @Test
     override fun testGetBooks_singleFileInSubfolderWhenDisabled() {
         SyncRepoTest.testGetBooks_singleFileInSubfolderWhenDisabled(client, syncRepo)
     }
