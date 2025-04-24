@@ -341,14 +341,21 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
         - ONLY_BOOK_WITHOUT_LINK_AND_MULTIPLE_REPOS
 
         test cases:
+        - new book added on remote
+        - book deleted on remote -> unlinked, error status, must not be silently re-synced
         - trying to save a book to the repo resulting in a file name collision (respecting ignore
          rules)
         - trying to load a file from the repo resulting in a book name collision
+        - new file added on remote which should not be loaded (wrong format)
+        - new file added on remote which should not be loaded (explicitly ignored)
+        - new file added on remote which should not be loaded (hidden?)
+        - a ignored/hidden/non-org file is modified in the repo
+        - a ignored/hidden/non-org file is deleted from the repo
         - "sync modification time" must update properly
-        - remotely deleted book must not be re-synced to the repo
-        - ability to recover when there are no remote changes ("always" try to rebase or
-        verify that we are synced with remote)
-        - failed push or fetch must result in nice snackbars
+        - ability to recover from weird state without any remote changes (always verify that we
+        are synced with latest known remote head, otherwise rebase)
+        - failed push or fetch must result in nice snackbars and good state
+        - a file is moved in the repo -> new note appearing, old note gets unlinked and error status
 
         */
 
@@ -455,7 +462,8 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                     dataRepository.removeBookSyncedTo(book.getId());
                 } else {
                     if (namesake.getStatus() != BookSyncStatus.BOOK_WITH_PREVIOUS_ERROR_AND_NO_LINK)
-                        throw new RuntimeException("Something is wrong");
+                        throw new RuntimeException("Error: The book " + book.getName() + " has no" +
+                                " linked remote book. This should not be possible.");
                 }
             }
             // Update link and status of all books
@@ -470,13 +478,16 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                 synchronizer.currentHead());
         for (DiffEntry changedFile : diffEntries) {
             // Update the status of all changed files - loading happens later.
-            String bookName = BookName.fromRepoRelativePath(changedFile.getOldPath()).getName();
-            if (!nameSakes.containsKey(bookName))
-                continue; // Unknown or ignored file; will get loaded later
-            BookNamesake namesake = nameSakes.get(bookName);
-            assert namesake != null;
+            String filePath;
+            String bookName;
             switch (changedFile.getChangeType()) {
                 case MODIFY: {
+                    filePath = changedFile.getNewPath();
+                    if (!BookName.isSupportedFormatFileName(filePath)) continue;
+                    bookName = BookName.fromRepoRelativePath(filePath).getName();
+                    BookNamesake namesake = nameSakes.get(bookName);
+                    if (namesake == null)
+                        continue; // Unknown or ignored file; will get loaded later
                     if (namesake.getStatus() == BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED) {
                         namesake.setStatus(BookSyncStatus.CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED);
                     } else {
@@ -489,13 +500,18 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
                     break;
                 }
                 case DELETE: {
+                    filePath = changedFile.getOldPath();
+                    if (!BookName.isSupportedFormatFileName(filePath)) continue;
+                    bookName = BookName.fromRepoRelativePath(filePath).getName();
+                    BookNamesake namesake = nameSakes.get(bookName);
+                    if (namesake == null) continue; // Unknown or ignored file
                     // This status is important to avoid re-syncing remotely deleted files.
                     namesake.setStatus(BookSyncStatus.ROOK_NO_LONGER_EXISTS);
                     break;
                 }
-                default:  // TODO: Handle RENAME, COPY
-                    throw new IOException("Unsupported remote change in Git repo (file renamed or" +
-                            " copied)");
+                default:  // TODO: RENAME, COPY? They don't seem to come into play for remote changes.
+                    throw new IOException(
+                            "Unsupported remote change in Git repo (file renamed or copied)");
             }
         }
     }
