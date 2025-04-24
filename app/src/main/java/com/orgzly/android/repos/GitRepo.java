@@ -204,9 +204,9 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
     }
 
     @Override
-    public VersionedRook retrieveBook(Uri uri, File destination) throws IOException {
-        synchronizer.retrieveLatestVersionOfFile(uri.getPath(), destination);
-        return currentVersionedRook(uri);
+    public VersionedRook retrieveBook(String repoRelativePath, File destination) throws IOException {
+        synchronizer.retrieveLatestVersionOfFile(repoRelativePath, destination);
+        return currentVersionedRook(Uri.parse("/" + repoRelativePath));
     }
 
     @Override
@@ -245,7 +245,10 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
             public boolean include(TreeWalk walker) {
                 final FileMode mode = walk.getFileMode();
                 final boolean isDirectory = mode == FileMode.TREE;
+                final String name = walk.getNameString();
                 final String repoRelativePath = walk.getPathString();
+                if (name.startsWith("."))
+                    return false;
                 if (ignores.isIgnored(repoRelativePath, isDirectory) == IgnoreNode.MatchResult.IGNORED)
                     return false;
                 if (isDirectory)
