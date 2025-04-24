@@ -89,7 +89,7 @@ class DataRepository @Inject constructor(
                     BookAction.Type.PROGRESS,
                     resources.getString(R.string.force_loading_from_uri, book.linkRepo.url)))
 
-            val loadedBook = loadBookFromRepo(book.linkRepo.id, book.linkRepo.type, book.linkRepo.url, BookName.repoRelativePathFromName(book.book.name))
+            val loadedBook = loadBookFromRepo(book.linkRepo.id, book.linkRepo.type, book.linkRepo.url, BookName.repoRelativePathFromRookOrName(book))
 
             setBookLastActionAndSyncStatus(loadedBook!!.book.id, BookAction.forNow(
                     BookAction.Type.INFO,
@@ -110,7 +110,7 @@ class DataRepository @Inject constructor(
         val book = getBookView(bookId)
                 ?: throw IOException(resources.getString(R.string.book_does_not_exist_anymore))
 
-        val repoRelativePath: String = BookName.repoRelativePathFromName(book.book.name)
+        val repoRelativePath = BookName.repoRelativePathFromRookOrName(book)
 
         try {
             /* Prefer link. */
@@ -442,11 +442,10 @@ class DataRepository @Inject constructor(
         val rookMtime = uploadedBook.mtime
 
         val rookUrlId = db.rookUrl().getOrInsert(rookUrl)
-        val rookId = db.rook().getOrInsert(repoId, rookUrlId)
+        val rookId = db.rook().getOrInsert(repoId, rookUrlId, uploadedBook.repoRelativePath)
 
         val versionedRookId = db.versionedRook().replace(
-                com.orgzly.android.db.entity.VersionedRook(
-                        0, rookId, rookRevision, rookMtime))
+                com.orgzly.android.db.entity.VersionedRook(0, rookId, rookRevision, rookMtime))
 
         db.bookLink().upsert(bookId, repoId)
         db.bookSync().upsert(bookId, versionedRookId)
@@ -1721,7 +1720,7 @@ class DataRepository @Inject constructor(
     fun loadBookFromRepo(rook: Rook): BookView? {
         if (rook.repoRelativePath != null)
             return loadBookFromRepo(rook.repoId, rook.repoType, rook.repoUri.toString(), rook.repoRelativePath!!)
-        return null
+        throw IOException("Failed to identify remote notebook's repository-relative path")
     }
 
     @Throws(IOException::class)

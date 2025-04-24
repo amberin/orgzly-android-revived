@@ -1,6 +1,10 @@
 package com.orgzly.android.db.entity
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
         tableName = "versioned_rooks",
@@ -10,7 +14,7 @@ import androidx.room.*
                     entity = Rook::class,
                     parentColumns = arrayOf("id"),
                     childColumns = arrayOf("rook_id"),
-                    onDelete = ForeignKey.CASCADE)
+                    onDelete = ForeignKey.CASCADE),
         ],
 
         indices = [

@@ -2,7 +2,7 @@ package com.orgzly.android.repos;
 
 import android.net.Uri;
 
-import javax.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 
 /**
@@ -20,10 +20,10 @@ public class Rook {
     protected RepoType repoType;
     protected Uri repoUri;
     protected Uri uri;
-    @Nullable // We have no need to store this value in DB, so let's make it optional
+    @Nullable
     protected String repoRelativePath;
 
-    public Rook(long repoId, RepoType repoType, Uri repoUri, Uri uri, @androidx.annotation.Nullable String repoRelativePath) {
+    public Rook(long repoId, RepoType repoType, Uri repoUri, Uri uri, @Nullable String repoRelativePath) {
         this.repoId = repoId;
         this.repoType = repoType;
         this.repoUri = repoUri;
@@ -47,7 +47,7 @@ public class Rook {
         return uri;
     }
 
-    @androidx.annotation.Nullable
+    @Nullable
     public String getRepoRelativePath() { return repoRelativePath; }
 
     public String toString() {

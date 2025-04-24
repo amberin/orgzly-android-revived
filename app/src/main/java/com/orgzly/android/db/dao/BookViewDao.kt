@@ -43,6 +43,7 @@ abstract class BookViewDao {
             synced_repos.type as synced_to_repoType,
             synced_repos.url as synced_to_repoUri,
             synced_rook_urls.url as synced_to_uri,
+            synced_rooks.repo_relative_path as synced_to_repoRelativePath,
             synced_versioned_rooks.rook_revision as synced_to_revision,
             synced_versioned_rooks.rook_mtime as synced_to_mtime
 

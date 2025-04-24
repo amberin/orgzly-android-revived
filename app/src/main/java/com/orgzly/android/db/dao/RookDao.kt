@@ -9,8 +9,15 @@ abstract class RookDao : BaseDao<Rook> {
     @Query("SELECT * FROM rooks WHERE repo_id = :repoId AND rook_url_id = :rookUrlId")
     abstract fun get(repoId: Long, rookUrlId: Long): Rook?
 
-    fun getOrInsert(repoId: Long, rookUrlId: Long): Long =
+    fun getOrInsert(repoId: Long, rookUrlId: Long, repoRelativePath: String?): Long =
             get(repoId, rookUrlId).let {
-                it?.id ?: insert(Rook(0, repoId, rookUrlId))
+                if (it != null) {
+                    if (it.repoRelativePath != null) return it.id
+                    // Add repoRelativePath attribute to existing entry when absent
+                    replace(Rook(it.id, repoId, rookUrlId, repoRelativePath))
+                    return it.id
+                }
+                // New entry
+                return insert(Rook(0, repoId, rookUrlId, repoRelativePath))
             }
 }

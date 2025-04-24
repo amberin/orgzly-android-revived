@@ -76,7 +76,7 @@ public class DataRepositoryTest extends OrgzlyTest {
 
         assertEquals("remote-book-1", book.getBook().getName());
         assertEquals("/remote-book-1.org", book.getSyncedTo().getUri().getPath());
-        assertEquals("remote-book-1", BookName.fromRook(book.getSyncedTo()).getName());
+        assertEquals("remote-book-1", BookName.fromRepoRelativePath(book.getSyncedTo().getRepoRelativePath()).getName());
         assertEquals("0abcdef", book.getSyncedTo().getRevision());
         assertEquals(1400067156000L, book.getSyncedTo().getMtime());
         assertEquals(repo.getUrl(), vrook.getRepoUri().toString());

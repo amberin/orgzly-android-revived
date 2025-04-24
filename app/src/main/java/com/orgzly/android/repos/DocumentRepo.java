@@ -273,7 +273,6 @@ public class DocumentRepo implements SyncRepo {
                         ""
                 )
         );
-        BookName oldBookName = BookName.fromRepoRelativePath(BookName.getRepoRelativePath(repoUri, oldFullUri));
         String newRelativePath = BookName.repoRelativePathFromName(newName);
         String newDocFileName = Objects.requireNonNull(Uri.parse(newRelativePath).getLastPathSegment());
         DocumentFile newDir;

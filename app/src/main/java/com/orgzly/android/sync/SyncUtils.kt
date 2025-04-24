@@ -1,6 +1,5 @@
 package com.orgzly.android.sync
 
-import androidx.core.net.toUri
 import com.orgzly.BuildConfig
 import com.orgzly.android.BookFormat
 import com.orgzly.android.BookName
@@ -165,7 +164,7 @@ object SyncUtils {
             BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED -> {
                 repoEntity = namesake.book.linkRepo
                 repoUrl = repoEntity!!.url
-                repositoryPath = BookName.getRepoRelativePath(repoUrl.toUri(), namesake.book.syncedTo!!.uri)
+                repositoryPath = BookName.repoRelativePathFromRookOrName(namesake.book)
                 dataRepository.saveBookToRepo(repoEntity, repositoryPath, namesake.book, BookFormat.ORG)
                 bookAction = BookAction.forNow(BookAction.Type.INFO, namesake.status.msg(repoUrl))
             }
@@ -173,7 +172,7 @@ object SyncUtils {
             BookSyncStatus.ONLY_BOOK_WITH_LINK -> {
                 repoEntity = namesake.book.linkRepo
                 repoUrl = repoEntity!!.url
-                repositoryPath = BookName.repoRelativePathFromName(namesake.book.book.name)
+                repositoryPath = BookName.repoRelativePathFromName(namesake.book.book.name) // Not yet synced - we must specify the repo path
                 dataRepository.saveBookToRepo(repoEntity, repositoryPath, namesake.book, BookFormat.ORG)
                 bookAction = BookAction.forNow(BookAction.Type.INFO, namesake.status.msg(repoUrl))
             }
@@ -190,7 +189,7 @@ object SyncUtils {
         var noNewMergeConflicts = true
         // If there are only local changes, the GitRepo.syncBook method is overly complicated.
         if (namesake.status == BookSyncStatus.BOOK_WITH_LINK_LOCAL_MODIFIED) {
-            val repoRelativePath = BookName.getRepoRelativePath(repo.getUri(), namesake.book.syncedTo!!.uri)
+            val repoRelativePath = BookName.repoRelativePathFromRookOrName(namesake.book)
             dataRepository.saveBookToRepo(namesake.book.linkRepo!!, repoRelativePath, namesake.book, BookFormat.ORG)
         } else {
             val dbFile = dataRepository.getTempBookFile()
@@ -202,8 +201,7 @@ object SyncUtils {
                 newRook = newRook1
                 // We only need to write it if syncback is needed
                 if (loadFile != null) {
-                    val repoRelativePath = BookName.getRepoRelativePath(repo.getUri(), newRook.uri)
-                    val bookName = BookName.fromRepoRelativePath(repoRelativePath)
+                    val bookName = BookName.fromRepoRelativePath(newRook.repoRelativePath)
                     if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Loading from file '$loadFile'")
                     dataRepository.loadBookFromFile(
                         bookName.name,

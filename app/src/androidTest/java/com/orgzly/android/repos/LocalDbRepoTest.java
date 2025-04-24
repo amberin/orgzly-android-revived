@@ -37,7 +37,7 @@ public class LocalDbRepoTest extends OrgzlyTest {
 
         VersionedRook vrook = books.get(0);
 
-        assertEquals("mock-book", BookName.fromRook(vrook).getName());
+        assertEquals("mock-book", BookName.fromRepoRelativePath(vrook.getRepoRelativePath()).getName());
         assertEquals("mock://repo-a", vrook.getRepoUri().toString());
         assertEquals("mock://repo-a/mock-book.org", vrook.getUri().toString());
         assertEquals("rev1", vrook.getRevision());
@@ -66,7 +66,7 @@ public class LocalDbRepoTest extends OrgzlyTest {
         assertEquals(1, books.size());
 
         VersionedRook vrook = books.get(0);
-        assertEquals("local-book-1", BookName.fromRook(vrook).getName());
+        assertEquals("local-book-1", BookName.fromRepoRelativePath(vrook.getRepoRelativePath()).getName());
         assertEquals("mock://repo-a", vrook.getRepoUri().toString());
         assertTrue(vrook.getMtime() >= now);
     }

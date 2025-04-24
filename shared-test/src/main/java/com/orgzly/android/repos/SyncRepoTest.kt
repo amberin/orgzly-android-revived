@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Build
 import androidx.documentfile.provider.DocumentFile
 import com.orgzly.android.App
-import com.orgzly.android.BookName
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.util.MiscUtils
 import org.eclipse.jgit.api.Git
@@ -65,7 +64,6 @@ interface SyncRepoTest {
             assertEquals(1, books.size)
             assertEquals(rookUri, books[0].uri)
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
-            assertEquals(fileName, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
             assertEquals(fileName, books[0].repoRelativePath)
             assertEquals(fileName, retrievedBook.repoRelativePath)
         }
@@ -85,7 +83,7 @@ interface SyncRepoTest {
             // Then
             assertEquals(1, books.size)
             assertEquals(rookUri, books[0].uri)
-            assertEquals(repoFilePath, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
+            assertEquals(repoFilePath, books[0].repoRelativePath)
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
         }
 
@@ -105,7 +103,6 @@ interface SyncRepoTest {
             assertEquals(1, books.size)
             assertEquals(rookUri, books[0].uri)
             assertEquals(repoFilePath, books[0].repoRelativePath)
-            assertEquals(repoFilePath, BookName.getRepoRelativePath(syncRepo.uri, books[0].uri))
             assertEquals(fileContent, retrieveBookDestinationFile.readText())
         }
 
@@ -169,7 +166,7 @@ interface SyncRepoTest {
             val books = syncRepo.books
             // Then
             assertEquals(1, books.size.toLong())
-            assertEquals("file three", BookName.fromRepoRelativePath(BookName.getRepoRelativePath(syncRepo.uri, books[0].uri)).name)
+            assertEquals("file three.org", books[0].repoRelativePath)
         }
 
         fun testStoreBook_expectedUri(syncRepo: SyncRepo) {

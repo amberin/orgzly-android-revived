@@ -36,16 +36,6 @@ public class BookName {
         mFormat = format;
     }
 
-    public static String getRepoRelativePath(BookView bookView) throws IOException {
-        if (bookView.getSyncedTo() != null) {
-            VersionedRook vrook = bookView.getSyncedTo();
-            return getRepoRelativePath(vrook.getRepoUri(), vrook.getUri());
-        } else {
-            // There is no remote book; we can only guess the repo path from the book's name.
-            return repoRelativePathFromName(bookView.getBook().getName());
-        }
-    }
-
     /**
      * Used when creating a Book from an imported file.
      * @param context Used for getting a DocumentFile, if possible
@@ -95,7 +85,7 @@ public class BookName {
         return null;
     }
 
-    public static String getRepoRelativePath(Uri repoUri, Uri fileUri) throws IOException {
+    private static String getRepoRelativePathFromFileUri(Uri repoUri, Uri fileUri) throws IOException {
         /* The content:// repository type requires special handling */
         if ("content".equals(repoUri.getScheme())) {
             Context context = App.getAppContext();
@@ -124,8 +114,22 @@ public class BookName {
         }
     }
 
-    public static BookName fromRook(Rook rook) throws IOException {
-        return fromRepoRelativePath(getRepoRelativePath(rook.getRepoUri(), rook.getUri()));
+    public static String repoRelativePathFromRookOrName(BookView bookView) throws IOException {
+        VersionedRook syncedTo = bookView.getSyncedTo();
+        if (syncedTo != null) {
+            // Use the stored Rook property, if it has a value
+            if (syncedTo.getRepoRelativePath() != null) {
+                return syncedTo.getRepoRelativePath();
+            } else {
+                // No rook property stored - examine the repository to figure out the file's relative path.
+                // This should only be needed when updating to v1.12 from an earlier version, so that
+                // the column has no value.
+                return getRepoRelativePathFromFileUri(syncedTo.getRepoUri(), syncedTo.getUri());
+            }
+        } else {
+            // No remote book information - we must guess the repository path from the book's name
+            return repoRelativePathFromName(bookView.getBook().getName());
+        }
     }
 
     public static boolean isSupportedFormatFileName(String path) {
@@ -145,16 +149,14 @@ public class BookName {
     }
 
     public static BookName fromRepoRelativePath(String repoRelativePath) {
-        if (repoRelativePath != null) {
-            Matcher m = PATTERN.matcher(repoRelativePath);
+        Matcher m = PATTERN.matcher(repoRelativePath);
 
-            if (m.find()) {
-                String name = m.group(1);
-                String extension = m.group(2);
+        if (m.find()) {
+            String name = m.group(1);
+            String extension = m.group(2);
 
-                if (extension != null && extension.equals("org")) {
-                    return new BookName(repoRelativePath, name, BookFormat.ORG);
-                }
+            if (extension != null && extension.equals("org")) {
+                return new BookName(repoRelativePath, name, BookFormat.ORG);
             }
         }
 

@@ -62,8 +62,8 @@ public class DirectoryRepoTest extends OrgzlyTest {
         List<VersionedRook> books = repo.getBooks();
 
         assertEquals(1, books.size());
-        assertEquals("booky", BookName.fromRook(books.get(0)).getName());
-        assertEquals("booky.org", BookName.fromRook(books.get(0)).getRepoRelativePath());
+        assertEquals("booky", BookName.fromRepoRelativePath(books.get(0).getRepoRelativePath()).getName());
+        assertEquals("booky.org", books.get(0).getRepoRelativePath());
         assertEquals(repoUriString, books.get(0).getRepoUri().toString());
         assertEquals(repoUriString + "/booky.org", books.get(0).getUri().toString());
     }
@@ -79,8 +79,8 @@ public class DirectoryRepoTest extends OrgzlyTest {
         List<VersionedRook> books = repo.getBooks();
 
         assertEquals(1, books.size());
-        assertEquals("03", BookName.fromRook(books.get(0)).getName());
-        assertEquals("03.org", BookName.fromRook(books.get(0)).getRepoRelativePath());
+        assertEquals("03", BookName.fromRepoRelativePath(books.get(0).getRepoRelativePath()).getName());
+        assertEquals("03.org", books.get(0).getRepoRelativePath());
         assertEquals(13, books.get(0).getRepoId());
         assertEquals(repoUriString, books.get(0).getRepoUri().toString());
         assertEquals(repoUriString + "/03.org", books.get(0).getUri().toString());
@@ -103,7 +103,7 @@ public class DirectoryRepoTest extends OrgzlyTest {
         List<VersionedRook> books = repo.getBooks();
 
         assertEquals(1, books.size());
-        assertEquals("file2", BookName.fromRook(books.get(0)).getName());
+        assertEquals("file2", BookName.fromRepoRelativePath(books.get(0).getRepoRelativePath()).getName());
         assertEquals(repoUriString + "/file2.org", books.get(0).getUri().toString());
     }
 

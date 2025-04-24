@@ -1,6 +1,10 @@
 package com.orgzly.android.db.entity
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
         tableName = "rooks",
@@ -19,8 +23,8 @@ import androidx.room.*
         ],
 
         indices = [
-            Index("repo_id", "rook_url_id", unique = true),
-            Index("rook_url_id")
+            Index("repo_id", "rook_url_id", "repo_relative_path", unique = true),
+            Index("rook_url_id"),
         ]
 )
 data class Rook(
@@ -31,5 +35,8 @@ data class Rook(
         val repoId: Long,
 
         @ColumnInfo(name = "rook_url_id")
-        val rookUrlId: Long
+        val rookUrlId: Long,
+
+        @ColumnInfo(name = "repo_relative_path")
+        val repoRelativePath: String?
 )
