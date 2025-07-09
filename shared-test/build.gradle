@@ -35,21 +35,23 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = 11
+        jvmTarget = 17
     }
 
     packagingOptions {
-        resources.merges.add("plugin.properties")
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'plugin.properties', 'OSGI-INF/l10n/plugin.properties']
+        }
     }
 }
 
 dependencies {
     implementation project(path: ':app')
     implementation "junit:junit:$versions.junit"
-    implementation 'androidx.documentfile:documentfile:1.1.0'
-    implementation "org.eclipse.jgit:org.eclipse.jgit:$versions.jgit"
+    implementation "androidx.documentfile:documentfile:$versions.android_documentfile"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:$versions.jgit"
 }

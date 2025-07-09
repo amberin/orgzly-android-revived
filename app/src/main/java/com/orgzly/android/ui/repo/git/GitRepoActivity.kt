@@ -524,17 +524,15 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
             publishProgress(CloneProgressUpdate(totalTasks, true))
         }
 
-        override fun beginTask(title: String, totalWork: Int) {
-
-        }
+        override fun beginTask(title: String, totalWork: Int) {}
 
         override fun update(completed: Int) {
             publishProgress(CloneProgressUpdate(completed, false))
         }
 
-        override fun endTask() {
+        override fun endTask() {}
 
-        }
+        override fun showDuration(p0: Boolean) {}
     }
 
     companion object {
