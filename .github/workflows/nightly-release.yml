@@ -130,3 +130,4 @@ jobs:
             **/*.aab
           make_latest: false
           tag_name: ${{ needs.AddTag.outputs.version }}
+          generate_release_notes: true
