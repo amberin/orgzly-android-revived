@@ -12,7 +12,7 @@ permissions:
 
 jobs:
 
-  AddNightlyTag:
+  AddTag:
     outputs:
       created: ${{ steps.daily-version.outputs.created }}
       version: ${{ steps.daily-version.outputs.version }}
@@ -21,21 +21,23 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-tags: true
-      - uses: fregante/daily-version-action@v1
+      - uses: fregante/daily-version-action@v2
         name: Create tag if necessary
         id: daily-version
+        with:
+          prefix: 'nightly-'
 
   BuildAndRelease:
-    needs: AddNightlyTag
-    if: github.event_name == 'workflow_dispatch' || needs.AddNightlyTag.outputs.created
+    needs: AddTag
+    if: github.event_name == 'workflow_dispatch' || needs.AddTag.outputs.created
     runs-on: ubuntu-latest
     steps:
 
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get version name from git tag
-        run: echo "VERSION=${{ needs.AddNightlyTag.outputs.version }}" >> $GITHUB_ENV
+      - name: Get version name
+        run: echo "VERSION=${{ needs.AddTag.outputs.version }}" >> $GITHUB_ENV
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -122,11 +124,10 @@ jobs:
       - name: Rename "premium" AAB file
         run: mv ${{steps.sign_premium_aab.outputs.signedReleaseFile}} orgzly-revived-${{ env.VERSION }}.aab
 
-      - name: Upload artifacts and create Github pre-release draft
+      - name: Upload artifacts and create Github release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             *.apk
             *.aab
-          prerelease: true
-          draft: true
+          latest: false
