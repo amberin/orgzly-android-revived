@@ -34,7 +34,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get version name
+      - name: Store version/tag name in shell env variable
         run: echo "VERSION=${{ needs.AddTag.outputs.version }}" >> $GITHUB_ENV
 
       - name: Setup Java
@@ -129,3 +129,4 @@ jobs:
             **/*.apk
             **/*.aab
           make_latest: false
+          tag_name: ${{ needs.AddTag.outputs.version }}
