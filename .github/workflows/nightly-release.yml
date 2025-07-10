@@ -23,7 +23,7 @@ jobs:
         name: Tag commit unless already tagged
         id: daily-version
         with:
-          prefix: 'nightly-'
+          prefix: 'nightly-unstable-'
 
   BuildAndRelease:
     needs: AddTag
