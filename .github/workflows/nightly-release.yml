@@ -4,7 +4,7 @@ name: Build and publish "nightly" release artifacts
  
 on:
   schedule:
-    - cron: 17 03 * * *
+    - cron: 05 * * * *
   workflow_dispatch:
 
 permissions:
@@ -18,11 +18,9 @@ jobs:
       version: ${{ steps.daily-version.outputs.version }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-tags: true
+      - uses: actions/checkout@v4
       - uses: fregante/daily-version-action@v2
-        name: Create tag if necessary
+        name: Create nightly build tag
         id: daily-version
         with:
           prefix: 'nightly-'
