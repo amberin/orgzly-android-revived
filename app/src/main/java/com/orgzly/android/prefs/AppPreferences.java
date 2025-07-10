@@ -526,6 +526,16 @@ public class AppPreferences {
     }
 
     /*
+     * Orgzlyignore file
+     */
+
+    public static String orgzlyignoreFile(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_orgzlyignore_file),
+                context.getResources().getString(R.string.pref_default_orgzlyignore_file));
+    }
+
+    /*
      * Click action.
      */
 
@@ -852,6 +862,16 @@ public class AppPreferences {
     public static void isNoteContentFolded(Context context, boolean value) {
         String key = context.getResources().getString(R.string.pref_key_is_note_content_folded);
         getStateSharedPreferences(context).edit().putBoolean(key, value).apply();
+    }
+
+    /*
+     * Folding in search
+     */
+
+    public static boolean isSearchFoldable(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_is_search_foldable),
+                context.getResources().getBoolean(R.bool.pref_default_is_search_foldable));
     }
 
     /*

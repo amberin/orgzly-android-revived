@@ -49,6 +49,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
+enum class ScrollDirection {
+    UP,
+    DOWN,
+}
 
 /**
  * Displays all notes from the notebook.
@@ -73,6 +77,8 @@ class BookFragment :
     private lateinit var viewModel: BookViewModel
 
     private var hideButtonJob: Job? = null
+
+    private var jumpButtonDirection = ScrollDirection.DOWN
 
     override fun getAdapter(): BookAdapter? {
         return if (::viewAdapter.isInitialized) viewAdapter else null
@@ -178,14 +184,6 @@ class BookFragment :
         }
 
         binding.swipeContainer.setup()
-    
-        // Fix the conflict between scroll and pull-to-refresh
-        // The problem is that RecylerView is not a direct child of SwipeRefreshLayout. 
-        // See https://stackoverflow.com/questions/55616525/i-cant-scroll-up-because-of-swipe-refresh-layout
-        binding.swipeContainer.setOnChildScrollUpCallback { parent, child ->
-            // Only allow pull-to-refresh if the recyclerView can't no longer scroll. 
-            binding.fragmentBookRecyclerView.canScrollVertically(-1)
-        }
 
         viewModel.flipperDisplayedChild.observe(viewLifecycleOwner, Observer { child ->
             if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, "Observed flipper displayed child: $child")
@@ -806,8 +804,17 @@ class BookFragment :
         binding.jumpToEndFab.run {
             setOnClickListener {
                 val adapter = binding.fragmentBookRecyclerView.adapter
-                val targetPosition = adapter?.itemCount?.minus(1) ?: 0
-                if (targetPosition <= 0) return@setOnClickListener // Nothing to scroll to
+                val targetPosition: Int? =
+                    when (jumpButtonDirection) {
+                        ScrollDirection.UP -> 0
+                        ScrollDirection.DOWN -> adapter?.itemCount?.minus(1)?.let {
+                            if (it <= 0)
+                                null
+                            else
+                                it
+                        }
+                    }
+                if (targetPosition == null) return@setOnClickListener // Nothing to scroll to
 
                 val layoutManager = binding.fragmentBookRecyclerView.layoutManager as? LinearLayoutManager
                 if (layoutManager == null) {
@@ -859,6 +866,14 @@ class BookFragment :
                     abs(dy) > SCROLL_SPEED_THRESHOLD -> {
                         binding.jumpToEndFab.show()
                         scheduleButtonHide()
+
+                        if (dy > 0) {
+                            jumpButtonDirection = ScrollDirection.DOWN
+                            binding.jumpToEndFab.setRotation(0f)
+                        } else {
+                            jumpButtonDirection = ScrollDirection.UP
+                            binding.jumpToEndFab.setRotation(180f)
+                        }
                     }
                 }
             }

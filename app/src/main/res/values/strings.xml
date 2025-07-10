@@ -277,8 +277,10 @@
 
     <string name="scheduled_new_notes_for_today">Schedule new notes for today</string>
     <string name="fold_content">Fold content</string>
+    <string name="fold_search">Fold in search</string>
     <string name="allow_folding_of_content">Allow folding of content</string>
     <string name="display_content_in_search">Display content in search</string>
+    <string name="allow_folding_in_search">Allow folding in search</string>
     <string name="display_content_in_search_results">Display content in search results</string>
     <string name="display_content">Display content</string>
     <string name="display_both_title_and_content">Display both title and content</string>
@@ -733,5 +735,11 @@
     <string name="note_does_not_contain_valid_json">Note does not contain valid JSON.</string>
     <string name="imported_json_is_missing_mandatory_fields">Imported JSON is missing mandatory fields.</string>
     <string name="note_has_no_content">Note has no content.</string>
+
     <string name="merge_conflict_pushed_to">Merge conflict; force-pushed to remote branch “%1$s”.</string>
+
+
+    <string name="orgzlyignore_file">Ignore pattern filename</string>
+    <string name="orgzlyignore_file_desc">The path of the file containing the ignore patterns relative to the repository root.</string>
+
 </resources>
