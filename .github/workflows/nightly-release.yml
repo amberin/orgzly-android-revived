@@ -56,7 +56,7 @@ jobs:
       # F-Droid APK
 
       - name: Assemble F-Droid APK
-        run: ./gradlew assembleFdroidRelease --stacktrace
+        run: ./gradlew app:assembleFdroidRelease --stacktrace
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
