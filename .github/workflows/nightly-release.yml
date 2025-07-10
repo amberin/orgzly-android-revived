@@ -4,7 +4,7 @@ name: Build and publish "nightly" release artifacts
  
 on:
   schedule:
-    - cron: '15 * * * *'
+    - cron: '41 03 * * *'
   workflow_dispatch:
 
 permissions:
