@@ -56,7 +56,7 @@ jobs:
       # F-Droid APK
 
       - name: Assemble F-Droid APK
-        run: ./gradlew app:assembleFdroidRelease --stacktrace
+        run: ./gradlew :app:assembleFdroidRelease --stacktrace
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -83,7 +83,7 @@ jobs:
           echo "dropbox.app_key_schema = \"db-${{ secrets.DROPBOX_APP_KEY }}\"" >> app.properties
 
       - name: Assemble "premium" APK
-        run: ./gradlew assemblePremiumRelease --stacktrace
+        run: ./gradlew :app:assemblePremiumRelease --stacktrace
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -104,7 +104,7 @@ jobs:
       # "Premium" AAB
 
       - name: Assemble "premium" AAB
-        run: ./gradlew bundlePremiumRelease --stacktrace
+        run: ./gradlew :app:bundlePremiumRelease --stacktrace
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
