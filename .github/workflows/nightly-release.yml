@@ -122,11 +122,10 @@ jobs:
       - name: Rename "premium" AAB file
         run: mv ${{steps.sign_premium_aab.outputs.signedReleaseFile}} orgzly-revived-${{ env.VERSION }}.aab
 
-      - name: Upload artifacts and create Github pre-release draft
+      - name: Upload artifacts and create Github release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             *.apk
             *.aab
-          prerelease: true
-          draft: true
+          latest: false
