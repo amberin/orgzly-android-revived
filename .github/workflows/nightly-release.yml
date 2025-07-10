@@ -4,7 +4,7 @@ name: Build and publish "nightly" release artifacts
  
 on:
   schedule:
-    - cron: '13 * * * *'
+    - cron: '15 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: fregante/daily-version-action@v2
-        name: Create nightly build tag
+        name: Tag commit unless already tagged
         id: daily-version
         with:
           prefix: 'nightly-'
@@ -128,4 +128,4 @@ jobs:
           files: |
             **/*.apk
             **/*.aab
-          latest: false
+          make_latest: false
