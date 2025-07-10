@@ -11,9 +11,5 @@ public interface GitPreferences {
 
     String repositoryFilepath();
 
-    String remoteName();
-
-    String branchName();
-
     Uri remoteUri();
 }

@@ -33,32 +33,35 @@ public class BookNamesake {
     }
 
     /**
-     * Create links between each local book and each remote book with the same name.
+     * Create links between remote books and any local books with the same name.
+     *
+     * This method is intended to be used with a limited set of both local books and VersionedRooks,
+     * to allow syncing repos separately.
      */
     public static Map<String, BookNamesake> getAll(List<BookView> books, List<VersionedRook> versionedRooks) {
         Map<String, BookNamesake> namesakes = new HashMap<>();
 
-        /* Create links from all local books first. */
-        for (BookView book: books) {
-            BookNamesake pair = new BookNamesake(book.getBook().getName());
-            namesakes.put(book.getBook().getName(), pair);
-            pair.setBook(book);
-        }
-
-        /* Set repo books. */
+        /* Add all provided remote books. */
         for (VersionedRook book: versionedRooks) {
             String repoRelativePath = BookName.getRepoRelativePath(book.getRepoUri(), book.getUri());
             String name = BookName.fromRepoRelativePath(repoRelativePath).getName();
 
-            BookNamesake pair = namesakes.get(name);
-            if (pair == null) {
-                /* Local file doesn't exists, create new pair. */
-                pair = new BookNamesake(name);
-                namesakes.put(name, pair);
-            }
+            BookNamesake namesake = new BookNamesake(name);
+            namesake.addRook(book);
+            namesakes.put(name, namesake);
+        }
 
-            /* Add remote book. */
-            pair.addRook(book);
+        /* Add any existing local books. */
+        for (BookView book: books) {
+            String name = book.getBook().getName();
+            BookNamesake namesake = namesakes.get(name);
+            if (namesake == null) {
+                /* This local book does not have a namesake among the VersionedRooks. Create a
+                dummy namesake. */
+                namesake = new BookNamesake(name);
+                namesakes.put(name, namesake);
+            }
+            namesake.setBook(book);
         }
 
         return namesakes;
@@ -244,5 +247,13 @@ public class BookNamesake {
         }
 
         return null;
+    }
+
+    /** Intended for use with IntegrallySyncedRepos
+     *
+     * @param newStatus The new status to set
+     */
+    public void setStatus(BookSyncStatus newStatus) {
+        status = newStatus;
     }
 }

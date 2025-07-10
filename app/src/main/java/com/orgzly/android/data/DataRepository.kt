@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.text.TextUtils
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
@@ -228,17 +229,17 @@ class DataRepository @Inject constructor(
             else -> db.bookView().getAllFOrderByName()
         }
     }
-
+    
     fun getBooksWithError(): List<Book> {
         return db.book().getWithActionType(BookAction.Type.ERROR)
     }
 
-    fun getBookView(name: String): BookView? {
-        return db.bookView().get(name)
-    }
-
     fun getBookView(id: Long): BookView? {
         return db.bookView().get(id)
+    }
+
+    fun getBookView(name: String): BookView? {
+        return db.bookView().get(name)
     }
 
     private fun doesBookExist(name: String): Boolean {
@@ -305,7 +306,7 @@ class DataRepository @Inject constructor(
      * @param dummy If true, creates a new dummy book - temporary incomplete book
      */
     @JvmOverloads
-    @Throws(IOException::class)
+    @Throws(Exception::class)
     fun createBook(name: String, dummy: Boolean = false): BookView {
         if (doesBookExist(name)) {
             throw IOException(resources.getString(R.string.book_name_already_exists, name))
@@ -360,7 +361,7 @@ class DataRepository @Inject constructor(
         }
     }
 
-    @Throws(IOException::class)
+    @Throws(Exception::class)
     private fun doRenameBook(bookView: BookView, name: String) {
         val book = bookView.book
 
@@ -454,7 +455,8 @@ class DataRepository @Inject constructor(
         db.bookSync().delete(bookId)
     }
 
-    private fun updateBookIsModified(bookId: Long, isModified: Boolean, time: Long = System.currentTimeMillis()) {
+    @JvmOverloads
+    fun updateBookIsModified(bookId: Long, isModified: Boolean, time: Long = System.currentTimeMillis()) {
         updateBookIsModified(setOf(bookId), isModified, time)
     }
 
@@ -2517,7 +2519,40 @@ class DataRepository @Inject constructor(
         val list = ArrayList<SyncRepo>()
         for ((id, type, url) in getRepos()) {
             try {
-                list.add(getRepoInstance(id, type, url))
+                val repo = getRepoInstance(id, type, url)
+                list.add(repo)
+            } catch (e: Exception) {
+                Log.e(TAG, e.toString())
+                throw RuntimeException(e)
+            }
+        }
+        return list
+    }
+
+    fun getRegularSyncRepos(): List<SyncRepo> {
+        val list = ArrayList<SyncRepo>()
+        for ((id, type, url) in getRepos()) {
+            try {
+                val repo = getRepoInstance(id, type, url)
+                if (repo !is IntegrallySyncedRepo) {
+                    list.add(repo)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+        return list
+    }
+
+    fun getIntegrallySyncedRepos(): List<IntegrallySyncedRepo> {
+        val list = ArrayList<IntegrallySyncedRepo>()
+        for ((id, type, url) in getRepos()) {
+            try {
+                val repo = getRepoInstance(id, type, url)
+                if (repo is IntegrallySyncedRepo) {
+                    list.add(repo)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

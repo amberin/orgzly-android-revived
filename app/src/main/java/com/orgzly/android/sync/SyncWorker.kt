@@ -14,10 +14,8 @@ import com.orgzly.android.db.entity.BookAction
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.reminders.RemindersScheduler
 import com.orgzly.android.repos.DirectoryRepo
-import com.orgzly.android.repos.RepoType
 import com.orgzly.android.repos.RepoUtils
 import com.orgzly.android.repos.SyncRepo
-import com.orgzly.android.repos.TwoWaySyncRepo
 import com.orgzly.android.ui.notifications.SyncNotifications
 import com.orgzly.android.ui.util.haveNetworkConnection
 import com.orgzly.android.util.AppPermissions
@@ -88,6 +86,7 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
     }
 
     private suspend fun tryDoWork(): SyncState {
+
         SyncNotifications.cancelSyncFailedNotification(context)
         SyncNotifications.showSyncInProgressNotification(context)
 
@@ -97,7 +96,9 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
 
         val syncStartTime = System.currentTimeMillis()
 
-        syncRepos()?.let { return it }
+        syncRegularRepos()?.let { return it }
+
+        syncIntegrallySyncedRepos()?.let { return it }
 
         RemindersScheduler.notifyDataSetChanged(App.getAppContext())
         ListWidgetProvider.notifyDataSetChanged(App.getAppContext())
@@ -171,17 +172,22 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
         return null
     }
 
-    private suspend fun syncRepos(): SyncState? {
+    private suspend fun syncRegularRepos(): SyncState? {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG)
+
+        /* Exit if there are no regular sync repos configured. */
+        if (dataRepository.getRegularSyncRepos().isEmpty()) {
+            return null
+        }
 
         sendProgress(SyncState.getInstance(SyncState.Type.COLLECTING_BOOKS))
 
-        /* Get the list of local and remote books from all repositories.
+        /* Get the list of local and remote books from all REGULAR repositories.
          * Group them by name.
          * Inserts dummy books if they don't exist in database.
          */
         val namesakes = withContext(Dispatchers.IO) {
-            SyncUtils.groupAllNotebooksByName(dataRepository)
+            SyncUtils.groupNotebooksByName(dataRepository)
         }
 
         if (isStopped) {
@@ -189,7 +195,7 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
         }
 
         if (namesakes.isEmpty()) {
-            return SyncState.getInstance(SyncState.Type.FAILED_NO_BOOKS_FOUND)
+            return null
         }
 
         sendProgress(SyncState.getInstance(SyncState.Type.BOOKS_COLLECTED, total = namesakes.size))
@@ -203,29 +209,10 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
         //                SystemClock.sleep(1000 - nowMsPart);
         //            }
 
-        /* If there are namesakes in Git repos with conflict status, make
-         * sure to sync them first, so that any conflict branches are
-         * created as early as possible. Otherwise, we risk committing
-         * changes on master which we cannot see on the conflict branch.
-         */
-        val orderedNamesakes = LinkedHashMap<String, BookNamesake>()
-        val lowPriorityNamesakes = LinkedHashMap<String, BookNamesake>()
-        for (namesake in namesakes.values) {
-            if (namesake.rooks.isNotEmpty() &&
-                namesake.rooks[0].repoType == RepoType.GIT &&
-                namesake.status == BookSyncStatus.CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED
-            ) {
-                orderedNamesakes[namesake.name] = namesake
-            } else {
-                lowPriorityNamesakes[namesake.name] = namesake
-            }
-        }
-        orderedNamesakes.putAll(lowPriorityNamesakes)
-
         /*
          * Update books' statuses, before starting to sync them.
          */
-        for (namesake in orderedNamesakes.values) {
+        for (namesake in namesakes.values) {
             dataRepository.setBookLastActionAndSyncStatus(namesake.book.book.id, BookAction.forNow(
                 BookAction.Type.PROGRESS, context.getString(R.string.syncing_in_progress)))
         }
@@ -233,7 +220,7 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
         /*
          * Start syncing name by name.
          */
-        for ((curr, namesake) in orderedNamesakes.values.withIndex()) {
+        for ((curr, namesake) in namesakes.values.withIndex()) {
             /* If task has been canceled, just mark the remaining books as such. */
             if (isStopped) {
                 dataRepository.setBookLastActionAndSyncStatus(
@@ -266,18 +253,20 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
             return SyncState.getInstance(SyncState.Type.CANCELED)
         }
 
-        val repos = dataRepository.getSyncRepos()
-
-        for (repo in repos) {
-            if (repo is TwoWaySyncRepo) {
-                repo.tryPushIfHeadDiffersFromRemote()
-            }
-        }
-
         return null
     }
 
-    // TODO: Remove or repo.requiresStoragePermission
+    private fun syncIntegrallySyncedRepos(): SyncState? {
+        for (repo in dataRepository.getIntegrallySyncedRepos()) {
+            val repoResult = repo.syncRepo(context, dataRepository)
+            if (repoResult != null) {
+                return repoResult
+            }
+        }
+        return null
+    }
+
+        // TODO: Remove or repo.requiresStoragePermission
     private fun reposRequireStoragePermission(repos: Collection<SyncRepo>): Boolean {
         for (repo in repos) {
             if (DirectoryRepo.SCHEME == repo.uri.scheme) {

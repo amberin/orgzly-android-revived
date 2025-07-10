@@ -62,7 +62,7 @@ public interface SyncRepo {
 
     // VersionedRook moveBook(Uri from, Uri uri) throws IOException;
 
-    void delete(Uri uri) throws IOException;
+    void delete(Uri uri) throws IOException, Exception;
 
     @NonNull
     String toString();

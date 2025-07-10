@@ -20,6 +20,7 @@ enum class BookSyncStatus {
     CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED,
     CONFLICT_BOOK_WITH_LINK_AND_ROOK_BUT_NEVER_SYNCED_BEFORE,
     CONFLICT_LAST_SYNCED_ROOK_AND_LATEST_ROOK_ARE_DIFFERENT,
+    CONFLICT_PUSHED_TO_CONFLICT_BRANCH,
 
     /* Book can be loaded. */
     NO_BOOK_ONE_ROOK, // TODO: Can this happen? We always load dummy.
@@ -69,6 +70,9 @@ enum class BookSyncStatus {
 
             CONFLICT_BOTH_BOOK_AND_ROOK_MODIFIED ->
                 return "Both local and remote notebook have been modified"
+
+            CONFLICT_PUSHED_TO_CONFLICT_BRANCH ->
+                return context.getString(R.string.merge_conflict_pushed_to, context.getString(R.string.git_conflict_branch_name_on_remote))
 
             CONFLICT_BOOK_WITH_LINK_AND_ROOK_BUT_NEVER_SYNCED_BEFORE ->
                 return "Link and remote notebook exist but notebook hasn't been synced before"
