@@ -4,7 +4,7 @@ name: Build and publish "nightly" release artifacts
  
 on:
   schedule:
-    - cron: '41 03 * * *'
+    - cron: '40 20 * * *'
   workflow_dispatch:
 
 permissions:
@@ -130,4 +130,5 @@ jobs:
             **/*.aab
           make_latest: 'false'
           tag_name: ${{ needs.AddTag.outputs.version }}
+          body: Install at your own risk! These unstable "nightly" builds are generated once a day from the current main branch.
           generate_release_notes: true
