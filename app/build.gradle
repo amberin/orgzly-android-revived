@@ -121,10 +121,6 @@ android {
 dependencies {
     implementation orgJavaLocation()
 
-    // Explicitly demand highest used SLF4J version to prevent dependency resolution errors
-    // implementation 'org.slf4j:slf4j-nop:2.0.0-alpha6'
-    implementation 'org.slf4j:slf4j-api:2.0.0-alpha6'
-
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.kotlin_coroutines"
 
     implementation "org.jetbrains:annotations:$versions.jetbrains_annotations"
@@ -161,7 +157,9 @@ dependencies {
     testImplementation(project(":shared-test"))
     testImplementation "androidx.test.ext:junit:$versions.android_test_ext_junit"
     testImplementation "org.robolectric:robolectric:$versions.robolectric"
-    testImplementation "io.github.atetzner:webdav-embedded-server:$versions.webdav_embedded_server"
+    testImplementation("io.github.atetzner:webdav-embedded-server:$versions.webdav_embedded_server") {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
 
     // Android instrumented tests
     androidTestImplementation(project(":shared-test"))
