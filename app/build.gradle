@@ -121,6 +121,10 @@ android {
 dependencies {
     implementation orgJavaLocation()
 
+    // Explicitly demand highest used SLF4J version to prevent dependency resolution errors
+    // implementation 'org.slf4j:slf4j-nop:2.0.0-alpha6'
+    implementation 'org.slf4j:slf4j-api:2.0.0-alpha6'
+
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.kotlin_coroutines"
 
     implementation "org.jetbrains:annotations:$versions.jetbrains_annotations"

@@ -52,7 +52,4 @@ dependencies {
     implementation "junit:junit:$versions.junit"
     implementation "androidx.documentfile:documentfile:$versions.android_documentfile"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:$versions.jgit"
-    // Explicitly demand highest used SLF4J version to prevent dependency resolution errors
-    implementation 'org.slf4j:slf4j-nop:2.0.0-alpha6'
-    implementation 'org.slf4j:slf4j-api:2.0.0-alpha6'
 }
