@@ -35,15 +35,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = 11
+        jvmTarget = 17
     }
 
     packagingOptions {
-        resources.merges.add("plugin.properties")
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'plugin.properties', 'OSGI-INF/l10n/plugin.properties']
+        }
     }
 }
 
