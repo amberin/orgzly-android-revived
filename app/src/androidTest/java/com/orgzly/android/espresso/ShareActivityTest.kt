@@ -163,21 +163,20 @@ class ShareActivityTest : OrgzlyTest() {
         val sharedText = "https://website.com/"
         val sharedSubject = "Website Title"
         startActivityWithIntent(
-            action = Intent.ACTION_SEND,
-            type = "text/plain",
-            extraText = sharedText,
-            extraSubjectText = sharedSubject)
-
-        // Content should be empty
-        onView(withId(R.id.content_view)).check(matches(withText("")))
-        // Title should be a link with the shared subject as title
-        onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
-        // Title should not be in "edit mode"
-        onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
-
-        // Verify the link content
-        onView(withId(R.id.title_view)).perform(click())
-        onView(withId(R.id.title_edit)).check(matches(withText("[[" + sharedText + "][" + sharedSubject + "]]")))
+                action = Intent.ACTION_SEND,
+                type = "text/plain",
+                extraText = sharedText,
+                extraSubjectText = sharedSubject).use {
+            // Content should be empty
+            onView(withId(R.id.content_view)).check(matches(withText("")))
+            // Title should be a link with the shared subject as title
+            onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
+            // Title should not be in "edit mode"
+            onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
+            // Verify the link content
+            onView(withId(R.id.title_view)).perform(click())
+            onView(withId(R.id.title_edit)).check(matches(withText("[[$sharedText][$sharedSubject]]")))
+        }
     }
 
     @Test
@@ -185,18 +184,17 @@ class ShareActivityTest : OrgzlyTest() {
         val sharedText = "https://website.com/ is really cool"
         val sharedSubject = "Website Title"
         startActivityWithIntent(
-            action = Intent.ACTION_SEND,
-            type = "text/plain",
-            extraText = sharedText,
-            extraSubjectText = sharedSubject)
-
-        // Content should contain the shared text verbatim
-        onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
-        // Title should match the subject extra
-        onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
-        // Title should not be in "edit mode"
-        onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
-
+                action = Intent.ACTION_SEND,
+                type = "text/plain",
+                extraText = sharedText,
+                extraSubjectText = sharedSubject).use {
+            // Content should contain the shared text verbatim
+            onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
+            // Title should match the subject extra
+            onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
+            // Title should not be in "edit mode"
+            onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
+        }
     }
 
     @Test
@@ -251,20 +249,18 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "image/png",
-                extraStreamUri = "content://uri")
-
-        onView(withId(R.id.title_view)).check(matches(withText("content://uri")))
-        onView(withId(R.id.content_view)).check(matches(withText("Cannot find image using this URI.")))
-
-        onView(withId(R.id.done)).perform(click()) // Note done
+                extraStreamUri = "content://uri").use {
+            onView(withId(R.id.title_view)).check(matches(withText("content://uri")))
+            onView(withId(R.id.content_view)).check(matches(withText("Cannot find image using this URI.")))
+        }
     }
 
     @Test
     fun testNoMatchingType() {
-        startActivityWithIntent(action = Intent.ACTION_SEND, type = "application/octet-stream")
-
-        onView(withId(R.id.content_view)).check(matches(withText("")))
-        onSnackbar().check(matches(withText(context.getString(R.string.share_type_not_supported, "application/octet-stream"))))
+        startActivityWithIntent(action = Intent.ACTION_SEND, type = "application/octet-stream").use {
+            onView(withId(R.id.content_view)).check(matches(withText("")))
+            onSnackbar().check(matches(withText(context.getString(R.string.share_type_not_supported, "application/octet-stream"))))
+        }
     }
 
     @Test
