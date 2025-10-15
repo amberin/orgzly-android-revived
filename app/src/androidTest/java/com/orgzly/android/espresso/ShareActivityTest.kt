@@ -19,13 +19,13 @@ import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.espresso.util.EspressoUtils.closeSoftKeyboardWithDelay
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
+import com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot
 import com.orgzly.android.espresso.util.EspressoUtils.waitId
 import com.orgzly.android.ui.share.ShareActivity
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 
@@ -276,7 +276,6 @@ class ShareActivityTest : OrgzlyTest() {
     }
 
     @Test
-    @Ignore("Too flaky for now")
     fun testSettingScheduledTimeRemainsSetAfterRotation() {
         val scenario = startActivityWithIntent(
                 action = Intent.ACTION_SEND,
@@ -288,6 +287,7 @@ class ShareActivityTest : OrgzlyTest() {
         }
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
+        waitForStableRoot()
         onView(withId(R.id.scheduled_button)).perform(click())
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
