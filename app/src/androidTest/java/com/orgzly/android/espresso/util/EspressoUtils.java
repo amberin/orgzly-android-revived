@@ -25,7 +25,6 @@ import static org.hamcrest.Matchers.anything;
 
 import android.content.res.Resources;
 import android.os.Build;
-import android.os.SystemClock;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.view.KeyEvent;
@@ -190,7 +189,8 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onRecyclerViewItem(@IdRes int recyclerView, int position, @IdRes int childView) {
-        SystemClock.sleep(200);
+        // Ensure UI is stable before searching for RecyclerView
+        onView(isRoot()).perform(waitForStableRoot());
         onView(isRoot()).perform(waitId(recyclerView, 5000));
         onView(withId(recyclerView)).perform(RecyclerViewActions.scrollToPosition(position));
         return onView(new EspressoRecyclerViewMatcher(recyclerView)
@@ -341,14 +341,19 @@ public class EspressoUtils {
     }
 
     public static void searchForTextCloseKeyboard(String str) {
-        SystemClock.sleep(300);
+        // Ensure UI is stable before searching for views to avoid grabbing wrong root
+        onView(isRoot()).perform(waitForStableRoot());
         onView(isRoot()).perform(waitId(R.id.search_view, 5000));
         onView(allOf(withId(R.id.search_view), isDisplayed())).perform(click());
-        SystemClock.sleep(300);
+
+        // Wait for UI to settle after click before searching for search text field
+        onView(isRoot()).perform(waitForStableRoot());
         onView(isRoot()).perform(waitId(R.id.search_src_text, 5000));
         onView(withId(R.id.search_src_text)).perform(replaceText(str), pressKey(KeyEvent.KEYCODE_ENTER));
         closeSoftKeyboardWithDelay();
-        SystemClock.sleep(300);
+
+        // Wait for UI to settle after keyboard action
+        onView(isRoot()).perform(waitForStableRoot());
     }
 
     public static ViewAction[] replaceTextCloseKeyboard(String str) {
@@ -463,6 +468,32 @@ public class EspressoUtils {
 
     public static ViewAction scroll() {
         return new NestedScrollViewExtension();
+    }
+
+    /**
+     * Waits for the UI to stabilize by ensuring the main thread is idle.
+     * This helps prevent race conditions where the wrong root view is captured
+     * during Activity/Fragment transitions.
+     */
+    public static ViewAction waitForStableRoot() {
+        return new ViewAction() {
+            @Override
+            public Matcher<View> getConstraints() {
+                return isRoot();
+            }
+
+            @Override
+            public String getDescription() {
+                return "wait for UI to stabilize";
+            }
+
+            @Override
+            public void perform(final UiController uiController, final View view) {
+                uiController.loopMainThreadUntilIdle();
+                // Give a brief moment for any pending UI updates to settle
+                uiController.loopMainThreadForAtLeast(100);
+            }
+        };
     }
 
     /**
