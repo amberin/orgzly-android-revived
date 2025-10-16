@@ -499,6 +499,7 @@ public class EspressoUtils {
 
     /**
      * Perform action of waiting for a specific view id. Copied from https://stackoverflow.com/a/49814995.
+     * Modified to refresh root view on each iteration to handle fragment/activity transitions.
      * @param viewId The id of the view to wait for.
      * @param millis The timeout of until when to wait for.
      */
@@ -525,7 +526,12 @@ public class EspressoUtils {
                     // asynchronous operations (like menu inflation) to complete
                     uiController.loopMainThreadUntilIdle();
 
-                    for (View child : TreeIterables.breadthFirstViewTraversal(view)) {
+                    // Get fresh root view on each iteration to handle fragment transitions
+                    // During transitions, the old root view becomes stale and doesn't contain
+                    // the views from the new fragment
+                    View currentRoot = view.getRootView();
+
+                    for (View child : TreeIterables.breadthFirstViewTraversal(currentRoot)) {
                         // found view with required ID
                         if (viewMatcher.matches(child)) {
                             return;
