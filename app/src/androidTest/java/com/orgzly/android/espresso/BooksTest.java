@@ -16,6 +16,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.isNotChecked;
+import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -26,6 +27,8 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.onSnackbar;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.sync;
+import static com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot;
+import static com.orgzly.android.espresso.util.EspressoUtils.waitId;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
@@ -345,6 +348,11 @@ public class BooksTest extends OrgzlyTest {
         onBook(0).perform(longClick());
         contextualToolbarOverflowMenu().perform(click());
         onView(withText(R.string.delete)).perform(click());
+
+        // Wait for dialog to appear and gain focus
+        onView(isRoot()).perform(waitForStableRoot());
+        onView(isRoot()).perform(waitId(R.id.delete_linked_url, 5000));
+
         onView(withText(R.string.also_delete_linked_book)).check(matches(isDisplayed()));
         onView(withId(R.id.delete_linked_url)).check(matches(withText("mock://repo/book-1.org")));
     }
