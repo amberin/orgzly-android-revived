@@ -490,8 +490,9 @@ public class EspressoUtils {
             @Override
             public void perform(final UiController uiController, final View view) {
                 uiController.loopMainThreadUntilIdle();
-                // Give a brief moment for any pending UI updates to settle
-                uiController.loopMainThreadForAtLeast(100);
+                // Give extra time for fragment transitions and menu inflation to complete
+                // Increased from 100ms to 250ms to handle slower CI environments
+                uiController.loopMainThreadForAtLeast(250);
             }
         };
     }
@@ -515,12 +516,15 @@ public class EspressoUtils {
 
             @Override
             public void perform(final UiController uiController, final View view) {
-                uiController.loopMainThreadUntilIdle();
                 final long startTime = System.currentTimeMillis();
                 final long endTime = startTime + millis;
                 final Matcher<View> viewMatcher = withId(viewId);
 
                 do {
+                    // Ensure main thread is idle before each check to allow
+                    // asynchronous operations (like menu inflation) to complete
+                    uiController.loopMainThreadUntilIdle();
+
                     for (View child : TreeIterables.breadthFirstViewTraversal(view)) {
                         // found view with required ID
                         if (viewMatcher.matches(child)) {
