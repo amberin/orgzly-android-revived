@@ -287,7 +287,8 @@ class ShareActivityTest : OrgzlyTest() {
         }
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
-        waitForStableRoot()
+        onView(isRoot()).perform(waitForStableRoot())
+        onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
         onView(withId(R.id.scheduled_button)).perform(click())
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
