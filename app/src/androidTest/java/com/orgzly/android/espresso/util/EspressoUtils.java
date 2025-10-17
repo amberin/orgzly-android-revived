@@ -191,7 +191,7 @@ public class EspressoUtils {
     public static ViewInteraction onRecyclerViewItem(@IdRes int recyclerView, int position, @IdRes int childView) {
         // Ensure UI is stable before searching for RecyclerView
         onView(isRoot()).perform(waitForStableRoot());
-        onView(isRoot()).perform(waitId(recyclerView, 10000));
+        onView(isRoot()).perform(waitId(recyclerView, 5000));
         onView(withId(recyclerView)).perform(RecyclerViewActions.scrollToPosition(position));
         return onView(new EspressoRecyclerViewMatcher(recyclerView)
                 .atPositionOnView(position, childView));
@@ -343,8 +343,7 @@ public class EspressoUtils {
     public static void searchForTextCloseKeyboard(String str) {
         // Ensure UI is stable before searching for views to avoid grabbing wrong root
         onView(isRoot()).perform(waitForStableRoot());
-        // Increase timeout to 10 seconds for slow CI environments where menu inflation can be delayed
-        onView(isRoot()).perform(waitId(R.id.search_view, 10000));
+        onView(isRoot()).perform(waitId(R.id.search_view, 5000));
         onView(allOf(withId(R.id.search_view), isDisplayed())).perform(click());
 
         // Wait for UI to settle after click before searching for search text field
