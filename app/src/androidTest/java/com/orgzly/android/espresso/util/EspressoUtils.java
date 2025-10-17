@@ -191,7 +191,8 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onRecyclerViewItem(@IdRes int recyclerView, int position, @IdRes int childView) {
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+//        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+//        onView(allOf(withId(recyclerView), isDisplayed())).perform(RecyclerViewActions.scrollToPosition(position));
         onView(withId(recyclerView)).perform(RecyclerViewActions.scrollToPosition(position));
         return onView(new EspressoRecyclerViewMatcher(recyclerView)
                 .atPositionOnView(position, childView));
