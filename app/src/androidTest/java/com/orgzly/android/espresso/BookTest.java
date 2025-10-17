@@ -126,6 +126,9 @@ public class BookTest extends OrgzlyTest {
         scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("book-name"), isDisplayed())).perform(click());
+
+        // Wait for BookFragment to load before tests run
+        onView(withId(R.id.fragment_book_view_flipper)).check(matches(isDisplayed()));
     }
 
     @After
