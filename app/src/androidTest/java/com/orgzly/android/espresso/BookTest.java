@@ -149,6 +149,9 @@ public class BookTest extends OrgzlyTest {
 
     @Test
     public void testOpensNoteFromBook() {
+        // Wait for UI to stabilize after fragment transition from setUp
+        onView(isRoot()).perform(waitForStableRoot());
+
         onNoteInBook(2).perform(click());
         onView(withId(R.id.view_flipper)).check(matches(isDisplayed()));
     }
