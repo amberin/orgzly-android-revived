@@ -47,6 +47,7 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.espresso.util.HumanReadables;
 import androidx.test.espresso.util.TreeIterables;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.orgzly.R;
 import com.orgzly.android.ui.SpanUtils;
@@ -190,8 +191,7 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onRecyclerViewItem(@IdRes int recyclerView, int position, @IdRes int childView) {
-        SystemClock.sleep(200);
-        onView(isRoot()).perform(waitId(recyclerView, 5000));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         onView(withId(recyclerView)).perform(RecyclerViewActions.scrollToPosition(position));
         return onView(new EspressoRecyclerViewMatcher(recyclerView)
                 .atPositionOnView(position, childView));
