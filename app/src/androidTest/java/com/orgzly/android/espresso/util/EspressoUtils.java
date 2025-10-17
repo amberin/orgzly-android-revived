@@ -25,7 +25,6 @@ import static org.hamcrest.Matchers.anything;
 
 import android.content.res.Resources;
 import android.os.Build;
-import android.os.SystemClock;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.view.KeyEvent;
@@ -47,7 +46,6 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.espresso.util.HumanReadables;
 import androidx.test.espresso.util.TreeIterables;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.orgzly.R;
 import com.orgzly.android.ui.SpanUtils;
@@ -303,7 +301,7 @@ public class EspressoUtils {
             // Open the overflow menu OR open the options menu,
             // depending on if the device has a hardware or software overflow menu button.
             openActionBarOverflowOrOptionsMenu(getInstrumentation().getTargetContext());
-            onView(withText(resourceId)).perform(click());
+            onView(allOf(withText(resourceId), isDisplayed())).perform(click());
         }
     }
 
