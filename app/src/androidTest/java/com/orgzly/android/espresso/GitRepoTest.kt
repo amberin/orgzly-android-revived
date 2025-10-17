@@ -6,6 +6,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
@@ -14,6 +15,8 @@ import com.orgzly.android.db.entity.Repo
 import com.orgzly.android.espresso.util.EspressoUtils.contextualToolbarOverflowMenu
 import com.orgzly.android.espresso.util.EspressoUtils.onBook
 import com.orgzly.android.espresso.util.EspressoUtils.sync
+import com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot
+import com.orgzly.android.espresso.util.EspressoUtils.waitId
 import com.orgzly.android.git.GitPreferencesFromRepoPrefs
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.prefs.RepoPreferences
@@ -76,6 +79,11 @@ class GitRepoTest : OrgzlyTest() {
             onBook(2).perform(ViewActions.click())
             contextualToolbarOverflowMenu().perform(ViewActions.click())
             Espresso.onView(withText(R.string.delete)).perform(ViewActions.click())
+
+            // Wait for dialog to appear and gain focus
+            Espresso.onView(isRoot()).perform(waitForStableRoot())
+            Espresso.onView(isRoot()).perform(waitId(R.id.delete_linked_checkbox, 5000))
+
             Espresso.onView(withId(R.id.delete_linked_checkbox)).perform(ViewActions.click())
             Espresso.onView(withText(R.string.delete)).perform(ViewActions.click())
             assertEquals(0, dataRepository.getBooks().size)
