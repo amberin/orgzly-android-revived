@@ -289,7 +289,7 @@ class ShareActivityTest : OrgzlyTest() {
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
         onView(isRoot()).perform(waitForStableRoot())
         onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
-        onView(withId(R.id.scheduled_button)).perform(click())
+        onView(withId(R.id.scheduled_button)).perform(scroll(), click())
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 
