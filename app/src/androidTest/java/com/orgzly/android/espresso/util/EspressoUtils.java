@@ -190,7 +190,7 @@ public class EspressoUtils {
 
     public static ViewInteraction onRecyclerViewItem(@IdRes int recyclerView, int position, @IdRes int childView) {
         // Ensure UI is stable before searching for RecyclerView
-        onView(isRoot()).perform(waitForStableRoot());
+        Thread.sleep(500);
         onView(isRoot()).perform(waitId(recyclerView, 5000));
         onView(withId(recyclerView)).perform(RecyclerViewActions.scrollToPosition(position));
         return onView(new EspressoRecyclerViewMatcher(recyclerView)
