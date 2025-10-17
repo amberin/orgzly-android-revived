@@ -14,8 +14,10 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static com.orgzly.android.espresso.util.EspressoUtils.closeSoftKeyboardWithDelay;
 import static com.orgzly.android.espresso.util.EspressoUtils.contextualToolbarOverflowMenu;
+import static com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot;
 import static com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick;
 import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
@@ -194,6 +196,9 @@ public class BookTest extends OrgzlyTest {
 
     @Test
     public void testClearStateTitleUnchanged() {
+        // Wait for UI to stabilize after fragment transition from setUp
+        onView(isRoot()).perform(waitForStableRoot());
+
         onNoteInBook(1, R.id.item_head_title_view).check(matches(withText("Note #1.")));
 
         onNoteInBook(1).perform(longClick());
