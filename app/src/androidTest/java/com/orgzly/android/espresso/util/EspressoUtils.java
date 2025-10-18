@@ -163,7 +163,7 @@ public class EspressoUtils {
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
         // Wait for BookFragment to load
         EspressoUtils.retryViewAssertion(onView(withId(R.id.fragment_book_recycler_view)),
-                matches(isDisplayed()), 5000);
+                matches(isDisplayed()), 1000);
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
 
@@ -474,7 +474,7 @@ public class EspressoUtils {
         return new NestedScrollViewExtension();
     }
 
-    private static void retryViewAssertion(ViewInteraction viewInteraction,
+    public static void retryViewAssertion(ViewInteraction viewInteraction,
                                       ViewAssertion viewAssertion, int timeoutInMs) {
         int timeElapsedInMs = 0;
         while (timeElapsedInMs < timeoutInMs) {

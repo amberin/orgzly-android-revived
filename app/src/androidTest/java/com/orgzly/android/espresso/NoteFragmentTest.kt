@@ -1,24 +1,52 @@
 package com.orgzly.android.espresso
 
 import android.content.pm.ActivityInfo
-import android.os.SystemClock
 import android.widget.DatePicker
 import android.widget.TimePicker
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso.*
+import androidx.test.espresso.Espresso.onData
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
 import androidx.test.espresso.Espresso.pressBack
-import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.longClick
+import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.swipeUp
+import androidx.test.espresso.action.ViewActions.typeTextIntoFocusedView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.PickerActions.setDate
 import androidx.test.espresso.contrib.PickerActions.setTime
 import androidx.test.espresso.matcher.RootMatchers.isDialog
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.hasSibling
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withClassName
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.RetryTestRule
-import com.orgzly.android.espresso.util.EspressoUtils.*
+import com.orgzly.android.espresso.util.EspressoUtils.clickClickableSpan
+import com.orgzly.android.espresso.util.EspressoUtils.clickSetting
+import com.orgzly.android.espresso.util.EspressoUtils.closeSoftKeyboardWithDelay
+import com.orgzly.android.espresso.util.EspressoUtils.listViewItemCount
+import com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick
+import com.orgzly.android.espresso.util.EspressoUtils.onBook
+import com.orgzly.android.espresso.util.EspressoUtils.onListView
+import com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook
+import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
+import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
+import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
+import com.orgzly.android.espresso.util.EspressoUtils.scroll
+import com.orgzly.android.espresso.util.EspressoUtils.setNumber
+import com.orgzly.android.espresso.util.EspressoUtils.settingsSetTodoKeywords
 import com.orgzly.android.ui.main.MainActivity
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.endsWith
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.hasToString
+import org.hamcrest.Matchers.not
+import org.hamcrest.Matchers.startsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -344,8 +372,7 @@ class NoteFragmentTest : OrgzlyTest() {
                 .check(matches(allOf(withText(userDateTime("[2014-01-01 Wed 20:07]")), isDisplayed())))
         onView(withId(R.id.state_button)).perform(click())
         onView(withText(R.string.clear)).perform(click())
-        SystemClock.sleep(500)
-        onView(withId(R.id.closed_button)).check(matches(not(isDisplayed())))
+        retryViewAssertion(onView(withId(R.id.closed_button)), matches(not(isDisplayed())), 1000)
     }
 
     @Test
@@ -403,7 +430,9 @@ class NoteFragmentTest : OrgzlyTest() {
         scenario.onActivity { activity ->
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }
-        SystemClock.sleep(500) // Give AVD time to complete rotation
+
+        // Give AVD time to complete rotation
+        retryViewAssertion(onView(withText(R.string.set)), matches(isDisplayed()), 1000)
 
         /* Set time. */
         onView(withText(R.string.set)).perform(click())
@@ -463,9 +492,11 @@ class NoteFragmentTest : OrgzlyTest() {
         }
 
         onView(withId(R.id.scroll_view)).perform(swipeUp()) // For small screens
-        SystemClock.sleep(500)
-        
-        onView(allOf(withId(R.id.name), withText("prop-name-1"))).check(matches(isDisplayed()))
+        // Allow some time for UI transitions before the first assertion
+        retryViewAssertion(
+            onView(allOf(withId(R.id.name), withText("prop-name-1"))),
+            matches(isDisplayed()),
+            1000)
         onView(allOf(withId(R.id.value), withText("prop-value-1"))).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.name), withText("prop-name-2"))).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.value), withText("prop-value-2"))).check(matches(isDisplayed()))
@@ -498,7 +529,6 @@ class NoteFragmentTest : OrgzlyTest() {
         onView(withId(R.id.content)).perform(click())
         onView(withId(R.id.content_edit)).perform(typeTextIntoFocusedView("a\nb\nc"))
         onView(withId(R.id.done)).perform(click()) // Note done
-        SystemClock.sleep(1000)
         onNoteInBook(1, R.id.item_head_fold_button).perform(click())
         onNoteInBook(1, R.id.item_head_title_view).check(matches(withText(endsWith("3"))))
     }
@@ -506,9 +536,6 @@ class NoteFragmentTest : OrgzlyTest() {
     @Test
     fun testBreadcrumbsFollowToBook() {
         onNoteInBook(3).perform(click())
-
-        // onView(withId(R.id.breadcrumbs_text)).perform(clickClickableSpan("book-name"));
-        // SystemClock.sleep(5000);
 
         onView(withId(R.id.breadcrumbs_text)).perform(click())
 
@@ -535,8 +562,7 @@ class NoteFragmentTest : OrgzlyTest() {
                 .inRoot(isDialog())
                 .check(matches(isDisplayed()))
 
-        SystemClock.sleep(500) // If we click too early, the button doesn't yet work...
-        onView(withText(R.string.cancel)).perform(click())
+        onView(allOf(withText(R.string.cancel), isDisplayed())).perform(click())
 
         // Title remains the same
         onView(withId(R.id.title_edit)).check(matches(withText("1.1")))

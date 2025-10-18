@@ -18,6 +18,7 @@ import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.espresso.util.EspressoUtils.closeSoftKeyboardWithDelay
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
+import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
 import com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot
 import com.orgzly.android.espresso.util.EspressoUtils.waitId
@@ -228,9 +229,8 @@ class ShareActivityTest : OrgzlyTest() {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
-
-        SystemClock.sleep(1000)
         setNoteTitle()
+        retryViewAssertion(onView(withId(R.id.done)), matches(isDisplayed()), 1000)
         onView(withId(R.id.done)).perform(click()) // Note done
     }
 
