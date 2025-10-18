@@ -25,6 +25,7 @@ import com.orgzly.android.ui.share.ShareActivity
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -311,6 +312,18 @@ class ShareActivityTest : OrgzlyTest() {
 
         setNoteTitle("Note 3")
         onView(withId(R.id.done)).perform(click()) // Note done
+
+        // Allow time for the note to get properly stored in DB
+        var elapsedTimeInMs = 0
+        while (elapsedTimeInMs < 1000) {
+            try {
+                assertEquals(3, dataRepository.getNotes("book-one").size)
+                break
+            } catch (_: AssertionError) {
+                SystemClock.sleep(100)
+                elapsedTimeInMs += 100
+            }
+        }
 
         val (_, lft, rgt) = dataRepository.getLastNote("Note 1")!!.position
         val (_, lft1, rgt1) = dataRepository.getLastNote("Note 2")!!.position
