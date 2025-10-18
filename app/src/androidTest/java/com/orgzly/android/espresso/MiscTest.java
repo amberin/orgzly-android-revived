@@ -10,6 +10,7 @@ import static androidx.test.espresso.contrib.DrawerActions.open;
 import static androidx.test.espresso.contrib.PickerActions.setDate;
 import static androidx.test.espresso.contrib.PickerActions.setTime;
 import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
+import static androidx.test.espresso.matcher.ViewMatchers.isClickable;
 import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
@@ -25,6 +26,7 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.onPreface;
 import static com.orgzly.android.espresso.util.EspressoUtils.onSavedSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
+import static com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion;
 import static com.orgzly.android.espresso.util.EspressoUtils.scroll;
 import static com.orgzly.android.espresso.util.EspressoUtils.searchForTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.settingsSetDoneKeywords;
@@ -469,7 +471,7 @@ public class MiscTest extends OrgzlyTest {
 
             // Search results
             onView(withId(R.id.drawer_layout)).perform(open());
-            SystemClock.sleep(500);
+            retryViewAssertion(onView(withText("Scheduled")), matches(isClickable()), 1000);
             onView(withText("Scheduled")).perform(click());
             fragmentTest(activity, true, withId(R.id.fragment_query_search_view_flipper));
 
@@ -508,24 +510,22 @@ public class MiscTest extends OrgzlyTest {
         onView(matcher).check(matches(isDisplayed()));
 
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        SystemClock.sleep(500);
-        onView(matcher).check(matches(isDisplayed()));
+        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        SystemClock.sleep(500);
+        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        SystemClock.sleep(500);
+        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        SystemClock.sleep(500);
+        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        SystemClock.sleep(500);
 
         if (hasSearchMenuItem) {
-            onView(withId(R.id.search_view)).check(matches(isDisplayed()));
+            retryViewAssertion(onView(withId(R.id.search_view)), matches(isDisplayed()), 1000);
         } else {
-            onView(withId(R.id.search_view)).check(doesNotExist());
+            retryViewAssertion(onView(withId(R.id.search_view)), doesNotExist(), 1000);
         }
     }
 

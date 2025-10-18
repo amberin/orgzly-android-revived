@@ -481,7 +481,7 @@ public class EspressoUtils {
             try {
                 viewInteraction.check(viewAssertion);
                 return;
-            } catch (NoMatchingViewException ignored) {
+            } catch (NoMatchingViewException | AssertionError ignored) {
                 SystemClock.sleep(100);
                 timeElapsedInMs += 100;
             }
