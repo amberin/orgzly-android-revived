@@ -32,9 +32,7 @@ import com.orgzly.android.util.EncodingDetect;
 import com.orgzly.android.util.MiscUtils;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,9 +48,6 @@ public class SyncTest extends OrgzlyTest {
     public void setUp() throws Exception {
         super.setUp();
     }
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Test
     public void testOrgRange() {
@@ -589,9 +584,8 @@ public class SyncTest extends OrgzlyTest {
 
         // Create book and sync it
         testUtils.setupBook("booky", "");
-        exceptionRule.expect(IOException.class);
-        exceptionRule.expectMessage("matches a rule in .orgzlyignore");
-        testUtils.syncOrThrow();
+        IOException exception = assertThrows(IOException.class, () -> testUtils.syncOrThrow());
+        assertTrue(exception.getMessage().contains("matches a rule in .orgzlyignore"));
     }
 
 
@@ -707,9 +701,9 @@ public class SyncTest extends OrgzlyTest {
     public void testForceLoadingBookWithNoLinkNoRepos() {
         BookView book = testUtils.setupBook("booky", "First book used for testing\n* Note A");
 
-        exceptionRule.expect(IOException.class);
-        exceptionRule.expectMessage(context.getString(R.string.message_book_has_no_link));
-        dataRepository.forceLoadBook(book.getBook().getId());
+        IOException exception = assertThrows(IOException.class,
+            () -> dataRepository.forceLoadBook(book.getBook().getId()));
+        assertEquals(context.getString(R.string.message_book_has_no_link), exception.getMessage());
     }
 
     @Test
@@ -717,9 +711,9 @@ public class SyncTest extends OrgzlyTest {
         testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
         BookView book = testUtils.setupBook("booky", "First book used for testing\n* Note A");
 
-        exceptionRule.expect(IOException.class);
-        exceptionRule.expectMessage(context.getString(R.string.message_book_has_no_link));
-        dataRepository.forceLoadBook(book.getBook().getId());
+        IOException exception = assertThrows(IOException.class,
+            () -> dataRepository.forceLoadBook(book.getBook().getId()));
+        assertEquals(context.getString(R.string.message_book_has_no_link), exception.getMessage());
     }
 
     /* Books view was returning multiple entries for the same book, due to duplicates in encodings
@@ -748,17 +742,19 @@ public class SyncTest extends OrgzlyTest {
         testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
         testUtils.setupRepo(RepoType.MOCK, "mock://repo-b");
         Book book = testUtils.setupBook("book-one", "First book used for testing\n* Note A").getBook();
-        exceptionRule.expect(IOException.class);
-        exceptionRule.expectMessage(context.getString(R.string.force_saving_failed, context.getString(R.string.multiple_repos)));
-        dataRepository.forceSaveBook(book.getId());
+        IOException exception = assertThrows(IOException.class,
+            () -> dataRepository.forceSaveBook(book.getId()));
+        assertEquals(context.getString(R.string.force_saving_failed, context.getString(R.string.multiple_repos)),
+            exception.getMessage());
     }
 
     @Test
     public void testForceSavingBookWithNoLinkNoRepos() {
         Book book = testUtils.setupBook("book-one", "First book used for testing\n* Note A").getBook();
-        exceptionRule.expect(IOException.class);
-        exceptionRule.expectMessage(context.getString(R.string.force_saving_failed, context.getString(R.string.no_repos)));
-        dataRepository.forceSaveBook(book.getId());
+        IOException exception = assertThrows(IOException.class,
+            () -> dataRepository.forceSaveBook(book.getId()));
+        assertEquals(context.getString(R.string.force_saving_failed, context.getString(R.string.no_repos)),
+            exception.getMessage());
     }
 
     @Test

@@ -18,7 +18,7 @@ import com.orgzly.databinding.ItemRefileBinding
 class RefileAdapter(val context: Context, val listener: OnClickListener) :
         ListAdapter<RefileViewModel.Item, RefileAdapter.RefileViewHolder>(DIFF_CALLBACK) {
 
-    data class Icons(@DrawableRes val up: Int, @DrawableRes val book: Int)
+    data class Icons(@param:DrawableRes val up: Int, @param:DrawableRes val book: Int)
 
     var icons: Icons? = null
 

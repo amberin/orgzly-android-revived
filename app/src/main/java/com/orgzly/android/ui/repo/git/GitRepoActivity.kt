@@ -230,7 +230,7 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
         try {
             success = orgzlyGitPath.mkdirs()
         } catch(error: SecurityException) {}
-        if (success || (orgzlyGitPath.exists() && orgzlyGitPath.list().size == 0)) {
+        if (success || (orgzlyGitPath.exists() && orgzlyGitPath.list()?.size == 0)) {
             binding.activityRepoGitDirectory.setText(orgzlyGitPath.path)
         }
     }

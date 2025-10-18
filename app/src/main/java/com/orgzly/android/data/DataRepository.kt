@@ -8,6 +8,7 @@ import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
+import android.os.Looper
 import android.text.TextUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -2016,7 +2017,7 @@ class DataRepository @Inject constructor(
             // Open book
             // FIXME: Runs with delay to be executed after the observer for unfoldForNote
             App.EXECUTORS.mainThread().execute {
-                Handler().postDelayed({
+                Handler(Looper.getMainLooper()).postDelayed({
                     val intent = Intent(AppIntent.ACTION_OPEN_BOOK)
                     intent.putExtra(AppIntent.EXTRA_BOOK_ID, bookId)
                     intent.putExtra(AppIntent.EXTRA_NOTE_ID, noteId)
@@ -2128,11 +2129,13 @@ class DataRepository @Inject constructor(
         }
         if (!("settings" in gson.keys && "saved_searches" in gson.keys)) // Both keys must be present
             throw RuntimeException(context.getString(R.string.imported_json_is_missing_mandatory_fields))
+        @Suppress("UNCHECKED_CAST")
         val settings = gson["settings"] as Map<String, *>
         if (settings.isNotEmpty()) {
             AppPreferences.setDefaultPrefsFromJsonMap(context, settings)
             importedSomething = true
         }
+        @Suppress("UNCHECKED_CAST")
         val savedSearches: List<SavedSearch> = (gson["saved_searches"] as Map<String, String>)
             .entries
             .mapIndexed { index, entry ->

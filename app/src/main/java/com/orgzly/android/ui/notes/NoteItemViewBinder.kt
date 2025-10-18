@@ -464,10 +464,10 @@ class NoteItemViewBinder(private val context: Context, private val inBook: Boole
 
 
     private data class Attrs(
-        @ColorInt val todoColor: Int,
-        @ColorInt val doneColor: Int,
+        @param:ColorInt val todoColor: Int,
+        @param:ColorInt val doneColor: Int,
         val postTitleTextSize: Int,
-        @ColorInt val postTitleTextColor: Int
+        @param:ColorInt val postTitleTextColor: Int
     ) {
         companion object {
             @SuppressWarnings("ResourceType")

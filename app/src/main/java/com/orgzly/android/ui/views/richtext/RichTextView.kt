@@ -180,8 +180,8 @@ class RichTextView : AppCompatTextView, ActionableRichTextView {
     }
 
     // Just pass to RichView
-    override fun toggleDrawer(drawerSpan: DrawerMarkerSpan) {
-        listeners.onActionListener?.toggleDrawer(drawerSpan)
+    override fun toggleDrawer(markerSpan: DrawerMarkerSpan) {
+        listeners.onActionListener?.toggleDrawer(markerSpan)
     }
 
     // Just pass to RichView

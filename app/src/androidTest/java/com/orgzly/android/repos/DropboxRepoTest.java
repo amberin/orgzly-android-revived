@@ -7,9 +7,7 @@ import com.orgzly.android.db.entity.BookView;
 import com.orgzly.android.util.MiscUtils;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,9 +28,6 @@ public class DropboxRepoTest extends OrgzlyTest {
         super.setUp();
         testUtils.dropboxTestPreflight();
     }
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Test
     public void testUrl() {

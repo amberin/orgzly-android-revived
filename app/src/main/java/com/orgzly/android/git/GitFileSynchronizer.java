@@ -238,6 +238,7 @@ public class GitFileSynchronizer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void tryPush() {
         final var pushCommand = transportSetter().setTransport(
                 git.push().setRemote(preferences.remoteName()));

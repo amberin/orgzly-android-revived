@@ -20,7 +20,7 @@ class SettingsImportAdapter(val context: Context, val listener: OnClickListener)
         DIFF_CALLBACK
     ) {
 
-    data class Icons(@DrawableRes val up: Int, @DrawableRes val book: Int)
+    data class Icons(@param:DrawableRes val up: Int, @param:DrawableRes val book: Int)
 
     private var icons: Icons? = null
 

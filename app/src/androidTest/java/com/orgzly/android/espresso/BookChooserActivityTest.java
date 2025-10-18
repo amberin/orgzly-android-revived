@@ -73,6 +73,7 @@ public class BookChooserActivityTest extends OrgzlyTest {
         Instrumentation.ActivityResult result = scenario.getResult();
 
         assertThat(result.getResultCode(), is(RESULT_OK));
-        assertThat(result.getResultData().getStringExtra(Intent.EXTRA_SHORTCUT_NAME), is("book-one"));
+        // Using string constant directly as EXTRA_SHORTCUT_NAME is deprecated
+        assertThat(result.getResultData().getStringExtra("android.intent.extra.shortcut.NAME"), is("book-one"));
     }
 }

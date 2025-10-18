@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import androidx.annotation.StringRes
 import androidx.preference.*
 import com.orgzly.BuildConfig
@@ -373,7 +374,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
             // Display images inline enabled - request permission
             getString(R.string.pref_key_images_enabled) -> {
                 if (AppPreferences.imagesEnabled(context)) {
-                    Handler().post {
+                    Handler(Looper.getMainLooper()).post {
                         AppPermissions.isGrantedOrRequest(
                                 activity, AppPermissions.Usage.EXTERNAL_FILES_ACCESS)
                     }

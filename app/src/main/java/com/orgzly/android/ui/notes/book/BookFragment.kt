@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.*
 import androidx.activity.OnBackPressedCallback
@@ -396,7 +397,7 @@ class BookFragment :
                     }
 
                     /* Make sure we don't scroll again (for example after configuration change). */
-                    Handler().postDelayed({ arguments?.remove(ARG_NOTE_ID) }, 500)
+                    Handler(Looper.getMainLooper()).postDelayed({ arguments?.remove(ARG_NOTE_ID) }, 500)
 
                     break
                 }

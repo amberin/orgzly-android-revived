@@ -367,8 +367,8 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             }
 
             R.id.sort_note -> {
-                val contentLines = binding.content.getSourceText()?.toString()?.split("\n");
-                Collections.sort(contentLines)
+                val contentLines = binding.content.getSourceText()?.toString()?.split("\n")?.toMutableList()
+                contentLines?.let { Collections.sort(it) }
                 val newContent = contentLines?.joinToString("\n")
                 binding.content.setSourceText(newContent)
             }

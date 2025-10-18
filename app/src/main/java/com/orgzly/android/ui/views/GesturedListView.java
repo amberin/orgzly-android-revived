@@ -3,6 +3,7 @@ package com.orgzly.android.ui.views;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -267,7 +268,7 @@ public class GesturedListView extends ListView implements GestureDetector.OnGest
                      * Wait for quick-menu opening animation to end.
                      */
                     if (menuFound && itemPosition == getCount() - 1) {
-                        new Handler().postDelayed(() ->
+                        new Handler(Looper.getMainLooper()).postDelayed(() ->
                                         smoothScrollToPosition(itemPosition),
                                 getResources().getInteger(R.integer.quick_bar_animation_duration));
                     }

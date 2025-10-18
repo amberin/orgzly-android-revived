@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AlertDialog
@@ -161,7 +162,7 @@ abstract class CommonActivity : AppCompatActivity() {
         super.onResume()
 
         if (restartActivity) {
-            Handler().post(::recreate)
+            Handler(Looper.getMainLooper()).post(::recreate)
 
             restartActivity = false
         }

@@ -18,10 +18,10 @@ import com.orgzly.org.datetime.OrgInterval
  */
 abstract class PeriodWithTypePickerDialog(
         context: Context,
-        @StringRes private val titleId: Int,
-        @StringRes private val descriptionId: Int,
-        @ArrayRes private val typesId: Int?,
-        @ArrayRes private val typesDescriptionsId: Int,
+        @param:StringRes private val titleId: Int,
+        @param:StringRes private val descriptionId: Int,
+        @param:ArrayRes private val typesId: Int?,
+        @param:ArrayRes private val typesDescriptionsId: Int,
         private val initialValue: String
 ) : AlertDialog(context) {
 
