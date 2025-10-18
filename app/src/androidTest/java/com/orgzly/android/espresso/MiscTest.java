@@ -507,7 +507,7 @@ public class MiscTest extends OrgzlyTest {
     }
 
     private void fragmentTest(Activity activity, boolean hasSearchMenuItem, Matcher<View> matcher) {
-        onView(matcher).check(matches(isDisplayed()));
+        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
 
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
