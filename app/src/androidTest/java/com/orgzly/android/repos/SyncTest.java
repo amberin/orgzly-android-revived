@@ -1,10 +1,5 @@
 package com.orgzly.android.repos;
 
-import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static com.orgzly.android.espresso.util.EspressoUtils.onBook;
-import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -703,7 +698,7 @@ public class SyncTest extends OrgzlyTest {
 
         IOException exception = assertThrows(IOException.class,
             () -> dataRepository.forceLoadBook(book.getBook().getId()));
-        assertEquals(context.getString(R.string.message_book_has_no_link), exception.getMessage());
+        assertEquals("Force-loading failed: " + context.getString(R.string.message_book_has_no_link), exception.getMessage());
     }
 
     @Test
@@ -713,7 +708,7 @@ public class SyncTest extends OrgzlyTest {
 
         IOException exception = assertThrows(IOException.class,
             () -> dataRepository.forceLoadBook(book.getBook().getId()));
-        assertEquals(context.getString(R.string.message_book_has_no_link), exception.getMessage());
+        assertEquals("Force-loading failed: " + context.getString(R.string.message_book_has_no_link), exception.getMessage());
     }
 
     /* Books view was returning multiple entries for the same book, due to duplicates in encodings
