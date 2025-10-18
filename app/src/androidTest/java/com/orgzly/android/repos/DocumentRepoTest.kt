@@ -7,17 +7,21 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
+import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.matcher.ViewMatchers.isClickable
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.db.entity.Repo
-import com.orgzly.android.espresso.util.EspressoUtils
+import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
 import com.orgzly.android.ui.repos.ReposActivity
-import org.hamcrest.core.AllOf
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -214,10 +218,8 @@ class DocumentRepoTest : SyncRepoTest, OrgzlyTest() {
                 mDevice.findObject(UiSelector().text("ALLOW")).click()
             }
             // Back in Orgzly:
-            SystemClock.sleep(500)
-            Espresso.onView(ViewMatchers.isRoot()).perform(EspressoUtils.waitId(R.id.fab, 5000))
-            Espresso.onView(AllOf.allOf(ViewMatchers.withId(R.id.fab), ViewMatchers.isDisplayed()))
-                .perform(ViewActions.click())
+            retryViewAssertion(onView(withId(R.id.fab)), matches(isClickable()), 5000)
+            onView(withId(R.id.fab)).perform(click())
         }
     }
 }
