@@ -13,6 +13,7 @@ import static androidx.test.espresso.Espresso.pressBack;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.longClick;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.isClickable;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -20,6 +21,7 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick;
 import static com.orgzly.android.espresso.util.EspressoUtils.onBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
+import static com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.endsWith;
 
@@ -119,7 +121,8 @@ public class NewNoteTest extends OrgzlyTest {
 
         onBook(0).perform(click());
 
-        onView(allOf(withId(R.id.fab), isDisplayed())).perform(click());
+        retryViewAssertion(onView(withId(R.id.fab)), matches(isClickable()), 1000);
+        onView(withId(R.id.fab)).perform(click());
         onView(withId(R.id.title_edit)).perform(replaceTextCloseKeyboard("A"));
         onView(withId(R.id.done)).perform(click()); // Note done
         onView(withId(R.id.fab)).perform(click());
