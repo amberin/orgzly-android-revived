@@ -5,7 +5,7 @@ apply plugin: 'kotlin-kapt'
 android {
     namespace = 'com.orgzly'
 
-    compileSdk 35
+    compileSdkVersion 35
 
     defaultConfig {
         minSdkVersion 21
@@ -23,14 +23,15 @@ android {
         buildConfigField "String", "DROPBOX_APP_KEY", gradle.ext.appProperties.getProperty("dropbox.app_key", '""')
 
         resValue "string", "dropbox_app_key_schema", gradle.ext.appProperties.getProperty("dropbox.app_key_schema", '')
+    }
 
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments = [
-                        "room.schemaLocation": "$projectDir/schemas".toString(),
-                        "room.incremental": "true"
-                ]
-            }
+    // KAPT configuration for Room and Dagger annotation processors
+    kapt {
+        correctErrorTypes = true
+        useBuildCache = true
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas".toString())
+            arg("room.incremental", "true")
         }
     }
 
