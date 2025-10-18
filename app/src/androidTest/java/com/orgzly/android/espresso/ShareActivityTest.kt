@@ -71,6 +71,7 @@ class ShareActivityTest : OrgzlyTest() {
     }
 
     private fun setNoteTitle(title: String = "Dummy title") {
+        retryViewAssertion(onView(withId(R.id.title_edit)), matches(isClickable()), 1000)
         onView(withId(R.id.title_edit)).perform(replaceText(title))
         closeSoftKeyboardWithDelay()
     }
