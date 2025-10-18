@@ -7,6 +7,7 @@ import static androidx.test.espresso.Espresso.pressBack;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.pressKey;
 import static androidx.test.espresso.action.ViewActions.replaceText;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.contrib.DrawerActions.close;
 import static androidx.test.espresso.contrib.DrawerActions.open;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
@@ -157,6 +158,7 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
+        onView(withId(R.id.fragment_book_recycler_view)).check(matches(isDisplayed()));
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
 
@@ -189,8 +191,6 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onRecyclerViewItem(@IdRes int recyclerView, int position, @IdRes int childView) {
-//        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-//        onView(allOf(withId(recyclerView), isDisplayed())).perform(RecyclerViewActions.scrollToPosition(position));
         onView(withId(recyclerView)).perform(RecyclerViewActions.scrollToPosition(position));
         return onView(new EspressoRecyclerViewMatcher(recyclerView)
                 .atPositionOnView(position, childView));
