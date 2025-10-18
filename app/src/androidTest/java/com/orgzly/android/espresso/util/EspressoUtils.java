@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.anything;
 
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.SystemClock;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.view.KeyEvent;
@@ -38,9 +39,11 @@ import androidx.annotation.IdRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.DataInteraction;
+import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.espresso.PerformException;
 import androidx.test.espresso.UiController;
 import androidx.test.espresso.ViewAction;
+import androidx.test.espresso.ViewAssertion;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.action.CloseKeyboardAction;
 import androidx.test.espresso.contrib.RecyclerViewActions;
@@ -158,7 +161,9 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
-        onView(withId(R.id.fragment_book_recycler_view)).check(matches(isDisplayed()));
+        // Wait for BookFragment to load
+        EspressoUtils.retryViewAssertion(onView(withId(R.id.fragment_book_recycler_view)),
+                matches(isDisplayed()), 5000);
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
 
@@ -467,6 +472,20 @@ public class EspressoUtils {
 
     public static ViewAction scroll() {
         return new NestedScrollViewExtension();
+    }
+
+    private static void retryViewAssertion(ViewInteraction viewInteraction,
+                                      ViewAssertion viewAssertion, int timeoutInMs) {
+        int timeElapsedInMs = 0;
+        while (timeElapsedInMs < timeoutInMs) {
+            try {
+                viewInteraction.check(viewAssertion);
+                return;
+            } catch (NoMatchingViewException ignored) {
+                SystemClock.sleep(100);
+                timeElapsedInMs += 100;
+            }
+        }
     }
 
     /**

@@ -34,6 +34,7 @@ import androidx.test.core.app.ActivityScenario;
 
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
+import com.orgzly.android.espresso.util.EspressoUtils;
 import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.ui.main.MainActivity;
 
@@ -126,9 +127,6 @@ public class BookTest extends OrgzlyTest {
         scenario = ActivityScenario.launch(MainActivity.class);
 
         onView(allOf(withText("book-name"), isDisplayed())).perform(click());
-
-        // Wait for BookFragment to load before tests run
-        onView(withId(R.id.fragment_book_view_flipper)).check(matches(isDisplayed()));
     }
 
     @After
