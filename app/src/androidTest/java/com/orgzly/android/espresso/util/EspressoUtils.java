@@ -29,6 +29,7 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ListView;
@@ -162,7 +163,7 @@ public class EspressoUtils {
 
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
         // Wait for BookFragment to load
-        EspressoUtils.retryViewAssertion(onView(withId(R.id.fragment_book_recycler_view)),
+        retryViewAssertion(onView(withId(R.id.fragment_book_recycler_view)),
                 matches(isDisplayed()), 3000);
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
@@ -476,16 +477,28 @@ public class EspressoUtils {
 
     public static void retryViewAssertion(ViewInteraction viewInteraction,
                                       ViewAssertion viewAssertion, int timeoutInMs) {
+        Log.w("EspressoUtils",
+                "Starting view hunt. Current root view is " + onView(ViewMatchers.isRoot()).toString());
         int timeElapsedInMs = 0;
         while (timeElapsedInMs < timeoutInMs) {
             try {
                 viewInteraction.check(viewAssertion);
+                Log.w("EspressoUtils",
+                        "Found a matching view. Current root view is " + onView(ViewMatchers.isRoot()).toString());
                 return;
             } catch (NoMatchingViewException | AssertionError ignored) {
-                SystemClock.sleep(100);
-                timeElapsedInMs += 100;
+                // Exponentially increase the sleep times
+                if (timeElapsedInMs == 0) {
+                    SystemClock.sleep(100);
+                    timeElapsedInMs += 100;
+                } else {
+                    SystemClock.sleep(timeElapsedInMs);
+                    timeElapsedInMs += timeElapsedInMs;
+                }
             }
         }
+        Log.w("EspressoUtils",
+                "View hunt has timed out. Current root view is " + onView(ViewMatchers.isRoot()).toString());
     }
 
     /**
