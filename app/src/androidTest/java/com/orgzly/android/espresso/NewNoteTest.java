@@ -119,7 +119,7 @@ public class NewNoteTest extends OrgzlyTest {
 
         onBook(0).perform(click());
 
-        onView(withId(R.id.fab)).perform(click());
+        onView(allOf(withId(R.id.fab), isDisplayed())).perform(click());
         onView(withId(R.id.title_edit)).perform(replaceTextCloseKeyboard("A"));
         onView(withId(R.id.done)).perform(click()); // Note done
         onView(withId(R.id.fab)).perform(click());
