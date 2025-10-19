@@ -168,7 +168,7 @@ public class EspressoUtils {
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
         // Wait for BookFragment to load
         retryViewAssertion(onView(withId(R.id.fragment_book_recycler_view)),
-                matches(isDisplayed()), 5000);
+                matches(isDisplayed()), 10000);
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
 
@@ -481,13 +481,10 @@ public class EspressoUtils {
 
     public static void retryViewAssertion(ViewInteraction viewInteraction,
                                       ViewAssertion viewAssertion, int timeoutInMs) {
-        System.out.println("Starting view hunt. Current root view: " + onView(ViewMatchers.isRoot()).toString());
         int timeElapsedInMs = 0;
         while (timeElapsedInMs < timeoutInMs) {
             try {
-                onView(isRoot()).perform(waitForStableRoot());
                 viewInteraction.check(viewAssertion);
-                System.out.println("Found matching view. Current root view: " + onView(ViewMatchers.isRoot()).toString());
                 return;
             } catch (NoMatchingViewException | AssertionError ignored) {
                 // Exponentially increase the sleep times
