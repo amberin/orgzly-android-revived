@@ -4,13 +4,13 @@ import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.longClick;
+import static androidx.test.espresso.action.ViewActions.scrollCompletelyTo;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.contrib.DrawerActions.open;
 import static androidx.test.espresso.contrib.PickerActions.setDate;
 import static androidx.test.espresso.contrib.PickerActions.setTime;
 import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
-import static androidx.test.espresso.matcher.ViewMatchers.isClickable;
 import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
@@ -472,7 +472,7 @@ public class MiscTest extends OrgzlyTest {
             // Search results
             onView(withId(R.id.drawer_layout)).perform(open());
             retryViewAssertion(onView(withText("Scheduled")), matches(isDisplayed()), 5000);
-            onView(withText("Scheduled")).perform(scroll(), click());
+            onView(withText("Scheduled")).perform(scrollCompletelyTo(), click());
             fragmentTest(activity, true, withId(R.id.fragment_query_search_view_flipper));
 
             // Agenda
