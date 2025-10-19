@@ -516,7 +516,7 @@ public class EspressoUtils {
             }
         }
         // Try a sleep as a last resort.
-        SystemClock.sleep(1000);
+        SystemClock.sleep(2000);
         viewInteraction.check(viewAssertion);
     }
 
