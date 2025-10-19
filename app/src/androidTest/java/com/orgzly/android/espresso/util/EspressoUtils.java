@@ -51,6 +51,10 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.espresso.util.HumanReadables;
 import androidx.test.espresso.util.TreeIterables;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
 
 import com.orgzly.R;
 import com.orgzly.android.ui.SpanUtils;
@@ -493,6 +497,24 @@ public class EspressoUtils {
                 } else {
                     SystemClock.sleep(timeElapsedInMs);
                     timeElapsedInMs += timeElapsedInMs;
+                }
+            } catch (RuntimeException e) {
+                // Handle ANR popup. Exception class is private - need to match by error message.
+                if (e.getMessage().contains("Waited for the root of the view hierarchy to have " +
+                        "window focus and not request layout for 10 seconds.")) {
+                    UiDevice device = UiDevice.getInstance(getInstrumentation());
+                    UiObject waitButton = device.findObject(new UiSelector().textContains("wait"));
+                    if (waitButton.exists()) {
+                        try {
+                            waitButton.click();
+                        } catch (UiObjectNotFoundException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                    SystemClock.sleep(timeElapsedInMs);
+                    timeElapsedInMs += timeElapsedInMs;
+                } else {
+                    throw e;
                 }
             }
         }
