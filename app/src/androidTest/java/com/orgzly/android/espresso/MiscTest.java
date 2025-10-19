@@ -471,8 +471,8 @@ public class MiscTest extends OrgzlyTest {
 
             // Search results
             onView(withId(R.id.drawer_layout)).perform(open());
-            retryViewAssertion(onView(withText("Scheduled")), matches(isClickable()), 5000);
-            onView(withText("Scheduled")).perform(click());
+            retryViewAssertion(onView(withText("Scheduled")), matches(isDisplayed()), 5000);
+            onView(withText("Scheduled")).perform(scroll(), click());
             fragmentTest(activity, true, withId(R.id.fragment_query_search_view_flipper));
 
             // Agenda
