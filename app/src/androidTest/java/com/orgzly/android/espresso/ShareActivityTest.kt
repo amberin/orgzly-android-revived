@@ -234,6 +234,7 @@ class ShareActivityTest : OrgzlyTest() {
         }
         setNoteTitle()
         retryViewAssertion(onView(withId(R.id.done)), matches(isClickable()), 5000)
+        closeSoftKeyboardWithDelay() // again
         onView(withId(R.id.done)).perform(click()) // Note done
     }
 
