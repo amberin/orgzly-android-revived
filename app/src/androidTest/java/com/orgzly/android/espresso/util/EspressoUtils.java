@@ -168,7 +168,7 @@ public class EspressoUtils {
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
         // Wait for BookFragment to load
         retryViewAssertion(onView(withId(R.id.fragment_book_recycler_view)),
-                matches(isDisplayed()), 10000);
+                matches(isDisplayed()), 5000);
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
 
@@ -515,6 +515,8 @@ public class EspressoUtils {
                 }
             }
         }
+        // Try a sleep as a last resort.
+        SystemClock.sleep(1000);
         viewInteraction.check(viewAssertion);
     }
 
