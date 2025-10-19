@@ -8,6 +8,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -292,7 +293,7 @@ class ShareActivityTest : OrgzlyTest() {
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
         onView(isRoot()).perform(waitForStableRoot())
         onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
-        onView(withId(R.id.scheduled_button)).perform(scroll(), click())
+        onView(withId(R.id.scheduled_button)).perform(scrollTo(90), click())
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 

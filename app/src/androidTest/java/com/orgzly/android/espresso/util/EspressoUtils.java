@@ -481,6 +481,7 @@ public class EspressoUtils {
         int timeElapsedInMs = 0;
         while (timeElapsedInMs < timeoutInMs) {
             try {
+                onView(isRoot()).perform(waitForStableRoot());
                 viewInteraction.check(viewAssertion);
                 System.out.println("Found matching view. Current root view: " + onView(ViewMatchers.isRoot()).toString());
                 return;
