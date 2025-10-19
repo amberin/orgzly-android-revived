@@ -477,12 +477,12 @@ public class EspressoUtils {
 
     public static void retryViewAssertion(ViewInteraction viewInteraction,
                                       ViewAssertion viewAssertion, int timeoutInMs) {
-        System.out.print("Starting view hunt. Current root view: " + onView(ViewMatchers.isRoot()).toString());
+        System.out.println("Starting view hunt. Current root view: " + onView(ViewMatchers.isRoot()).toString());
         int timeElapsedInMs = 0;
         while (timeElapsedInMs < timeoutInMs) {
             try {
                 viewInteraction.check(viewAssertion);
-                System.out.print("Found a matching view. Current root view: " + onView(ViewMatchers.isRoot()).toString());
+print                System.out.println("Found matching view. Current root view: " + onView(ViewMatchers.isRoot()).toString());
                 return;
             } catch (NoMatchingViewException | AssertionError ignored) {
                 // Exponentially increase the sleep times
@@ -495,7 +495,7 @@ public class EspressoUtils {
                 }
             }
         }
-        System.out.print("View hunt has timed out. Current root view: " + onView(ViewMatchers.isRoot()).toString());
+        System.out.println("View hunt timed out. Current root view: " + onView(ViewMatchers.isRoot()).toString());
     }
 
     /**
