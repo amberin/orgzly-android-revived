@@ -495,7 +495,7 @@ public class EspressoUtils {
                 }
             }
         }
-        System.out.println("View hunt timed out. Current root view: " + onView(ViewMatchers.isRoot()).toString());
+        viewInteraction.check(viewAssertion);
     }
 
     /**
