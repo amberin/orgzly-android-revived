@@ -482,7 +482,7 @@ public class EspressoUtils {
         while (timeElapsedInMs < timeoutInMs) {
             try {
                 viewInteraction.check(viewAssertion);
-print                System.out.println("Found matching view. Current root view: " + onView(ViewMatchers.isRoot()).toString());
+                System.out.println("Found matching view. Current root view: " + onView(ViewMatchers.isRoot()).toString());
                 return;
             } catch (NoMatchingViewException | AssertionError ignored) {
                 // Exponentially increase the sleep times
