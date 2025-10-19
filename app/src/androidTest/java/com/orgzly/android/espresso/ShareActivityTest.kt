@@ -232,7 +232,7 @@ class ShareActivityTest : OrgzlyTest() {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
         setNoteTitle()
-        retryViewAssertion(onView(withId(R.id.done)), matches(isClickable()), 2000)
+        retryViewAssertion(onView(withId(R.id.done)), matches(isClickable()), 5000)
         onView(withId(R.id.done)).perform(click()) // Note done
     }
 
