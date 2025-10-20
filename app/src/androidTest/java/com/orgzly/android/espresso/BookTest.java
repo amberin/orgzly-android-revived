@@ -2,6 +2,7 @@ package com.orgzly.android.espresso;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
+import static androidx.test.espresso.Espresso.setFailureHandler;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.longClick;
 import static androidx.test.espresso.action.ViewActions.swipeUp;
@@ -31,6 +32,7 @@ import android.widget.DatePicker;
 import android.os.SystemClock;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
@@ -69,6 +71,9 @@ public class BookTest extends OrgzlyTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+
+        // Add custom failure handler which takes screenshots
+        setFailureHandler(new EspressoUtils.CustomFailureHandler(InstrumentationRegistry.getInstrumentation().getContext()));
 
         /* Create book with enough notes to get a scrollable list on every device. */
         testUtils.setupBook("book-name",

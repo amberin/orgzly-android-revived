@@ -24,12 +24,12 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.Matchers.anything;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.SystemClock;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ListView;
@@ -40,6 +40,7 @@ import androidx.annotation.IdRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.DataInteraction;
+import androidx.test.espresso.FailureHandler;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.espresso.PerformException;
 import androidx.test.espresso.UiController;
@@ -47,6 +48,7 @@ import androidx.test.espresso.ViewAction;
 import androidx.test.espresso.ViewAssertion;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.action.CloseKeyboardAction;
+import androidx.test.espresso.base.DefaultFailureHandler;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.espresso.util.HumanReadables;
@@ -64,6 +66,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 
+import java.io.File;
 import java.util.concurrent.TimeoutException;
 
 /*
@@ -518,6 +521,23 @@ public class EspressoUtils {
         // Try a sleep as a last resort.
         SystemClock.sleep(2000);
         viewInteraction.check(viewAssertion);
+    }
+
+    public static class CustomFailureHandler implements FailureHandler {
+        private final FailureHandler delegate;
+
+        public CustomFailureHandler(Context targetContext) {
+            delegate = new DefaultFailureHandler(targetContext);
+        }
+
+        @Override
+        public void handle(Throwable error, Matcher<View> viewMatcher) {
+            // take screenshot
+            UiDevice device = UiDevice.getInstance(getInstrumentation());
+            device.takeScreenshot(new File("/sdcard/Pictures/fail-screenshot.png"));
+            // hand over to default handler
+            delegate.handle(error, viewMatcher);
+        }
     }
 
     /**
