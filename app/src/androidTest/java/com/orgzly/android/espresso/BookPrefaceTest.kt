@@ -2,19 +2,30 @@ package com.orgzly.android.espresso
 
 import androidx.annotation.StringRes
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso.*
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
-import com.orgzly.android.espresso.util.EspressoUtils.*
+import com.orgzly.android.espresso.util.EspressoUtils.clickSetting
+import com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick
+import com.orgzly.android.espresso.util.EspressoUtils.onBook
+import com.orgzly.android.espresso.util.EspressoUtils.onPreface
+import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
 import com.orgzly.android.ui.main.MainActivity
 import org.hamcrest.Matchers.not
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 class BookPrefaceTest : OrgzlyTest() {
+
+    private var scenario: ActivityScenario<MainActivity?>? = null
+
     @Before
     @Throws(Exception::class)
     override fun setUp() {
@@ -34,9 +45,18 @@ class BookPrefaceTest : OrgzlyTest() {
                     ** TODO Note #3.
                 """.trimIndent())
 
-        ActivityScenario.launch(MainActivity::class.java)
+        scenario = ActivityScenario.launch(MainActivity::class.java)
 
         onBook(0).perform(click())
+    }
+
+    @After
+    @Throws(java.lang.Exception::class)
+    override fun tearDown() {
+        super.tearDown()
+        if (scenario != null) {
+            scenario!!.close()
+        }
     }
 
     @Test

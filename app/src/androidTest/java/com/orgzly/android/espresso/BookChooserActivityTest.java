@@ -48,32 +48,33 @@ public class BookChooserActivityTest extends OrgzlyTest {
 
     @Test
     public void testDisplayBooks() {
-        startActivityWithCreateShortcutAction();
-
-        onView(allOf(withText("book-one"), isDisplayed())).check(matches(isDisplayed()));
+        try (ActivityScenario<BookChooserActivity> ignored = startActivityWithCreateShortcutAction()) {
+            onView(allOf(withText("book-one"), isDisplayed())).check(matches(isDisplayed()));
+        }
     }
 
     @Ignore("SecurityException")
     @Test
     public void testLongClickChoosesBook() {
-        ActivityScenario<BookChooserActivity> scenario = startActivityWithCreateShortcutAction();
+        try (ActivityScenario<BookChooserActivity> scenario = startActivityWithCreateShortcutAction()) {
 
-        onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
-        // java.lang.SecurityException: Injecting to another application requires INJECT_EVENTS permission
+            onView(allOf(withText("book-one"), isDisplayed())).perform(longClick());
+            // java.lang.SecurityException: Injecting to another application requires INJECT_EVENTS permission
 
-        scenario.onActivity(activity -> assertTrue(activity.isFinishing()));
+            scenario.onActivity(activity -> assertTrue(activity.isFinishing()));
+        }
     }
 
     @Test
     public void testCreateShortcut() {
-        ActivityScenario<BookChooserActivity> scenario = startActivityForResult();
+        try (ActivityScenario<BookChooserActivity> scenario = startActivityForResult()) {
+            onView(allOf(withText("book-one"), isDisplayed())).perform(click());
 
-        onView(allOf(withText("book-one"), isDisplayed())).perform(click());
+            Instrumentation.ActivityResult result = scenario.getResult();
 
-        Instrumentation.ActivityResult result = scenario.getResult();
-
-        assertThat(result.getResultCode(), is(RESULT_OK));
-        // Using string constant directly as EXTRA_SHORTCUT_NAME is deprecated
-        assertThat(result.getResultData().getStringExtra("android.intent.extra.shortcut.NAME"), is("book-one"));
+            assertThat(result.getResultCode(), is(RESULT_OK));
+            // Using string constant directly as EXTRA_SHORTCUT_NAME is deprecated
+            assertThat(result.getResultData().getStringExtra("android.intent.extra.shortcut.NAME"), is("book-one"));
+        }
     }
 }

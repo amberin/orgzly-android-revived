@@ -6,6 +6,7 @@ import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.ui.main.MainActivity;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,6 +29,9 @@ import static org.hamcrest.Matchers.hasToString;
 import static org.hamcrest.Matchers.not;
 
 public class SettingsChangeTest extends OrgzlyTest {
+
+    private ActivityScenario<MainActivity> scenario;
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -41,7 +45,14 @@ public class SettingsChangeTest extends OrgzlyTest {
                 "SCHEDULED: <2014-01-01>\n"
         );
 
-        ActivityScenario.launch(MainActivity.class);
+        scenario = ActivityScenario.launch(MainActivity.class);
+    }
+
+    @After
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+        scenario.close();
     }
 
     @Test
