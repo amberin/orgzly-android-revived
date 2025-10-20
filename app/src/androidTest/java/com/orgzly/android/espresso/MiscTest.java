@@ -550,7 +550,6 @@ public class MiscTest extends OrgzlyTest {
             onView(allOf(withText("Notebook Title"), isDisplayed())).perform(click());
             onNoteInBook(0, R.id.item_preface_text_view)
                     .check(matches(withText(containsString("#+TITLE: Notebook Title"))));
-
         }
     }
 
