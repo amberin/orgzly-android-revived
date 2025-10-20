@@ -39,6 +39,7 @@ import androidx.annotation.IdRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.DataInteraction;
+import androidx.test.espresso.NoActivityResumedException;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.espresso.PerformException;
 import androidx.test.espresso.UiController;
@@ -485,8 +486,8 @@ public class EspressoUtils {
             try {
                 viewInteraction.check(viewAssertion);
                 return;
-            } catch (NoMatchingViewException | AssertionError ignored) {
-                // Exponentially increase the sleep times
+            } catch (NoMatchingViewException | AssertionError | NoActivityResumedException ignored) {
+                // Exponentially increase the sleep duration
                 if (timeElapsedInMs == 0) {
                     SystemClock.sleep(100);
                     timeElapsedInMs += 100;
