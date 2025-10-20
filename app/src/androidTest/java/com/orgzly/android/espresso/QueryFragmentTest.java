@@ -25,6 +25,7 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.onNotesInSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.recyclerViewItemCount;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
+import static com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion;
 import static com.orgzly.android.espresso.util.EspressoUtils.scroll;
 import static com.orgzly.android.espresso.util.EspressoUtils.searchForTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.waitId;
@@ -172,12 +173,12 @@ public class QueryFragmentTest extends OrgzlyTest {
     @Test
     public void testToggleState() {
         testUtils.setupBook("book-one", "* Note");
-        scenario = ActivityScenario.launch(MainActivity.class);
-
-        searchForTextCloseKeyboard("Note");
-        onNoteInSearch(0).perform(longClick());
-        onView(withId(R.id.toggle_state)).perform(click());
-        onNoteInSearch(0, R.id.item_head_title_view).check(matches(withText(startsWith("DONE"))));
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            searchForTextCloseKeyboard("Note");
+            onNoteInSearch(0).perform(longClick());
+            onView(withId(R.id.toggle_state)).perform(click());
+            onNoteInSearch(0, R.id.item_head_title_view).check(matches(withText(startsWith("DONE"))));
+        }
     }
 
     /**
@@ -229,24 +230,22 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "*** Note C :tag3:\n" +
                 "*** Note D :tag3:\n" +
                 "");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
 
-        onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
+            /* Move Note C down. */
+            onNoteInBook(3).perform(longClick());
+            onActionItemClick(R.id.move, R.string.move);
+            onView(withId(R.id.notes_action_move_down)).perform(click());
+            pressBack();
+            pressBack();
 
-        /* Move Note C down. */
-        onNoteInBook(3).perform(longClick());
-        onActionItemClick(R.id.move, R.string.move);
-        onView(withId(R.id.notes_action_move_down)).perform(click());
-        pressBack();
-        pressBack();
-
-        searchForTextCloseKeyboard("t.tag3");
-        onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
-        onNotesInSearch().check(matches(recyclerViewItemCount(2)));
-        onNoteInSearch(0, R.id.item_head_title_view)
-                .check(matches(allOf(withText("Note D  tag3 • tag2 tag1"), isDisplayed())));
-        onNoteInSearch(1, R.id.item_head_title_view)
-                .check(matches(allOf(withText("Note C  tag3 • tag2 tag1"), isDisplayed())));
+            searchForTextCloseKeyboard("t.tag3");
+            onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
+            onNotesInSearch().check(matches(recyclerViewItemCount(2)));
+            onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText("Note D  tag3 • tag2 tag1"), isDisplayed())));
+            onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText("Note C  tag3 • tag2 tag1"), isDisplayed())));
+        }
     }
 
     @Test
@@ -257,24 +256,22 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note C :tag3:\n" +
                 "** Note D :tag3:\n" +
                 "");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
 
-        onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
+            /* Demote Note B. */
+            onNoteInBook(2).perform(longClick());
+            onActionItemClick(R.id.move, R.string.move);
+            onView(withId(R.id.notes_action_move_right)).perform(click());
+            pressBack();
+            pressBack();
 
-        /* Demote Note B. */
-        onNoteInBook(2).perform(longClick());
-        onActionItemClick(R.id.move, R.string.move);
-        onView(withId(R.id.notes_action_move_right)).perform(click());
-        pressBack();
-        pressBack();
-
-        searchForTextCloseKeyboard("t.tag3");
-        onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
-        onNotesInSearch().check(matches(recyclerViewItemCount(2)));
-        onNoteInSearch(0, R.id.item_head_title_view)
-                .check(matches(allOf(withText("Note C  tag3 • tag1 tag2"), isDisplayed())));
-        onNoteInSearch(1, R.id.item_head_title_view)
-                .check(matches(allOf(withText("Note D  tag3 • tag1 tag2"), isDisplayed())));
+            searchForTextCloseKeyboard("t.tag3");
+            onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
+            onNotesInSearch().check(matches(recyclerViewItemCount(2)));
+            onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText("Note C  tag3 • tag1 tag2"), isDisplayed())));
+            onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText("Note D  tag3 • tag1 tag2"), isDisplayed())));
+        }
     }
 
     @Test
@@ -285,27 +282,26 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note C :tag3:\n" +
                 "** Note D :tag3:\n" +
                 "");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
 
-        onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
+            onView(allOf(withText("notebook-1"), isDisplayed())).perform(click());
 
-        /* Cut Note B. */
-        onNoteInBook(2).perform(longClick());
+            /* Cut Note B. */
+            onNoteInBook(2).perform(longClick());
 
-        onActionItemClick(R.id.cut, R.string.cut);
+            onActionItemClick(R.id.cut, R.string.cut);
 
-        /* Paste under Note A. */
-        onNoteInBook(1).perform(longClick());
-        onActionItemClick(R.id.paste, R.string.paste);
-        onView(withText(R.string.heads_action_menu_item_paste_under)).perform(click());
+            /* Paste under Note A. */
+            onNoteInBook(1).perform(longClick());
+            onActionItemClick(R.id.paste, R.string.paste);
+            onView(withText(R.string.heads_action_menu_item_paste_under)).perform(click());
 
-        searchForTextCloseKeyboard("t.tag3");
-        onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
-        onNotesInSearch().check(matches(recyclerViewItemCount(2)));
-        onNoteInSearch(0, R.id.item_head_title_view)
-                .check(matches(allOf(withText("Note C  tag3 • tag1 tag2"), isDisplayed())));
-        onNoteInSearch(1, R.id.item_head_title_view)
-                .check(matches(allOf(withText("Note D  tag3 • tag1 tag2"), isDisplayed())));
+            searchForTextCloseKeyboard("t.tag3");
+            onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
+            onNotesInSearch().check(matches(recyclerViewItemCount(2)));
+            onNoteInSearch(0, R.id.item_head_title_view).check(matches(allOf(withText("Note C  tag3 • tag1 tag2"), isDisplayed())));
+            onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText("Note D  tag3 • tag1 tag2"), isDisplayed())));
+        }
     }
 
     @Test
@@ -346,72 +342,73 @@ public class QueryFragmentTest extends OrgzlyTest {
                 "** Note B\n" +
                 "Content for Note B\n" +
                 "* Note C\n");
-        scenario = ActivityScenario.launch(MainActivity.class);
-
-        onView(allOf(withText("notebook"), isDisplayed())).perform(click());
-        onNoteInBook(1, R.id.item_head_fold_button).perform(click());
-        searchForTextCloseKeyboard("note");
-        onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
-        onNotesInSearch().check(matches(recyclerViewItemCount(3)));
-        onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note B")), isDisplayed())));
-        onNoteInSearch(1, R.id.item_head_content_view).check(matches(allOf(withText(containsString("Content for Note B")), isDisplayed())));
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            onView(allOf(withText("notebook"), isDisplayed())).perform(click());
+            onNoteInBook(1, R.id.item_head_fold_button).perform(click());
+            searchForTextCloseKeyboard("note");
+            onView(withId(R.id.fragment_query_search_view_flipper)).check(matches(isDisplayed()));
+            onNotesInSearch().check(matches(recyclerViewItemCount(3)));
+            onNoteInSearch(1, R.id.item_head_title_view).check(matches(allOf(withText(containsString("Note B")), isDisplayed())));
+            onNoteInSearch(1, R.id.item_head_content_view).check(matches(allOf(withText(containsString("Content for Note B")), isDisplayed())));
+        }
     }
 
     @Test
     public void testDeSelectRemovedNoteInSearch() {
         testUtils.setupBook("notebook", "* TODO Note A\n* TODO Note B");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
 
-        searchForTextCloseKeyboard("i.todo");
+            searchForTextCloseKeyboard("i.todo");
 
-        onNoteInSearch(0).perform(longClick());
+            onNoteInSearch(0).perform(longClick());
 
-        onNotesInSearch().check(matches(recyclerViewItemCount(2)));
+            onNotesInSearch().check(matches(recyclerViewItemCount(2)));
 
-        // Check title for number of selected notes
-        onView(allOf(instanceOf(TextView.class), withParent(withId(R.id.top_toolbar))))
-                .check(matches(withText("1")));
+            // Check title for number of selected notes
+            onView(allOf(instanceOf(TextView.class), withParent(withId(R.id.top_toolbar)))).check(matches(withText("1")));
 
-        // Remove state from selected note
-        onView(withId(R.id.state)).perform(click());
-        onView(withText(R.string.clear)).perform(click());
+            // Remove state from selected note
+            onView(withId(R.id.state)).perform(click());
+            onView(withText(R.string.clear)).perform(click());
 
-        onNotesInSearch().check(matches(recyclerViewItemCount(1)));
+            onNotesInSearch().check(matches(recyclerViewItemCount(1)));
 
-        // Check subtitle for search query
-        onView(allOf(instanceOf(TextView.class), not(withText(R.string.search)), withParent(withId(R.id.top_toolbar))))
-                .check(matches(withText("i.todo")));
+            // Check subtitle for search query
+            onView(allOf(instanceOf(TextView.class), not(withText(R.string.search)), withParent(withId(R.id.top_toolbar)))).check(matches(withText("i.todo")));
+        }
     }
 
     @Test
     public void testNoNotesFoundMessageIsDisplayedInSearch() {
-        scenario = ActivityScenario.launch(MainActivity.class);
-        searchForTextCloseKeyboard("Note");
-        SystemClock.sleep(200);
-        onView(withText(R.string.no_notes_found_after_search)).check(matches(isDisplayed()));
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            searchForTextCloseKeyboard("Note");
+            SystemClock.sleep(200);
+            onView(withText(R.string.no_notes_found_after_search)).check(matches(isDisplayed()));
+        }
     }
 
     @Ignore("Not implemented yet")
     @Test
     public void testPreselectedStateOfSelectedNote() {
         testUtils.setupBook("notebook", "* TODO Note A\n* TODO Note B");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            searchForTextCloseKeyboard("i.todo");
 
-        searchForTextCloseKeyboard("i.todo");
+            onNoteInSearch(1).perform(longClick());
 
-        onNoteInSearch(1).perform(longClick());
+            onView(withId(R.id.state)).perform(click());
 
-        onView(withId(R.id.state)).perform(click());
-
-        onView(withText("TODO")).check(matches(isChecked()));
+            onView(withText("TODO")).check(matches(isChecked()));
+        }
     }
 
     @Test
     public void testSearchAndClickOnNoteWithTwoDifferentEvents() {
         testUtils.setupBook("notebook", "* Note\n<2000-01-01>\n<2000-01-02>");
-        scenario = ActivityScenario.launch(MainActivity.class);
-        searchForTextCloseKeyboard("e.lt.now");
-        onNoteInSearch(0).perform(click());
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            searchForTextCloseKeyboard("e.lt.now");
+            onNoteInSearch(0).perform(click());
+        }
     }
 
     @Test
@@ -429,20 +426,22 @@ public class QueryFragmentTest extends OrgzlyTest {
 
         testUtils.setupBook("notebook-1", "* Note A\nSCHEDULED: " + inOneHour);
 
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
 
-        onBook(0).perform(click());
+            onBook(0).perform(click());
 
-        // Remove time usage
-        onView(allOf(withText(endsWith("Note A")), isDisplayed())).perform(longClick());
-        onView(withId(R.id.schedule)).perform(click());
-        onView(withId(R.id.time_used_checkbox)).perform(scroll(), click());
-        onView(withText(R.string.set)).perform(click());
-        pressBack();
+            // Remove time usage
+            retryViewAssertion(onView(withText(endsWith("Note A"))), matches(isDisplayed()), 1000);
+            onView(allOf(withText(endsWith("Note A")), isDisplayed())).perform(longClick());
+            onView(withId(R.id.schedule)).perform(click());
+            onView(withId(R.id.time_used_checkbox)).perform(scroll(), click());
+            onView(withText(R.string.set)).perform(click());
+            pressBack();
 
-        searchForTextCloseKeyboard("s.now");
+            searchForTextCloseKeyboard("s.now");
 
-        onNotesInSearch().check(matches(recyclerViewItemCount(1)));
+            onNotesInSearch().check(matches(recyclerViewItemCount(1)));
+        }
     }
 
     @Test
@@ -451,26 +450,23 @@ public class QueryFragmentTest extends OrgzlyTest {
 
         // Create a saved search with Agenda View
         testUtils.createSavedSearch("My Agenda", ".it.done ad.7");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
 
-        // Open drawer
-        onView(withId(R.id.drawer_layout)).perform(open());
+            // Open drawer
+            onView(withId(R.id.drawer_layout)).perform(open());
 
-        // Click on the saved search
-        onView(withText("My Agenda")).perform(click());
+            // Click on the saved search
+            onView(withText("My Agenda")).perform(click());
 
-        // Verify AgendaFragment is displayed
-        onView(withId(R.id.fragment_query_agenda_recycler_view)).check(matches(isDisplayed()));
+            // Verify AgendaFragment is displayed
+            onView(withId(R.id.fragment_query_agenda_recycler_view)).check(matches(isDisplayed()));
 
-        // Verify SearchFragment is NOT displayed
-        onView(withId(R.id.fragment_query_search_recycler_view)).check(doesNotExist());
+            // Verify SearchFragment is NOT displayed
+            onView(withId(R.id.fragment_query_search_recycler_view)).check(doesNotExist());
 
-        // Verify the title in the toolbar
-        onView(allOf(
-            instanceOf(TextView.class),
-            withParent(withId(R.id.top_toolbar)),
-            withText("My Agenda")
-        )).check(matches(isDisplayed()));
+            // Verify the title in the toolbar
+            onView(allOf(instanceOf(TextView.class), withParent(withId(R.id.top_toolbar)), withText("My Agenda"))).check(matches(isDisplayed()));
+        }
     }
 
     @Test
@@ -479,26 +475,23 @@ public class QueryFragmentTest extends OrgzlyTest {
 
         // Create a saved search
         testUtils.createSavedSearch("My Search", "i.todo");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
 
-        // Open drawer
-        onView(withId(R.id.drawer_layout)).perform(open());
+            // Open drawer
+            onView(withId(R.id.drawer_layout)).perform(open());
 
-        // Click on the saved search
-        onView(withText("My Search")).perform(click());
+            // Click on the saved search
+            onView(withText("My Search")).perform(click());
 
-        SystemClock.sleep(200);
+            SystemClock.sleep(200);
 
-        // Verify SearchFragment is displayed
-        onView(withId(R.id.fragment_query_search_recycler_view)).check(matches(isDisplayed()));
+            // Verify SearchFragment is displayed
+            onView(withId(R.id.fragment_query_search_recycler_view)).check(matches(isDisplayed()));
 
-        // Verify AgendaFragment is NOT displayed
-        onView(withId(R.id.fragment_query_agenda_recycler_view)).check(doesNotExist());
+            // Verify AgendaFragment is NOT displayed
+            onView(withId(R.id.fragment_query_agenda_recycler_view)).check(doesNotExist());
 
-        onView(allOf(
-                instanceOf(TextView.class),
-                withParent(withId(R.id.top_toolbar)),
-                withText("My Search")
-        )).check(matches(isDisplayed()));
+            onView(allOf(instanceOf(TextView.class), withParent(withId(R.id.top_toolbar)), withText("My Search"))).check(matches(isDisplayed()));
+        }
     }
 }
