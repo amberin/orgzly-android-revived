@@ -11,6 +11,7 @@ import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
+import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -72,7 +73,7 @@ class ShareActivityTest : OrgzlyTest() {
     }
 
     private fun setNoteTitle(title: String = "Dummy title") {
-        retryViewAssertion(onView(withId(R.id.title_edit)), matches(isClickable()), 1000)
+        retryViewAssertion(onView(withId(R.id.title_edit)), matches(isCompletelyDisplayed()), 1000)
         onView(withId(R.id.title_edit)).perform(replaceText(title))
         closeSoftKeyboardWithDelay()
     }

@@ -133,4 +133,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshot
-          path: ./build/fail-screenshot.png
+          path: ./build/fail-screenshot-*.png
+          if-no-files-found: ignore

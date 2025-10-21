@@ -17,7 +17,6 @@ import com.orgzly.android.data.DataRepository;
 import com.orgzly.android.data.DbRepoBookRepository;
 import com.orgzly.android.db.OrgzlyDatabase;
 import com.orgzly.android.db.entity.BookView;
-import com.orgzly.android.espresso.util.EspressoUtils;
 import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.prefs.AppPreferencesValues;
 import com.orgzly.android.repos.RepoFactory;
@@ -33,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
 
@@ -230,7 +230,7 @@ public class OrgzlyTest {
         public void handle(Throwable error, Matcher<View> viewMatcher) {
             // take screenshot
             UiDevice device = UiDevice.getInstance(getInstrumentation());
-            device.takeScreenshot(new File("/sdcard/Pictures/fail-screenshot.png"));
+            device.takeScreenshot(new File("/sdcard/Pictures/fail-screenshot-" + Instant.now().getEpochSecond() + ".png"));
             // hand over to default handler
             delegate.handle(error, viewMatcher);
         }

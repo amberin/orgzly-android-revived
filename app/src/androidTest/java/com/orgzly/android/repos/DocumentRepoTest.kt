@@ -219,6 +219,7 @@ class DocumentRepoTest : SyncRepoTest, OrgzlyTest() {
             }
             // Back in Orgzly:
             retryViewAssertion(onView(withId(R.id.fab)), matches(isClickable()), 5000)
+            SystemClock.sleep(500)
             onView(withId(R.id.fab)).perform(click())
         }
     }
