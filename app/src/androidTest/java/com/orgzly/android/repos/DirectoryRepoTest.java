@@ -54,7 +54,7 @@ public class DirectoryRepoTest extends OrgzlyTest {
         File tmpFile = dataRepository.getTempBookFile();
         try {
             MiscUtils.writeStringToFile("...", tmpFile);
-            repo.storeBook(tmpFile, "booky.org");
+            repo.storeBook(tmpFile, "booky1.org");
         } finally {
             tmpFile.delete();
         }
@@ -62,10 +62,10 @@ public class DirectoryRepoTest extends OrgzlyTest {
         List<VersionedRook> books = repo.getBooks();
 
         assertEquals(1, books.size());
-        assertEquals("booky", BookName.fromRook(books.get(0)).getName());
-        assertEquals("booky.org", BookName.fromRook(books.get(0)).getRepoRelativePath());
+        assertEquals("booky1", BookName.fromRook(books.get(0)).getName());
+        assertEquals("booky1.org", BookName.fromRook(books.get(0)).getRepoRelativePath());
         assertEquals(repoUriString, books.get(0).getRepoUri().toString());
-        assertEquals(repoUriString + "/booky.org", books.get(0).getUri().toString());
+        assertEquals(repoUriString + "/booky1.org", books.get(0).getUri().toString());
     }
 
     @Test
@@ -123,14 +123,14 @@ public class DirectoryRepoTest extends OrgzlyTest {
         BookView bookView;
 
         testUtils.setupRepo(RepoType.DIRECTORY, repoUriString);
-        testUtils.setupBook("booky", "");
+        testUtils.setupBook("booky2", "");
 
         testUtils.sync();
-        bookView = dataRepository.getBookView("booky");
+        bookView = dataRepository.getBookView("booky2");
 
-        assertEquals(repoUriString, bookView.getLinkRepo().getUrl());
+        assertEquals(repoUriString, bookView.getLinkepo().getUrl());
         assertEquals(repoUriString, bookView.getSyncedTo().getRepoUri().toString());
-        assertEquals(repoUriString + "/booky.org", bookView.getSyncedTo().getUri().toString());
+        assertEquals(repoUriString + "/booky2.org", bookView.getSyncedTo().getUri().toString());
 
         dataRepository.renameBook(bookView, "booky-renamed");
         bookView = dataRepository.getBookView("booky-renamed");
