@@ -642,7 +642,7 @@ public class MiscTest extends OrgzlyTest {
     public void testNewlyCreatedBookShouldNotHaveEncodingsDisplayed() {
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             onView(withId(R.id.fab)).perform(click());
-            onView(withId(R.id.dialog_input)).perform(replaceTextCloseKeyboard("booky"));
+            onView(withId(R.id.dialog_input)).perform(replaceTextCloseKeyboard("booky3misctest"));
             onView(withText(R.string.create)).perform(click());
             onBook(0, R.id.item_book_encoding_used_container).check(matches(not(isDisplayed())));
             onBook(0, R.id.item_book_encoding_detected_container).check(matches(not(isDisplayed())));
