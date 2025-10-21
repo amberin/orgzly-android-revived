@@ -128,7 +128,7 @@ public class DirectoryRepoTest extends OrgzlyTest {
         testUtils.sync();
         bookView = dataRepository.getBookView("booky2");
 
-        assertEquals(repoUriString, bookView.getLinkepo().getUrl());
+        assertEquals(repoUriString, bookView.getLinkRepo().getUrl());
         assertEquals(repoUriString, bookView.getSyncedTo().getRepoUri().toString());
         assertEquals(repoUriString + "/booky2.org", bookView.getSyncedTo().getUri().toString());
 
