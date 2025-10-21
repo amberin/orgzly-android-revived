@@ -64,7 +64,7 @@ public class SyncingTest extends OrgzlyTest {
     @Test
     public void testAutoSyncIsTriggeredAfterCreatingNote() {
         Repo repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupRook(repo, "mock://repo-a/booky.org", "", "abc", 1234567890000L);
+        testUtils.setupRook(repo, "mock://repo-a/booky4.org", "", "abc", 1234567890000L);
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             sync();
 
@@ -91,7 +91,7 @@ public class SyncingTest extends OrgzlyTest {
             onView(withId(R.id.drawer_layout)).perform(open());
             onView(allOf(withText(R.string.notebooks), isDescendantOfA(withId(R.id.drawer_navigation_view)))).perform(click());
             onView(withId(R.id.fragment_books_view_flipper)).check(matches(isDisplayed()));
-            onView(allOf(withText("booky"), withId(R.id.item_book_title))).check(matches(isDisplayed()));
+            onView(allOf(withText("booky4"), withId(R.id.item_book_title))).check(matches(isDisplayed()));
             onView(allOf(withId(R.id.item_book_sync_needed_icon))).check(matches(not(isDisplayed())));
         }
     }
@@ -99,7 +99,7 @@ public class SyncingTest extends OrgzlyTest {
     @Test
     public void testPrefaceModificationMakesBookOutOfSync() {
         Repo repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupRook(repo, "mock://repo-a/booky.org", "", "abc", 1234567890000L);
+        testUtils.setupRook(repo, "mock://repo-a/booky5.org", "", "abc", 1234567890000L);
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             sync();
 
@@ -473,11 +473,11 @@ public class SyncingTest extends OrgzlyTest {
     public void testSettingLinkToRenamedRepo() throws JSONException {
         testUtils.dropboxTestPreflight();
         Repo repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupRook(repo, "mock://repo-a/booky.org", "Täht", "1abcde", 1400067156000L);
+        testUtils.setupRook(repo, "mock://repo-a/booky6.org", "Täht", "1abcde", 1400067156000L);
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             sync();
             onBook(0, R.id.item_book_link_repo).check(matches(allOf(withText("mock://repo-a"), isDisplayed())));
-            onBook(0, R.id.item_book_synced_url).check(matches(allOf(withText("mock://repo-a/booky.org"), isDisplayed())));
+            onBook(0, R.id.item_book_synced_url).check(matches(allOf(withText("mock://repo-a/booky6.org"), isDisplayed())));
             onBook(0, R.id.item_book_encoding_used).check(matches((withText(context.getString(R.string.argument_used, "UTF-8")))));
             onBook(0, R.id.item_book_encoding_detected).check(matches((withText(context.getString(R.string.argument_detected, "UTF-8")))));
             onBook(0, R.id.item_book_encoding_selected).check(matches(not(isDisplayed())));
@@ -496,7 +496,7 @@ public class SyncingTest extends OrgzlyTest {
             /* Set link to new repository. */
             onView(withId(R.id.drawer_layout)).perform(open());
             onView(allOf(withText(R.string.notebooks), isDescendantOfA(withId(R.id.drawer_navigation_view)))).perform(click());
-            onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
+            onView(allOf(withText("booky6"), isDisplayed())).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
             onView(withText("dropbox:/repo-b")).perform(click());
@@ -507,7 +507,7 @@ public class SyncingTest extends OrgzlyTest {
             onBook(0, R.id.item_book_encoding_detected).check(matches((withText(context.getString(R.string.argument_detected, "UTF-8")))));
             onBook(0, R.id.item_book_encoding_selected).check(matches(not(isDisplayed())));
 
-            onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
+            onView(allOf(withText("booky6"), isDisplayed())).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
             onView(withText("dropbox:/repo-b")).check(matches(isDisplayed())); // Current value
@@ -520,9 +520,9 @@ public class SyncingTest extends OrgzlyTest {
 
         testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
         testUtils.setupRepo(RepoType.MOCK, "mock://repo-b");
-        testUtils.setupBook("booky", "");
+        testUtils.setupBook("booky7", "");
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
-            onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
+            onView(allOf(withText("booky7"), isDisplayed())).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
             onView(withText("mock://repo-a")).perform(click());
@@ -553,11 +553,11 @@ public class SyncingTest extends OrgzlyTest {
     @Test
     public void testRemovingLinkFromBook() {
         Repo repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupBook("booky", "", repo);
+        testUtils.setupBook("booky8", "", repo);
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             onBook(0, R.id.item_book_link_repo).check(matches(allOf(withText("mock://repo-a"), isDisplayed())));
 
-            onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
+            onView(allOf(withText("booky8"), isDisplayed())).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
             onView(withText(R.string.remove_notebook_link)).perform(click());
@@ -569,20 +569,20 @@ public class SyncingTest extends OrgzlyTest {
     @Test
     public void testSettingLinkForLoadedOrgTxtBook() {
         Repo repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupRook(repo, "mock://repo-a/booky.org.txt", "", "1abcdef", 1400067155);
+        testUtils.setupRook(repo, "mock://repo-a/booky9.org.txt", "", "1abcdef", 1400067155);
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             sync();
 
             onBook(0, R.id.item_book_link_repo).check(matches(allOf(withText("mock://repo-a"), isDisplayed())));
-            onBook(0, R.id.item_book_last_action).check(matches(withText(containsString("Loaded from mock://repo-a/booky.org.txt"))));
+            onBook(0, R.id.item_book_last_action).check(matches(withText(containsString("Loaded from mock://repo-a/booky9.org.txt"))));
 
-            onView(allOf(withText("booky"), isDisplayed())).perform(longClick());
+            onView(allOf(withText("booky9"), isDisplayed())).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.books_context_menu_item_set_link)).perform(click());
             onView(withText("mock://repo-a")).perform(click());
 
             onBook(0, R.id.item_book_link_repo).check(matches(allOf(withText("mock://repo-a"), isDisplayed())));
-            onBook(0, R.id.item_book_synced_url).check(matches(allOf(withText("mock://repo-a/booky.org.txt"), isDisplayed())));
+            onBook(0, R.id.item_book_synced_url).check(matches(allOf(withText("mock://repo-a/booky9.org.txt"), isDisplayed())));
         }
     }
 
@@ -649,13 +649,13 @@ public class SyncingTest extends OrgzlyTest {
     @Test
     public void testDeleteNonExistentRemoteFile() throws IOException {
         testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupBook("booky", "Sample book used for tests");
+        testUtils.setupBook("booky10", "Sample book used for tests");
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             sync();
 
-            dbRepoBookRepository.deleteBook(Uri.parse("mock://repo-a/booky.org"));
+            dbRepoBookRepository.deleteBook(Uri.parse("mock://repo-a/booky10.org"));
 
-            onView(allOf(withText("booky"), isDisplayed())).check(matches(isDisplayed()));
+            onView(allOf(withText("booky10"), isDisplayed())).check(matches(isDisplayed()));
             onBook(0).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.delete)).perform(click());
@@ -667,11 +667,11 @@ public class SyncingTest extends OrgzlyTest {
     @Test
     public void testDeleteExistingRemoteFile() {
         Repo repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a");
-        testUtils.setupBook("booky", "Sample book used for tests");
+        testUtils.setupBook("booky11", "Sample book used for tests");
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             sync();
 
-            onView(allOf(withText("booky"), isDisplayed())).check(matches(isDisplayed()));
+            onView(allOf(withText("booky11"), isDisplayed())).check(matches(isDisplayed()));
             onBook(0).perform(longClick());
             contextualToolbarOverflowMenu().perform(click());
             onView(withText(R.string.delete)).perform(click());
