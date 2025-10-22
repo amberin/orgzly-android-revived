@@ -39,6 +39,7 @@ class SshKeyCreationTest(private val param: Parameter) : OrgzlyTest() {
     fun testCreateUnprotectedKey() {
         Assume.assumeFalse(BuildConfig.IS_GIT_REMOVED);
         ActivityScenario.launch(MainActivity::class.java).use {
+            getInstrumentation().waitForIdleSync()
             EspressoUtils.onActionItemClick(R.id.activity_action_settings, R.string.settings)
             EspressoUtils.clickSetting(R.string.app)
             EspressoUtils.clickSetting(R.string.developer_options)
