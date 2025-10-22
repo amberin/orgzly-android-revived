@@ -19,6 +19,7 @@ import androidx.test.espresso.contrib.PickerActions.setTime
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withClassName
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
@@ -432,7 +433,7 @@ class NoteFragmentTest : OrgzlyTest() {
         }
 
         // Give AVD time to complete rotation
-        retryViewAssertion(onView(withText(R.string.set)), matches(isDisplayed()), 1000)
+        retryViewAssertion(onView(withText(R.string.set)), matches(isCompletelyDisplayed()), 1000)
 
         /* Set time. */
         onView(withText(R.string.set)).perform(click())
