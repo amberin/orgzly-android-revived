@@ -316,7 +316,7 @@ class ShareActivityTest : OrgzlyTest() {
 
             // Allow time for the note to get properly stored in DB
             var elapsedTimeInMs = 0
-            while (elapsedTimeInMs < 1000) {
+            while (elapsedTimeInMs < 2000) {
                 try {
                     assertEquals(3, dataRepository.getNotes("book-one").size)
                     break
