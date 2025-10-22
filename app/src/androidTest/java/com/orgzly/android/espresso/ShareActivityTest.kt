@@ -7,7 +7,6 @@ import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
@@ -19,8 +18,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
 import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
-import com.orgzly.android.espresso.util.EspressoUtils.closeSoftKeyboardWithDelay
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
+import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
 import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
 import com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot
@@ -74,8 +73,7 @@ class ShareActivityTest : OrgzlyTest() {
 
     private fun setNoteTitle(title: String = "Dummy title") {
         retryViewAssertion(onView(withId(R.id.title_edit)), matches(isCompletelyDisplayed()), 1000)
-        onView(withId(R.id.title_edit)).perform(replaceText(title))
-        closeSoftKeyboardWithDelay()
+        onView(withId(R.id.title_edit)).perform(*replaceTextCloseKeyboard(title))
     }
 
     @Test

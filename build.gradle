@@ -110,6 +110,6 @@ allprojects {
 }
 
 tasks.register('pullScreenshot', Exec) {
-    final def command = ['adb', 'pull', '/sdcard/Pictures/fail-screenshot.png', buildDir]
+    final def command = ['adb', 'pull', '/sdcard/Pictures/.', buildDir]
     commandLine command
 }
