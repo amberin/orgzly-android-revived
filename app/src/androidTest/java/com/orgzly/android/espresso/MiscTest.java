@@ -66,9 +66,6 @@ import org.junit.Test;
 
 public class MiscTest extends OrgzlyTest {
 
-    @Rule
-    public RetryTestRule mRetryTestRule = new RetryTestRule();
-
     @Test
     public void testLftRgt() {
         testUtils.setupBook("booky", "Preface\n* Note 1\n** Note 2\n* Note 3\n");
