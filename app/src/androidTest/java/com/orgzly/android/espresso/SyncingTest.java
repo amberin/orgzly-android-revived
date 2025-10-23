@@ -51,8 +51,6 @@ import org.junit.Test;
 import java.io.IOException;
 
 public class SyncingTest extends OrgzlyTest {
-    @Rule
-    public RetryTestRule mRetryTestRule = new RetryTestRule();
 
     @Test
     public void testRunSync() {
