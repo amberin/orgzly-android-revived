@@ -56,10 +56,6 @@ import org.junit.Test
 class NoteFragmentTest : OrgzlyTest() {
     private lateinit var scenario: ActivityScenario<MainActivity>
 
-    @Rule
-    @JvmField
-    val mRetryTestRule = RetryTestRule()
-
     @Before
     @Throws(Exception::class)
     override fun setUp() {
