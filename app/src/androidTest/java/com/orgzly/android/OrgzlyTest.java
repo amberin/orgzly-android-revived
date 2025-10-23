@@ -107,8 +107,8 @@ public class OrgzlyTest {
 
         dataRepository.clearDatabase();
 
-        // Add custom failure handler which takes a screenshot
-        setFailureHandler(new OrgzlyCustomFailureHandler(InstrumentationRegistry.getInstrumentation().getContext()));
+        // Custom failure handler for taking screenshots
+        setFailureHandler(new OrgzlyCustomFailureHandler(context));
     }
 
     @After
