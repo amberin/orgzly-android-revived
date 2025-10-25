@@ -20,6 +20,7 @@ import androidx.test.uiautomator.UiSelector
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.db.entity.Repo
+import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
 import com.orgzly.android.ui.repos.ReposActivity
 import org.junit.After
 import org.junit.Assert
@@ -217,7 +218,8 @@ class DocumentRepoTest : SyncRepoTest, OrgzlyTest() {
                 mDevice.findObject(UiSelector().text("ALLOW")).click()
             }
             // Back in Orgzly:
-            SystemClock.sleep(1000)
+            retryViewAssertion(onView(withId(R.id.fab)), matches(isClickable()), 5000)
+            SystemClock.sleep(500)
             onView(withId(R.id.fab)).perform(click())
         }
     }

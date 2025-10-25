@@ -1,25 +1,22 @@
 package com.orgzly.android.espresso
 
 import androidx.annotation.StringRes
-import androidx.core.content.ContextCompat.getString
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.espresso.util.EspressoUtils.clickSetting
+import com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick
 import com.orgzly.android.espresso.util.EspressoUtils.onBook
 import com.orgzly.android.espresso.util.EspressoUtils.onPreface
 import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
 import com.orgzly.android.ui.main.MainActivity
-import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Before
@@ -80,15 +77,12 @@ class BookPrefaceTest : OrgzlyTest() {
 
     @Test
     fun testDeleteBookPreface() {
-        val context = getInstrumentation().targetContext
-
         // Preface is displayed
         onPreface().check(matches(isDisplayed()))
 
         // Open preface and delete it
         onPreface().perform(click())
-        openActionBarOverflowOrOptionsMenu(context)
-        onView(allOf(withText(getString(context, R.string.delete)), isDisplayed())).perform(click())
+        onActionItemClick(R.id.delete, R.string.delete)
 
         // Preface is not displayed anymore
         onPreface().check(matches(not(isDisplayed())))
@@ -108,8 +102,7 @@ class BookPrefaceTest : OrgzlyTest() {
     }
 
     private fun setPrefaceSetting(@StringRes id: Int) {
-        openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
-        onView(allOf(withText(getString(getInstrumentation().targetContext, R.string.settings)), isDisplayed())).perform(click())
+        onActionItemClick(R.id.activity_action_settings, R.string.settings)
 
         clickSetting(R.string.pref_title_notebooks)
         clickSetting(R.string.preface_in_book)

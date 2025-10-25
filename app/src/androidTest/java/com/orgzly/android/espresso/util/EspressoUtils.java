@@ -299,18 +299,17 @@ public class EspressoUtils {
      * Item could either be on the action bar (visible) or in the overflow menu.
      */
     public static void onActionItemClick(int id, int resourceId) {
-        onView(withId(id)).perform(click());
-//        try {
-//            onView(withId(id)).perform(click());
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//
-//            // Open the overflow menu OR open the options menu,
-//            // depending on if the device has a hardware or software overflow menu button.
-//            openActionBarOverflowOrOptionsMenu(getInstrumentation().getTargetContext());
-//            onView(allOf(withText(resourceId), isDisplayed())).perform(click());
-//        }
+        try {
+            onView(withId(id)).perform(click());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            // Open the overflow menu OR open the options menu,
+            // depending on if the device has a hardware or software overflow menu button.
+            openActionBarOverflowOrOptionsMenu(getInstrumentation().getTargetContext());
+            onView(allOf(withText(resourceId), isDisplayed())).perform(click());
+        }
     }
 
     public static void clickSetting(int title) {
@@ -350,7 +349,7 @@ public class EspressoUtils {
     public static void searchForTextCloseKeyboard(String str) {
         // Ensure UI is stable before searching for views to avoid grabbing wrong root
         onView(isRoot()).perform(waitForStableRoot());
-        onView(isRoot()).perform(waitId(R.id.search_view, 1000));
+        retryViewAssertion(onView(withId(R.id.search_view)), matches(isDisplayed()), 5000);
         onView(allOf(withId(R.id.search_view), isDisplayed())).perform(click());
 
         // Wait for UI to settle after click before searching for search text field
@@ -475,6 +474,45 @@ public class EspressoUtils {
 
     public static ViewAction scroll() {
         return new NestedScrollViewExtension();
+    }
+
+    public static void retryViewAssertion(ViewInteraction viewInteraction,
+                                      ViewAssertion viewAssertion, int timeoutInMs) {
+        int timeElapsedInMs = 0;
+        while (timeElapsedInMs < timeoutInMs) {
+            try {
+                viewInteraction.check(viewAssertion);
+                return;
+            } catch (NoMatchingViewException | AssertionError | NoActivityResumedException ignored) {
+                // Exponentially increase the sleep duration
+                if (timeElapsedInMs == 0) {
+                    SystemClock.sleep(100);
+                    timeElapsedInMs += 100;
+                } else {
+                    SystemClock.sleep(timeElapsedInMs);
+                    timeElapsedInMs += timeElapsedInMs;
+                }
+            } catch (RuntimeException e) {
+                // Handle ANR popup. Exception class is private - need to match by error message.
+                if (e.getMessage().contains("Waited for the root of the view hierarchy to have " +
+                        "window focus and not request layout for 10 seconds.")) {
+                    UiDevice device = UiDevice.getInstance(getInstrumentation());
+                    UiObject waitButton = device.findObject(new UiSelector().textContains("wait"));
+                    if (waitButton.exists()) {
+                        try {
+                            waitButton.click();
+                        } catch (UiObjectNotFoundException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                    SystemClock.sleep(timeElapsedInMs);
+                    timeElapsedInMs += timeElapsedInMs;
+                } else {
+                    throw e;
+                }
+            }
+        }
+        viewInteraction.check(viewAssertion);
     }
 
     /**

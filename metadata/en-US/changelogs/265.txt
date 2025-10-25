@@ -1,2 +1,0 @@
-• Improve the “share to Orgzly” experience (setting added under “New note”).
-• Target Android 15 (API 35).
