@@ -2,6 +2,7 @@ package com.orgzly.android.espresso;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
+import static androidx.test.espresso.Espresso.setFailureHandler;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.longClick;
 import static androidx.test.espresso.action.ViewActions.scrollCompletelyTo;
@@ -44,6 +45,8 @@ import android.os.SystemClock;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.TimePicker;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.adevinta.android.barista.rule.BaristaRule;
 import com.orgzly.BuildConfig;
@@ -471,6 +474,8 @@ public class MiscTest extends OrgzlyTest {
         Activity activity = baristaRule.getActivityTestRule().getActivity();
 
         // List of repos
+        // Take a screenshot for troubleshooting flakiness
+        setFailureHandler(new EspressoUtils.OrgzlyCustomFailureHandler(context));
         fragmentTest(activity, false, withId(R.id.activity_repos_flipper));
 
         // Directory repo

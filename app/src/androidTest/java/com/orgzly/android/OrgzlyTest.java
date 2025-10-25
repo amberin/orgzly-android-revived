@@ -1,6 +1,5 @@
 package com.orgzly.android;
 
-import static androidx.test.espresso.Espresso.setFailureHandler;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.Manifest;
@@ -10,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.view.View;
 
 import com.orgzly.R;
 import com.orgzly.android.data.DataRepository;
@@ -23,25 +21,19 @@ import com.orgzly.android.repos.RepoFactory;
 import com.orgzly.android.util.UserTimeFormatter;
 import com.orgzly.org.datetime.OrgDateTime;
 
-import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
 
 import androidx.core.content.pm.PackageInfoCompat;
-import androidx.test.espresso.FailureHandler;
-import androidx.test.espresso.base.DefaultFailureHandler;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.UiDevice;
 
 /**
  * Sets up the environment for tests, such as shelf, preferences and contexts.
@@ -106,9 +98,6 @@ public class OrgzlyTest {
         setupPreferences();
 
         dataRepository.clearDatabase();
-
-        // Add custom failure handler which takes a screenshot
-        setFailureHandler(new OrgzlyCustomFailureHandler(InstrumentationRegistry.getInstrumentation().getContext()));
     }
 
     @After
@@ -218,21 +207,4 @@ public class OrgzlyTest {
 
     // @Category
     public interface Permissions {}
-
-    private static class OrgzlyCustomFailureHandler implements FailureHandler {
-        private final FailureHandler delegate;
-
-        public OrgzlyCustomFailureHandler(Context targetContext) {
-            delegate = new DefaultFailureHandler(targetContext);
-        }
-
-        @Override
-        public void handle(Throwable error, Matcher<View> viewMatcher) {
-            // take screenshot
-            UiDevice device = UiDevice.getInstance(getInstrumentation());
-            device.takeScreenshot(new File("/sdcard/Pictures/fail-screenshot-" + Instant.now().getEpochSecond() + ".png"));
-            // hand over to default handler
-            delegate.handle(error, viewMatcher);
-        }
-    }
 }
