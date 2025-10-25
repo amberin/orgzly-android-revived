@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Environment
 import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.withText
@@ -11,6 +12,7 @@ import androidx.test.rule.GrantPermissionRule
 import com.orgzly.R
 import com.orgzly.android.App
 import com.orgzly.android.OrgzlyTest
+import com.orgzly.android.espresso.util.EspressoUtils.OrgzlyCustomFailureHandler
 import com.orgzly.android.espresso.util.EspressoUtils.clickClickableSpan
 import com.orgzly.android.espresso.util.EspressoUtils.onBook
 import com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook
@@ -72,6 +74,10 @@ class ExternalLinksTest(private val param: Parameter) : OrgzlyTest() {
             onBook(0).perform(click())
 
             // Click on link
+
+            // List of repos
+            // Take a screenshot for troubleshooting flakiness
+            Espresso.setFailureHandler(OrgzlyCustomFailureHandler(context))
             onNoteInBook(1, R.id.item_head_content_view).perform(clickClickableSpan(param.link))
 
             SystemClock.sleep(500)
