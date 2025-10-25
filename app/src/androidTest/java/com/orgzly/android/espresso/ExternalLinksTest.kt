@@ -7,6 +7,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.base.DefaultFailureHandler
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.GrantPermissionRule
 import com.orgzly.R
@@ -79,6 +80,7 @@ class ExternalLinksTest(private val param: Parameter) : OrgzlyTest() {
             // Take a screenshot for troubleshooting flakiness
             Espresso.setFailureHandler(OrgzlyCustomFailureHandler(context))
             onNoteInBook(1, R.id.item_head_content_view).perform(clickClickableSpan(param.link))
+            Espresso.setFailureHandler(DefaultFailureHandler(context))
 
             SystemClock.sleep(500)
 

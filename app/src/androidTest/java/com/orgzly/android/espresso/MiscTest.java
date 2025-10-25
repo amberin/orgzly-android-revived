@@ -14,6 +14,7 @@ import static androidx.test.espresso.contrib.PickerActions.setTime;
 import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -31,6 +32,7 @@ import static com.orgzly.android.espresso.util.EspressoUtils.scroll;
 import static com.orgzly.android.espresso.util.EspressoUtils.searchForTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.settingsSetDoneKeywords;
 import static com.orgzly.android.espresso.util.EspressoUtils.settingsSetTodoKeywords;
+import static com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -46,7 +48,7 @@ import android.view.View;
 import android.widget.DatePicker;
 import android.widget.TimePicker;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.espresso.base.DefaultFailureHandler;
 
 import com.adevinta.android.barista.rule.BaristaRule;
 import com.orgzly.BuildConfig;
@@ -477,6 +479,7 @@ public class MiscTest extends OrgzlyTest {
         // Take a screenshot for troubleshooting flakiness
         setFailureHandler(new EspressoUtils.OrgzlyCustomFailureHandler(context));
         fragmentTest(activity, false, withId(R.id.activity_repos_flipper));
+        setFailureHandler(new DefaultFailureHandler(context));
 
         // Directory repo
         onListItem(1).perform(click());
@@ -491,6 +494,7 @@ public class MiscTest extends OrgzlyTest {
     private void fragmentTest(Activity activity, boolean hasSearchMenuItem, Matcher<View> matcher) {
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        onView(isRoot()).perform(waitForStableRoot());
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         onView(matcher).check(matches(isDisplayed()));
