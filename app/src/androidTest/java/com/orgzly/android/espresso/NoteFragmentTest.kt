@@ -3,7 +3,6 @@ package com.orgzly.android.espresso
 import android.content.pm.ActivityInfo
 import android.widget.DatePicker
 import android.widget.TimePicker
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
@@ -18,17 +17,18 @@ import androidx.test.espresso.contrib.PickerActions.setDate
 import androidx.test.espresso.contrib.PickerActions.setTime
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withClassName
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import com.adevinta.android.barista.rule.BaristaRule
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
-import com.orgzly.android.RetryTestRule
 import com.orgzly.android.espresso.util.EspressoUtils.clickClickableSpan
 import com.orgzly.android.espresso.util.EspressoUtils.clickSetting
 import com.orgzly.android.espresso.util.EspressoUtils.closeSoftKeyboardWithDelay
+import com.orgzly.android.espresso.util.EspressoUtils.grantAlarmsAndRemindersSpecialPermission
 import com.orgzly.android.espresso.util.EspressoUtils.listViewItemCount
 import com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick
 import com.orgzly.android.espresso.util.EspressoUtils.onBook
@@ -48,17 +48,14 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasToString
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class NoteFragmentTest : OrgzlyTest() {
-    private lateinit var scenario: ActivityScenario<MainActivity>
 
-    @Rule
-    @JvmField
-    val mRetryTestRule = RetryTestRule()
+    @get:Rule
+    var baristaRule = BaristaRule.create(MainActivity::class.java)
 
     @Before
     @Throws(Exception::class)
@@ -98,15 +95,9 @@ class NoteFragmentTest : OrgzlyTest() {
 
                 """.trimIndent())
 
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         onBook(0).perform(click())
-    }
-
-    @After
-    override fun tearDown() {
-        super.tearDown()
-        scenario.close()
     }
 
     @Test
@@ -134,7 +125,7 @@ class NoteFragmentTest : OrgzlyTest() {
         onView(withId(R.id.title)).perform(click())
         onView(withId(R.id.title_edit)).perform(*replaceTextCloseKeyboard("Note title changed"))
 
-        onView(withId(R.id.done)).perform(click()); // Note done
+        onView(withId(R.id.done)).perform(click()) // Note done
 
         onNoteInBook(1, R.id.item_head_title_view).check(matches(withText("Note title changed")))
     }
@@ -263,7 +254,7 @@ class NoteFragmentTest : OrgzlyTest() {
     @Test
     fun testTitleCanNotBeEmptyForNewNote() {
         onView(withId(R.id.fab)).perform(click()) // New note
-        onView(withId(R.id.done)).perform(click()); // Note done
+        onView(withId(R.id.done)).perform(click()) // Note done
         onSnackbar().check(matches(withText(R.string.title_can_not_be_empty)))
     }
 
@@ -272,14 +263,14 @@ class NoteFragmentTest : OrgzlyTest() {
         onNoteInBook(1).perform(click())
         onView(withId(R.id.title)).perform(click())
         onView(withId(R.id.title_edit)).perform(*replaceTextCloseKeyboard(""))
-        onView(withId(R.id.done)).perform(click()); // Note done
+        onView(withId(R.id.done)).perform(click()) // Note done
         onSnackbar().check(matches(withText(R.string.title_can_not_be_empty)))
     }
 
     @Test
     fun testSavingNoteWithRepeater() {
         onNoteInBook(4).perform(click())
-        onView(withId(R.id.done)).perform(click()); // Note done
+        onView(withId(R.id.done)).perform(click()) // Note done
     }
 
     @Test
@@ -291,45 +282,41 @@ class NoteFragmentTest : OrgzlyTest() {
 
     @Test
     fun testSettingStateRemainsSetAfterRotation() {
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        val activity = baristaRule.activityTestRule.activity
+
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onNoteInBook(1).perform(click())
         onView(withId(R.id.state_button)).perform(click())
         onView(withText("TODO")).perform(click())
         onView(withText("TODO")).check(matches(isDisplayed()))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withText("TODO")).check(matches(isDisplayed()))
     }
 
     @Test
     fun testSettingPriorityRemainsSetAfterRotation() {
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        val activity = baristaRule.activityTestRule.activity
+
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onNoteInBook(1).perform(click())
         onView(withId(R.id.priority_button)).perform(click())
         onView(withText("B")).perform(click())
         onView(withId(R.id.priority_button)).check(matches(withText("B")))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withId(R.id.priority_button)).check(matches(withText("B")))
     }
 
     @Test
     fun testSettingScheduledTimeRemainsSetAfterRotation() {
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        val activity = baristaRule.activityTestRule.activity
+
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onNoteInBook(1).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
@@ -338,9 +325,7 @@ class NoteFragmentTest : OrgzlyTest() {
         onView(withId(R.id.scheduled_button))
                 .check(matches(withText(startsWith(defaultDialogUserDate()))))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withId(R.id.scheduled_button))
                 .check(matches(withText(startsWith(defaultDialogUserDate()))))
@@ -350,16 +335,14 @@ class NoteFragmentTest : OrgzlyTest() {
     fun testSetScheduledTimeAfterRotation() {
         onNoteInBook(1).perform(click())
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        val activity = baristaRule.activityTestRule.activity
+
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
         onView(withId(R.id.scheduled_button)).perform(click())
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withText(R.string.set)).perform(closeSoftKeyboardWithDelay(), click())
         onView(withId(R.id.scheduled_button))
@@ -378,6 +361,7 @@ class NoteFragmentTest : OrgzlyTest() {
 
     @Test
     fun testSettingPmTimeDisplays24HourTime() {
+        grantAlarmsAndRemindersSpecialPermission()
         onNoteInBook(1).perform(click())
 
         onView(withId(R.id.deadline_button)).check(matches(withText("")))
@@ -405,9 +389,9 @@ class NoteFragmentTest : OrgzlyTest() {
 
         onView(withId(R.id.deadline_button)).check(matches(withText("")))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        val activity = baristaRule.activityTestRule.activity
+
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.deadline_button)).perform(click())
 
@@ -428,9 +412,7 @@ class NoteFragmentTest : OrgzlyTest() {
         onView(withText(R.string.ok)).perform(click())
 
         /* Rotate screen. */
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         // Give AVD time to complete rotation
         retryViewAssertion(onView(withText(R.string.set)), matches(isCompletelyDisplayed()), 1000)
@@ -487,10 +469,9 @@ class NoteFragmentTest : OrgzlyTest() {
         onView(allOf(withId(R.id.value), hasSibling(withText("prop-name-2"))))
                 .perform(*replaceTextCloseKeyboard("prop-value-2"))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        val activity = baristaRule.activityTestRule.activity
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.scroll_view)).perform(swipeUp()) // For small screens
         // Allow some time for UI transitions before the first assertion
@@ -515,7 +496,7 @@ class NoteFragmentTest : OrgzlyTest() {
         onView(allOf(withId(R.id.name), withText("prop-name-1"))).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.value), withText("prop-value-1"))).check(matches(isDisplayed()))
 
-        onView(withId(R.id.done)).perform(click()); // Note done
+        onView(withId(R.id.done)).perform(click()) // Note done
 
         onNoteInBook(1).perform(click())
 

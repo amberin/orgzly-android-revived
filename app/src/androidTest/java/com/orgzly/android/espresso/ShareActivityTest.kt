@@ -4,7 +4,6 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.SystemClock
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.scrollTo
@@ -15,6 +14,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import com.adevinta.android.barista.rule.BaristaRule
 import com.orgzly.R
 import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
@@ -30,17 +30,22 @@ import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
 
 class ShareActivityTest : OrgzlyTest() {
+
+    @get:Rule
+    var baristaRule = BaristaRule.create(ShareActivity::class.java)
+
     private fun startActivityWithIntent(
             action: String? = null,
             type: String? = null,
             extraText: String? = null,
             extraStreamUri: String? = null,
             queryString: String? = null,
-            extraSubjectText: String? = null): ActivityScenario<ShareActivity> {
+            extraSubjectText: String? = null) {
 
         val intent = Intent(context, ShareActivity::class.java)
 
@@ -68,7 +73,7 @@ class ShareActivityTest : OrgzlyTest() {
             intent.putExtra(Intent.EXTRA_SUBJECT, extraSubjectText)
         }
 
-        return ActivityScenario.launch(intent)
+        return baristaRule.launchActivity(intent)
     }
 
     private fun setNoteTitle(title: String = "Dummy title") {
@@ -82,19 +87,15 @@ class ShareActivityTest : OrgzlyTest() {
             action = Intent.ACTION_SEND,
             type = "text/plain",
             extraText = "This is some shared text"
-        ).use { scenario ->
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
-            onView(withId(R.id.location_button))
-                .check(matches(withText(context.getString(R.string.default_share_notebook))))
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            }
-            onView(withId(R.id.location_button))
-                .check(matches(withText(context.getString(R.string.default_share_notebook))))
-        }
-    }
+        )
+
+        baristaRule.activityTestRule.activity.requestedOrientation  = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        onView(withId(R.id.location_button))
+            .check(matches(withText(context.getString(R.string.default_share_notebook))))
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        onView(withId(R.id.location_button))
+            .check(matches(withText(context.getString(R.string.default_share_notebook))))
+}
 
     @Test
     fun testBookRemainsSetAfterRotation() {
@@ -105,24 +106,19 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = "This is some shared text").use { scenario ->
+                extraText = "This is some shared text")
 
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-            onView(withId(R.id.location_button)).perform(scroll(), click())
-            onView(withText("book-two")).perform(click())
-            SystemClock.sleep(100)
-            onView(isRoot()).perform(waitId(R.id.location_button, 5000))
-            onView(withId(R.id.location_button)).check(matches(withText("book-two")))
+        onView(withId(R.id.location_button)).perform(scroll(), click())
+        onView(withText("book-two")).perform(click())
+        SystemClock.sleep(100)
+        onView(isRoot()).perform(waitId(R.id.location_button, 5000))
+        onView(withId(R.id.location_button)).check(matches(withText("book-two")))
 
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            }
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-            onView(withId(R.id.location_button)).check(matches(withText("book-two")))
-        }
+        onView(withId(R.id.location_button)).check(matches(withText("book-two")))
     }
 
     @Test
@@ -130,10 +126,10 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = "This is some shared text").use {
-            onView(withId(R.id.location_button))
-                .check(matches(withText(context.getString(R.string.default_share_notebook))))
-        }
+                extraText = "This is some shared text")
+
+        onView(withId(R.id.location_button))
+            .check(matches(withText(context.getString(R.string.default_share_notebook))))
     }
 
     @Test
@@ -142,10 +138,9 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = sharedText).use {
-            onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
-            onView(withId(R.id.title_edit)).check(matches(withText("")))
-        }
+                extraText = sharedText)
+        onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
+        onView(withId(R.id.title_edit)).check(matches(withText("")))
     }
 
     @Test
@@ -156,10 +151,9 @@ class ShareActivityTest : OrgzlyTest() {
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = sharedText,
-                extraSubjectText = sharedSubject).use {
-            onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
-            onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
-        }
+                extraSubjectText = sharedSubject)
+        onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
+        onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
     }
 
     @Test
@@ -170,18 +164,17 @@ class ShareActivityTest : OrgzlyTest() {
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = sharedText,
-                extraSubjectText = sharedSubject).use {
-            // Content should be empty
-            onView(withId(R.id.content_view)).check(matches(withText("")))
-            // Title should be a link with the shared subject as title
-            onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
-            // Title should not be in "edit mode"
-            onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
+                extraSubjectText = sharedSubject)
+        // Content should be empty
+        onView(withId(R.id.content_view)).check(matches(withText("")))
+        // Title should be a link with the shared subject as title
+        onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
+        // Title should not be in "edit mode"
+        onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
 
-            // Verify the link content
-            onView(withId(R.id.title_view)).perform(click())
-            onView(withId(R.id.title_edit)).check(matches(withText("[[" + sharedText + "][" + sharedSubject + "]]")))
-        }
+        // Verify the link content
+        onView(withId(R.id.title_view)).perform(click())
+        onView(withId(R.id.title_edit)).check(matches(withText("[[" + sharedText + "][" + sharedSubject + "]]")))
     }
 
     @Test
@@ -192,14 +185,13 @@ class ShareActivityTest : OrgzlyTest() {
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = sharedText,
-                extraSubjectText = sharedSubject).use {
-            // Content should contain the shared text verbatim
-            onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
-            // Title should match the subject extra
-            onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
-            // Title should not be in "edit mode"
-            onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
-        }
+                extraSubjectText = sharedSubject)
+        // Content should contain the shared text verbatim
+        onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
+        // Title should match the subject extra
+        onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
+        // Title should not be in "edit mode"
+        onView(withId(R.id.title_edit)).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -208,14 +200,13 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = sharedText).use {
-            // Content should contain the shared text verbatim
-            onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
-            // Title should be empty
-            onView(withId(R.id.title_edit)).check(matches(allOf(withText(""), isDisplayed())))
-            // Title should be in "edit mode"
-            onView(withId(R.id.title_view)).check(matches(not(isDisplayed())))
-        }
+                extraText = sharedText)
+        // Content should contain the shared text verbatim
+        onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
+        // Title should be empty
+        onView(withId(R.id.title_edit)).check(matches(allOf(withText(""), isDisplayed())))
+        // Title should be in "edit mode"
+        onView(withId(R.id.title_view)).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -223,31 +214,26 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = "This is some shared text").use { scenario ->
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
-            setNoteTitle()
-            retryViewAssertion(onView(withId(R.id.done)), matches(isClickable()), 5000)
-            onView(withId(R.id.done)).perform(click()) // Note done
-        }
-    }
+                extraText = "This is some shared text")
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        setNoteTitle()
+        retryViewAssertion(onView(withId(R.id.done)), matches(isClickable()), 5000)
+        onView(withId(R.id.done)).perform(click()) // Note done
+}
 
     @Test
     fun testTextEmpty() {
-        startActivityWithIntent(action = Intent.ACTION_SEND, type = "text/plain", extraText = "").use {
-            setNoteTitle()
-            onView(withId(R.id.done)).perform(click()) // Note done
-        }
+        startActivityWithIntent(action = Intent.ACTION_SEND, type = "text/plain", extraText = "")
+        setNoteTitle()
+        onView(withId(R.id.done)).perform(click()) // Note done
     }
 
     @Test
     fun testTextNull() {
-        startActivityWithIntent(action = Intent.ACTION_SEND, type = "text/plain").use {
-            setNoteTitle()
-            onView(withId(R.id.done)).perform(click()) // Note done
-        }
+        startActivityWithIntent(action = Intent.ACTION_SEND, type = "text/plain")
+        setNoteTitle()
+        onView(withId(R.id.done)).perform(click()) // Note done
     }
 
     @Test
@@ -255,26 +241,23 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "image/png",
-                extraStreamUri = "content://uri").use {
-            onView(withId(R.id.title_view)).check(matches(withText("content://uri")))
-            onView(withId(R.id.content_view)).check(matches(withText("Cannot find image using this URI.")))
-            onView(withId(R.id.done)).perform(click()) // Note done
-        }
+                extraStreamUri = "content://uri")
+        onView(withId(R.id.title_view)).check(matches(withText("content://uri")))
+        onView(withId(R.id.content_view)).check(matches(withText("Cannot find image using this URI.")))
+        onView(withId(R.id.done)).perform(click()) // Note done
     }
 
     @Test
     fun testNoMatchingType() {
-        startActivityWithIntent(action = Intent.ACTION_SEND, type = "application/octet-stream").use {
-            onView(withId(R.id.content_view)).check(matches(withText("")))
-            onSnackbar().check(matches(withText(context.getString(R.string.share_type_not_supported, "application/octet-stream"))))
-        }
+        startActivityWithIntent(action = Intent.ACTION_SEND, type = "application/octet-stream")
+        onView(withId(R.id.content_view)).check(matches(withText("")))
+        onSnackbar().check(matches(withText(context.getString(R.string.share_type_not_supported, "application/octet-stream"))))
     }
 
     @Test
     fun testNoActionSend() {
-        startActivityWithIntent().use {
-            onView(withId(R.id.content_view)).check(matches(withText("")))
-        }
+        startActivityWithIntent()
+        onView(withId(R.id.content_view)).check(matches(withText("")))
     }
 
     @Test
@@ -282,24 +265,19 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = "This is some shared text").use { scenario ->
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
+                extraText = "This is some shared text")
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-            onView(withId(R.id.scheduled_button)).check(matches(withText("")))
-            onView(isRoot()).perform(waitForStableRoot())
-            onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
-            onView(withId(R.id.scheduled_button)).perform(scrollTo(90), click())
-            onView(withText(R.string.set)).perform(click())
-            onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
+        onView(withId(R.id.scheduled_button)).check(matches(withText("")))
+        onView(isRoot()).perform(waitForStableRoot())
+        onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
+        onView(withId(R.id.scheduled_button)).perform(scrollTo(90), click())
+        onView(withText(R.string.set)).perform(click())
+        onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 
-            scenario.onActivity { activity ->
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            }
+        baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-            onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
-        }
+        onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
     }
 
     @Test
@@ -309,33 +287,32 @@ class ShareActivityTest : OrgzlyTest() {
         startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
-                extraText = "This is some shared text").use {
+                extraText = "This is some shared text")
 
-            setNoteTitle("Note 3")
-            onView(withId(R.id.done)).perform(click()) // Note done
+        setNoteTitle("Note 3")
+        onView(withId(R.id.done)).perform(click()) // Note done
 
-            // Allow time for the note to get properly stored in DB
-            var elapsedTimeInMs = 0
-            while (elapsedTimeInMs < 2000) {
-                try {
-                    assertEquals(3, dataRepository.getNotes("book-one").size)
-                    break
-                } catch (_: AssertionError) {
-                    SystemClock.sleep(100)
-                    elapsedTimeInMs += 100
-                }
+        // Allow time for the note to get properly stored in DB
+        var elapsedTimeInMs = 0
+        while (elapsedTimeInMs < 2000) {
+            try {
+                assertEquals(3, dataRepository.getNotes("book-one").size)
+                break
+            } catch (_: AssertionError) {
+                SystemClock.sleep(100)
+                elapsedTimeInMs += 100
             }
-
-            val (_, lft, rgt) = dataRepository.getLastNote("Note 1")!!.position
-            val (_, lft1, rgt1) = dataRepository.getLastNote("Note 2")!!.position
-            val (_, lft2, rgt2) = dataRepository.getLastNote("Note 3")!!.position
-
-            assertTrue(lft < lft1)
-            assertTrue(lft1 < rgt1)
-            assertTrue(rgt1 < rgt)
-            assertTrue(rgt < lft2)
-            assertTrue(lft2 < rgt2)
         }
+
+        val (_, lft, rgt) = dataRepository.getLastNote("Note 1")!!.position
+        val (_, lft1, rgt1) = dataRepository.getLastNote("Note 2")!!.position
+        val (_, lft2, rgt2) = dataRepository.getLastNote("Note 3")!!.position
+
+        assertTrue(lft < lft1)
+        assertTrue(lft1 < rgt1)
+        assertTrue(rgt1 < rgt)
+        assertTrue(rgt < lft2)
+        assertTrue(lft2 < rgt2)
     }
 
     @Test
@@ -346,8 +323,7 @@ class ShareActivityTest : OrgzlyTest() {
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = "This is some shared text",
-                queryString = "b.foo").use {
-            onView(withId(R.id.location_button)).check(matches(withText("foo")))
-        }
+                queryString = "b.foo")
+        onView(withId(R.id.location_button)).check(matches(withText("foo")))
     }
 }

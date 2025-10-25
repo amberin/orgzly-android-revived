@@ -2,17 +2,14 @@ package com.orgzly.android.espresso;
 
 import android.widget.EditText;
 
-import androidx.test.core.app.ActivityScenario;
-
+import com.adevinta.android.barista.rule.BaristaRule;
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
-import com.orgzly.android.RetryTestRule;
 import com.orgzly.android.ui.main.MainActivity;
 
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.Rule;
+import org.junit.Test;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
@@ -34,10 +31,8 @@ import static org.hamcrest.Matchers.allOf;
 
 public class CreatedAtPropertyTest extends OrgzlyTest {
 
-    private ActivityScenario<MainActivity> scenario;
-
     @Rule
-    public RetryTestRule mRetryTestRule = new RetryTestRule();
+    public BaristaRule<MainActivity> baristaRule = BaristaRule.create(MainActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -61,13 +56,7 @@ public class CreatedAtPropertyTest extends OrgzlyTest {
                 "SCHEDULED: <2014-01-01>\n"
         );
 
-        scenario = ActivityScenario.launch(MainActivity.class);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        scenario.close();
+        baristaRule.launchActivity();
     }
 
     @Test

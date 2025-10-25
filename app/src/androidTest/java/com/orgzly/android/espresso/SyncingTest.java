@@ -36,7 +36,6 @@ import androidx.test.core.app.ActivityScenario;
 
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
-import com.orgzly.android.RetryTestRule;
 import com.orgzly.android.db.entity.Repo;
 import com.orgzly.android.repos.RepoType;
 import com.orgzly.android.sync.BookSyncStatus;
@@ -45,15 +44,11 @@ import com.orgzly.android.ui.main.MainActivity;
 
 import org.json.JSONException;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
 
 public class SyncingTest extends OrgzlyTest {
-    @Rule
-    public RetryTestRule mRetryTestRule = new RetryTestRule();
-
     @Test
     public void testRunSync() {
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
