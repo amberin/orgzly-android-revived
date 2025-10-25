@@ -60,6 +60,7 @@ import com.orgzly.android.repos.RepoType;
 import com.orgzly.android.ui.main.MainActivity;
 
 import org.hamcrest.Matcher;
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,6 +69,12 @@ public class MiscTest extends OrgzlyTest {
 
     @Rule
     public BaristaRule<MainActivity> baristaRule = BaristaRule.create(MainActivity.class);
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        setFailureHandler(new DefaultFailureHandler(context));
+    }
 
     @Test
     public void testLftRgt() {
@@ -479,7 +486,6 @@ public class MiscTest extends OrgzlyTest {
         // Take a screenshot for troubleshooting flakiness
         setFailureHandler(new EspressoUtils.OrgzlyCustomFailureHandler(context));
         fragmentTest(activity, false, withId(R.id.activity_repos_flipper));
-        setFailureHandler(new DefaultFailureHandler(context));
 
         // Directory repo
         onListItem(1).perform(click());

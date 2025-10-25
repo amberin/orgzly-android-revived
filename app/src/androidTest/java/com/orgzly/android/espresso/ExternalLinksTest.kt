@@ -20,6 +20,7 @@ import com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
 import com.orgzly.android.ui.main.MainActivity
 import org.hamcrest.Matchers.startsWith
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,6 +37,12 @@ class ExternalLinksTest(private val param: Parameter) : OrgzlyTest() {
         GrantPermissionRule.grant(android.Manifest.permission.READ_MEDIA_IMAGES)
     } else {
         GrantPermissionRule.grant()
+    }
+
+    @After
+    override fun tearDown() {
+        super.tearDown()
+        Espresso.setFailureHandler(DefaultFailureHandler(context))
     }
 
     companion object {
@@ -80,7 +87,6 @@ class ExternalLinksTest(private val param: Parameter) : OrgzlyTest() {
             // Take a screenshot for troubleshooting flakiness
             Espresso.setFailureHandler(OrgzlyCustomFailureHandler(context))
             onNoteInBook(1, R.id.item_head_content_view).perform(clickClickableSpan(param.link))
-            Espresso.setFailureHandler(DefaultFailureHandler(context))
 
             SystemClock.sleep(500)
 
