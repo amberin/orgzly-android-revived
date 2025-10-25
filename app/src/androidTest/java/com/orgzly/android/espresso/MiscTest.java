@@ -26,7 +26,6 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.onPreface;
 import static com.orgzly.android.espresso.util.EspressoUtils.onSavedSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
-import static com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion;
 import static com.orgzly.android.espresso.util.EspressoUtils.scroll;
 import static com.orgzly.android.espresso.util.EspressoUtils.searchForTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.settingsSetDoneKeywords;
@@ -452,7 +451,6 @@ public class MiscTest extends OrgzlyTest {
 
         // Search results
         onView(withId(R.id.drawer_layout)).perform(open());
-        retryViewAssertion(onView(withText("Scheduled")), matches(isDisplayed()), 5000);
         onView(withText("Scheduled")).perform(scrollCompletelyTo(), click());
         fragmentTest(activity, true, withId(R.id.fragment_query_search_view_flipper));
 
@@ -486,25 +484,19 @@ public class MiscTest extends OrgzlyTest {
     }
 
     private void fragmentTest(Activity activity, boolean hasSearchMenuItem, Matcher<View> matcher) {
-        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
-
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        retryViewAssertion(onView(matcher), matches(isDisplayed()), 1000);
         onView(matcher).check(matches(isDisplayed()));
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         if (hasSearchMenuItem) {
-            retryViewAssertion(onView(withId(R.id.search_view)), matches(isDisplayed()), 1000);
+            onView(withId(R.id.search_view)).check(matches(isDisplayed()));
         } else {
-            retryViewAssertion(onView(withId(R.id.search_view)), doesNotExist(), 1000);
+            onView(withId(R.id.search_view)).check(doesNotExist());
         }
     }
 

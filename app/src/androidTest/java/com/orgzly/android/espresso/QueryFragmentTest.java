@@ -25,7 +25,6 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.onNotesInSearch;
 import static com.orgzly.android.espresso.util.EspressoUtils.recyclerViewItemCount;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
-import static com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion;
 import static com.orgzly.android.espresso.util.EspressoUtils.scroll;
 import static com.orgzly.android.espresso.util.EspressoUtils.searchForTextCloseKeyboard;
 import static com.orgzly.android.espresso.util.EspressoUtils.waitId;
@@ -431,7 +430,6 @@ public class QueryFragmentTest extends OrgzlyTest {
             onBook(0).perform(click());
 
             // Remove time usage
-            retryViewAssertion(onView(withText(endsWith("Note A"))), matches(isDisplayed()), 1000);
             onView(allOf(withText(endsWith("Note A")), isDisplayed())).perform(longClick());
             onView(withId(R.id.schedule)).perform(click());
             onView(withId(R.id.time_used_checkbox)).perform(scroll(), click());

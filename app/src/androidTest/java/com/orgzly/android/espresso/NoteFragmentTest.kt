@@ -17,7 +17,6 @@ import androidx.test.espresso.contrib.PickerActions.setDate
 import androidx.test.espresso.contrib.PickerActions.setTime
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
-import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withClassName
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -36,7 +35,6 @@ import com.orgzly.android.espresso.util.EspressoUtils.onListView
 import com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
 import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
-import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
 import com.orgzly.android.espresso.util.EspressoUtils.setNumber
 import com.orgzly.android.espresso.util.EspressoUtils.settingsSetTodoKeywords
@@ -356,7 +354,7 @@ class NoteFragmentTest : OrgzlyTest() {
                 .check(matches(allOf(withText(userDateTime("[2014-01-01 Wed 20:07]")), isDisplayed())))
         onView(withId(R.id.state_button)).perform(click())
         onView(withText(R.string.clear)).perform(click())
-        retryViewAssertion(onView(withId(R.id.closed_button)), matches(not(isDisplayed())), 1000)
+        onView(withId(R.id.closed_button)).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -413,9 +411,6 @@ class NoteFragmentTest : OrgzlyTest() {
 
         /* Rotate screen. */
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-        // Give AVD time to complete rotation
-        retryViewAssertion(onView(withText(R.string.set)), matches(isCompletelyDisplayed()), 1000)
 
         /* Set time. */
         onView(withText(R.string.set)).perform(click())
@@ -474,11 +469,7 @@ class NoteFragmentTest : OrgzlyTest() {
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.scroll_view)).perform(swipeUp()) // For small screens
-        // Allow some time for UI transitions before the first assertion
-        retryViewAssertion(
-            onView(allOf(withId(R.id.name), withText("prop-name-1"))),
-            matches(isDisplayed()),
-            1000)
+        onView(allOf(withId(R.id.name), withText("prop-name-1"))).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.value), withText("prop-value-1"))).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.name), withText("prop-name-2"))).check(matches(isDisplayed()))
         onView(allOf(withId(R.id.value), withText("prop-value-2"))).check(matches(isDisplayed()))

@@ -8,8 +8,6 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.isClickable
-import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -20,7 +18,6 @@ import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
 import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
-import com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
 import com.orgzly.android.espresso.util.EspressoUtils.waitForStableRoot
 import com.orgzly.android.espresso.util.EspressoUtils.waitId
@@ -77,7 +74,6 @@ class ShareActivityTest : OrgzlyTest() {
     }
 
     private fun setNoteTitle(title: String = "Dummy title") {
-        retryViewAssertion(onView(withId(R.id.title_edit)), matches(isCompletelyDisplayed()), 1000)
         onView(withId(R.id.title_edit)).perform(*replaceTextCloseKeyboard(title))
     }
 
@@ -218,7 +214,6 @@ class ShareActivityTest : OrgzlyTest() {
         baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         baristaRule.activityTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setNoteTitle()
-        retryViewAssertion(onView(withId(R.id.done)), matches(isClickable()), 5000)
         onView(withId(R.id.done)).perform(click()) // Note done
 }
 

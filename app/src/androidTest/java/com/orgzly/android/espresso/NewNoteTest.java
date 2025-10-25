@@ -21,7 +21,6 @@ import static com.orgzly.android.espresso.util.EspressoUtils.onActionItemClick;
 import static com.orgzly.android.espresso.util.EspressoUtils.onBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.onNoteInBook;
 import static com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard;
-import static com.orgzly.android.espresso.util.EspressoUtils.retryViewAssertion;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.endsWith;
 
@@ -102,8 +101,6 @@ public class NewNoteTest extends OrgzlyTest {
         testUtils.setupBook("notebook-1", "");
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
             onBook(0).perform(click());
-
-            retryViewAssertion(onView(withId(R.id.fab)), matches(isClickable()), 1000);
             onView(withId(R.id.fab)).perform(click());
             onView(withId(R.id.title_edit)).perform(replaceTextCloseKeyboard("A"));
             onView(withId(R.id.done)).perform(click()); // Note done
