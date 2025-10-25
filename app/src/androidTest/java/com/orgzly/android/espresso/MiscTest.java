@@ -58,6 +58,7 @@ import com.orgzly.android.db.entity.NotePosition;
 import com.orgzly.android.espresso.util.EspressoUtils;
 import com.orgzly.android.repos.RepoType;
 import com.orgzly.android.ui.main.MainActivity;
+import com.orgzly.android.ui.repos.ReposActivity;
 
 import org.hamcrest.Matcher;
 import org.junit.After;
@@ -69,6 +70,9 @@ public class MiscTest extends OrgzlyTest {
 
     @Rule
     public BaristaRule<MainActivity> baristaRule = BaristaRule.create(MainActivity.class);
+
+    @Rule
+    public BaristaRule<ReposActivity> reposActivityBaristaRule = BaristaRule.create(ReposActivity.class);
 
     @After
     public void tearDown() throws Exception {
@@ -479,8 +483,8 @@ public class MiscTest extends OrgzlyTest {
         testUtils.setupRepo(RepoType.DROPBOX, "dropbox:/orgzly");
         testUtils.setupBook("book-one", "Preface\n\n* Note");
 
-        baristaRule.launchActivity();
-        Activity activity = baristaRule.getActivityTestRule().getActivity();
+        reposActivityBaristaRule.launchActivity();
+        Activity activity = reposActivityBaristaRule.getActivityTestRule().getActivity();
 
         // List of repos
         // Take a screenshot for troubleshooting flakiness
