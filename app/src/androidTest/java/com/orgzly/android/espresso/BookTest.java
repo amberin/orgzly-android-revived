@@ -2,6 +2,7 @@ package com.orgzly.android.espresso;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
+import static androidx.test.espresso.Espresso.setFailureHandler;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.longClick;
 import static androidx.test.espresso.action.ViewActions.swipeUp;
@@ -31,9 +32,11 @@ import android.widget.DatePicker;
 import android.os.SystemClock;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.base.DefaultFailureHandler;
 
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
+import com.orgzly.android.espresso.util.EspressoUtils;
 import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.ui.main.MainActivity;
 
@@ -133,6 +136,7 @@ public class BookTest extends OrgzlyTest {
     public void tearDown() throws Exception {
         super.tearDown();
         scenario.close();
+        setFailureHandler(new DefaultFailureHandler(context));
     }
 
     @Test
@@ -514,6 +518,7 @@ public class BookTest extends OrgzlyTest {
 
     @Test
     public void testLongContentDisplayedInNote() {
+        setFailureHandler(new EspressoUtils.OrgzlyCustomFailureHandler(context));
         onNoteInBook(15, R.id.item_head_content_view).check(matches(withText(
                 allOf(startsWith(LONG_CONTENT_START), endsWith(LONG_CONTENT_END)))));
     }

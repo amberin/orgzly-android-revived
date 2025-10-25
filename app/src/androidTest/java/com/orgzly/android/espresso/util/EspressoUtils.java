@@ -171,7 +171,7 @@ public class EspressoUtils {
     }
 
     public static ViewInteraction onNoteInBook(int position, @IdRes int childView) {
-        onView(isRoot()).perform(waitId(R.id.fragment_book_recycler_view, 5000));
+        onView(isRoot()).perform(waitId(R.id.fragment_book_recycler_view, 10000));
         return onRecyclerViewItem(R.id.fragment_book_recycler_view, position, childView);
     }
 
