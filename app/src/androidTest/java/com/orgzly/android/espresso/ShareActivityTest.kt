@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.scrollCompletelyTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
@@ -277,8 +278,7 @@ class ShareActivityTest : OrgzlyTest() {
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
-        SystemClock.sleep(500)
-        onView(withId(R.id.scheduled_button)).perform(click())
+        onView(withId(R.id.scheduled_button)).perform(scrollCompletelyTo(), click())
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 
