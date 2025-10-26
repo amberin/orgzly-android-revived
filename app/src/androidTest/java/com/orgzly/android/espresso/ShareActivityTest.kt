@@ -6,8 +6,10 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.setFailureHandler
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.base.DefaultFailureHandler
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -15,6 +17,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
 import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
+import com.orgzly.android.espresso.util.EspressoUtils
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
 import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
@@ -283,8 +286,10 @@ class ShareActivityTest : OrgzlyTest() {
         }
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
-        SystemClock.sleep(500)
+        onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
+        setFailureHandler(EspressoUtils.OrgzlyCustomFailureHandler(context))
         onView(withId(R.id.scheduled_button)).perform(click())
+        setFailureHandler(DefaultFailureHandler(context))
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 
