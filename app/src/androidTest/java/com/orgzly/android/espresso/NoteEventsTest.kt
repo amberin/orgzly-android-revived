@@ -2,7 +2,6 @@ package com.orgzly.android.espresso
 
 import android.icu.util.Calendar
 import android.os.SystemClock
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
@@ -10,6 +9,7 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import com.adevinta.android.barista.rule.BaristaRule
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.espresso.util.EspressoUtils.onBook
@@ -24,13 +24,15 @@ import com.orgzly.android.ui.main.MainActivity
 import com.orgzly.org.datetime.OrgDateTime
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
-import org.junit.After
+import org.junit.Rule
 import org.junit.Test
 
 
 class NoteEventsTest : OrgzlyTest() {
-    private lateinit var scenario: ActivityScenario<MainActivity>
 
+    @get:Rule
+    var baristaRule: BaristaRule<MainActivity> = BaristaRule.create(MainActivity::class.java)
+    
     private val now: String
             get() = OrgDateTime(true).toString()
 
@@ -68,17 +70,11 @@ class NoteEventsTest : OrgzlyTest() {
                 .setIsActive(true)
                 .build()
                 .toString()
-
-    @After
-    override fun tearDown() {
-        super.tearDown()
-        scenario.close()
-    }
-
+    
     @Test
     fun search_OneInTitle() {
         testUtils.setupBook("book-a", "* Note $now")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.ge.today")
         onNotesInSearch().check(matches(recyclerViewItemCount(1)))
@@ -87,7 +83,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun search_OneInContent() {
         testUtils.setupBook("book-a", "* Note\n$now")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.ge.today")
         onNotesInSearch().check(matches(recyclerViewItemCount(1)))
@@ -96,7 +92,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun search_TwoSameInContent() {
         testUtils.setupBook("book-a", "* Note\n$now $now")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.ge.today")
         onNotesInSearch().check(matches(recyclerViewItemCount(1)))
@@ -105,7 +101,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun agenda_OneInTitle() {
         testUtils.setupBook("book-a", "* Note $now")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("ad.1")
         onNotesInAgenda().check(matches(recyclerViewItemCount(2)))
@@ -114,7 +110,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun agenda_TwoInTitle() {
         testUtils.setupBook("book-a", "* Note $now $tomorrow")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("ad.2")
         onNotesInAgenda().check(matches(recyclerViewItemCount(4)))
@@ -123,7 +119,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun agenda_OneInContent() {
         testUtils.setupBook("book-a", "* Note\n$now")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("ad.1")
         SystemClock.sleep(500)
@@ -133,7 +129,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun agenda_TwoInContent() {
         testUtils.setupBook("book-a", "* Note\n$now $tomorrow")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("ad.2")
         onNotesInAgenda().check(matches(recyclerViewItemCount(4)))
@@ -159,7 +155,7 @@ class NoteEventsTest : OrgzlyTest() {
             Tomorrow: ${time(1000 * 60 * 60 * 24, hasTime = true)}"
         """.trimIndent())
 
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("ad.5")
 
@@ -209,7 +205,7 @@ class NoteEventsTest : OrgzlyTest() {
             Tomorrow: ${time(1000 * 60 * 60 * 24, hasTime = true)}"
         """.trimIndent())
 
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("b.book-a")
 
@@ -225,7 +221,7 @@ class NoteEventsTest : OrgzlyTest() {
         testUtils.setupBook(
                 "book-a",
                 "* Today $today\n* In few days $inFewDays\n* Today & In few days $today $inFewDays")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.gt.1d")
         onNotesInSearch().check(matches(recyclerViewItemCount(2)))
@@ -234,7 +230,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun agenda_PastEvent() {
         testUtils.setupBook("book-a", "* Few days ago\n$fewDaysAgo")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("ad.2")
         SystemClock.sleep(500)
@@ -244,7 +240,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun agendaSearch_TwoWithScheduledTime() {
         testUtils.setupBook("book-a", "* $yesterday $fewDaysAgo\nSCHEDULED: $tomorrow")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.lt.now ad.3")
         onNotesInAgenda().check(matches(recyclerViewItemCount(4)))
@@ -258,7 +254,7 @@ class NoteEventsTest : OrgzlyTest() {
                 * Note A-01
                   $today $tomorrow
                 """.trimIndent())
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.today")
         onNotesInSearch().check(matches(recyclerViewItemCount(1)))
@@ -275,7 +271,7 @@ class NoteEventsTest : OrgzlyTest() {
                 * Note A-02
                   <2000-01-12>
                 """.trimIndent())
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.lt.now o.e")
         onNotesInSearch().check(matches(recyclerViewItemCount(2)))
@@ -293,7 +289,7 @@ class NoteEventsTest : OrgzlyTest() {
                 * Note A-02
                   <2000-01-12>
                 """.trimIndent())
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard("e.lt.now .o.e")
         onNotesInSearch().check(matches(recyclerViewItemCount(2)))
@@ -304,7 +300,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun shiftFromList() {
         testUtils.setupBook("Book A", "* Note A-01 <2000-01-10 +1d>")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         onBook(0).perform(click())
         onNoteInBook(1, R.id.item_head_title_view).check(matches(withText("Note A-01 <2000-01-10 +1d>")))
@@ -316,7 +312,7 @@ class NoteEventsTest : OrgzlyTest() {
     @Test
     fun shiftFromNote() {
         testUtils.setupBook("Book A", "* Note A-01 <2000-01-10 +1d>")
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         onBook(0).perform(click())
         onNoteInBook(1).perform(click())
@@ -334,7 +330,7 @@ class NoteEventsTest : OrgzlyTest() {
                 * Note A-01
                   SCHEDULED: $tomorrow
                 """.trimIndent())
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        baristaRule.launchActivity()
 
         searchForTextCloseKeyboard(".it.done ad.7 o.e")
 

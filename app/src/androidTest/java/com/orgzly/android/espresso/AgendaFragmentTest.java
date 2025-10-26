@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 
+import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.os.SystemClock;
 import android.widget.DatePicker;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.contrib.PickerActions;
 
+import com.adevinta.android.barista.rule.BaristaRule;
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.espresso.util.EspressoUtils;
@@ -38,12 +40,15 @@ import com.orgzly.android.ui.main.MainActivity;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class AgendaFragmentTest extends OrgzlyTest {
-    private ActivityScenario<MainActivity> scenario;
 
-    private ActivityScenario<MainActivity> defaultSetUp() {
+    @Rule
+    public BaristaRule<MainActivity> baristaRule = BaristaRule.create(MainActivity.class);
+
+    private void defaultSetUp() {
         testUtils.setupBook("book-one",
                 "First book used for testing\n" +
 
@@ -64,19 +69,12 @@ public class AgendaFragmentTest extends OrgzlyTest {
                         "**** Note 2\n" +
                         "SCHEDULED: <2014-01-04 Sat>--<2044-01-10 Fri>\n");
 
-        return ActivityScenario.launch(MainActivity.class);
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        scenario.close();
+        baristaRule.launchActivity();
     }
 
     @Test
     public void testAgendaSavedSearch() {
-        scenario = defaultSetUp();
+        defaultSetUp();
         searchForTextCloseKeyboard(".it.done ad.7");
         /*
          * 1 Overdue
@@ -92,7 +90,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
 
     @Test
     public void testWithNoBook() {
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
         searchForTextCloseKeyboard(".it.done (s.7d or d.7d) ad.7");
         onNotesInAgenda().check(matches(recyclerViewItemCount(7)));
         searchForTextCloseKeyboard(".it.done (s.7d or d.7d) ad.3");
@@ -101,7 +99,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
 
     @Test
     public void testDayAgenda() {
-        scenario = defaultSetUp();
+        defaultSetUp();
         searchForTextCloseKeyboard(".it.done (s.7d or d.7d) ad.1");
         onNotesInAgenda().check(matches(recyclerViewItemCount(7)));
         onItemInAgenda(0, R.id.item_agenda_divider_text).check(matches(allOf(withText(R.string.overdue), isDisplayed())));
@@ -121,14 +119,14 @@ public class AgendaFragmentTest extends OrgzlyTest {
                             "* Event A.\n" +
                             "<" + start.toString() + ">--<" + end.toString() + ">\n");
 
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
         searchForTextCloseKeyboard("ad.5");
         onNotesInAgenda().check(matches(recyclerViewItemCount(10)));
     }
 
     @Test
     public void testOneTimeTaskMarkedDone() {
-        scenario = defaultSetUp();
+        defaultSetUp();
         searchForTextCloseKeyboard(".it.done ad.7");
         /*
          * 1 Overdue
@@ -146,7 +144,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
 
     @Test
     public void testRepeaterTaskMarkedDone() {
-        scenario = defaultSetUp();
+        defaultSetUp();
         searchForTextCloseKeyboard(".it.done ad.7");
         onItemInAgenda(2).perform(longClick());
         onView(withId(R.id.toggle_state)).perform(click());
@@ -155,7 +153,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
 
     @Test
     public void testRangeTaskMarkedDone() {
-        scenario = defaultSetUp();
+        defaultSetUp();
         searchForTextCloseKeyboard(".it.done ad.7");
         onItemInAgenda(3).perform(longClick());
         onView(withId(R.id.toggle_state)).perform(click());
@@ -166,7 +164,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     public void testMoveTaskWithRepeaterToTomorrow() {
         EspressoUtils.grantAlarmsAndRemindersSpecialPermission();
         DateTime tomorrow = DateTime.now().withTimeAtStartOfDay().plusDays(1);
-        scenario = defaultSetUp();
+        defaultSetUp();
         searchForTextCloseKeyboard(".it.done ad.7");
         onItemInAgenda(2).perform(longClick());
         onView(withId(R.id.schedule)).perform(click());
@@ -184,14 +182,14 @@ public class AgendaFragmentTest extends OrgzlyTest {
 
     @Test
     public void testPersistedSpinnerSelection() {
-        scenario = defaultSetUp();
+        defaultSetUp();
 
         searchForTextCloseKeyboard(".it.done ad.7");
         onNotesInAgenda().check(matches(recyclerViewItemCount(25)));
 
         SystemClock.sleep(500);
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+        Activity activity = baristaRule.getActivityTestRule().getActivity();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         onNotesInAgenda().check(matches(recyclerViewItemCount(25)));
     }
@@ -203,7 +201,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
                 "* TODO Note A\nSCHEDULED: <2018-01-01 +1d>\n" +
                 "* TODO Note B\nSCHEDULED: <2018-01-01 .+1d>\n");
 
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
 
         searchForTextCloseKeyboard("i.todo ad.3");
 
@@ -230,7 +228,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     @Test
     public void testPreselectedStateOfSelectedNote() {
         testUtils.setupBook("notebook", "* TODO Note A\nSCHEDULED: <2018-01-01 +1d>");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
 
         searchForTextCloseKeyboard("ad.3");
 
@@ -243,7 +241,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     @Test
     public void testSwipeDivider() {
         testUtils.setupBook("notebook", "* TODO Note A\nSCHEDULED: <2018-01-01 +1d>");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
         searchForTextCloseKeyboard("ad.3");
         onItemInAgenda(0).perform(swipeLeft());
         onItemInAgenda(2).perform(swipeLeft());
@@ -253,7 +251,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     @Test
     public void testOpenCorrectNote() {
         testUtils.setupBook("notebook", "* TODO Note A\nSCHEDULED: <2018-01-01 +1d>");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
 
         searchForTextCloseKeyboard("ad.3");
 
@@ -269,7 +267,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
         testUtils.setupBook("book-1","* DONE Note A");
         testUtils.setupBook("book-2","* TODO Note B\nSCHEDULED: <2014-01-01>\n* TODO Note C\nSCHEDULED: <2014-01-02>\n");
         AppPreferences.isReverseNoteClickAction(context, false);
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
 
         searchForTextCloseKeyboard(".it.done ad.7");
         onItemInAgenda(1).perform(longClick());
@@ -280,7 +278,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     @Test
     public void testInactiveScheduled() {
         testUtils.setupBook("notebook-1", "* Note A\nSCHEDULED: [2020-07-01]\nDEADLINE: <2020-07-01>");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
         searchForTextCloseKeyboard("ad.1");
         // Overdue, note (deadline), today
         onNotesInAgenda().check(matches(recyclerViewItemCount(3)));
@@ -289,7 +287,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     @Test
     public void testInactiveDeadline() {
         testUtils.setupBook("notebook-1", "* Note A\nDEADLINE: [2020-07-01]\nSCHEDULED: <2020-07-01>");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
         searchForTextCloseKeyboard("ad.1");
         // Overdue, note (scheduled), today
         SystemClock.sleep(500);
@@ -299,7 +297,7 @@ public class AgendaFragmentTest extends OrgzlyTest {
     @Test
     public void testInactiveScheduledAndDeadline() {
         testUtils.setupBook("notebook-1", "* Note A\nSCHEDULED: [2020-07-01]\nDEADLINE: [2020-07-01]");
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
         searchForTextCloseKeyboard("ad.1");
         // Today
         onNotesInAgenda().check(matches(recyclerViewItemCount(1)));

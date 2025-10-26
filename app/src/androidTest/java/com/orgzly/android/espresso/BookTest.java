@@ -26,24 +26,26 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 
+import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.widget.DatePicker;
 import android.os.SystemClock;
 
-import androidx.test.core.app.ActivityScenario;
-
+import com.adevinta.android.barista.rule.BaristaRule;
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.prefs.AppPreferences;
 import com.orgzly.android.ui.main.MainActivity;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class BookTest extends OrgzlyTest {
-    private ActivityScenario<MainActivity> scenario;
+
+    @Rule
+    public BaristaRule<MainActivity> baristaRule = BaristaRule.create(MainActivity.class);
 
     private static final String LONG_CONTENT_NOTE_TITLE = "Note with very long content";
     private static final String LONG_CONTENT_START = "START OF LONG CONTENT...";
@@ -123,16 +125,9 @@ public class BookTest extends OrgzlyTest {
         // Empty book for tests that need to scroll down to a newly created note
         testUtils.setupBook("Book B", "");
 
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
 
         onView(allOf(withText("book-name"), isDisplayed())).perform(click());
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        scenario.close();
     }
 
     @Test
@@ -205,14 +200,13 @@ public class BookTest extends OrgzlyTest {
 
     @Test
     public void testScrollPositionKeptOnRotation() {
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+        Activity activity = baristaRule.getActivityTestRule().getActivity();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         SystemClock.sleep(500);
         onNoteInBook(40).check(matches(isDisplayed())); // Scroll to note
 
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         onView(withText("Note #40.")).check(matches(isDisplayed()));
     }
@@ -294,8 +288,8 @@ public class BookTest extends OrgzlyTest {
 
     @Test
     public void testActionModeMovingStaysOpenAfterRotation() {
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+        Activity activity = baristaRule.getActivityTestRule().getActivity();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         onView(withId(R.id.notes_action_move_down)).check(doesNotExist());
 
@@ -305,8 +299,7 @@ public class BookTest extends OrgzlyTest {
         onView(withId(R.id.notes_action_move_down)).check(matches(isDisplayed()));
 
         SystemClock.sleep(500);
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         onView(withId(R.id.notes_action_move_down)).check(matches(isDisplayed()));
     }

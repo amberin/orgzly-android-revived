@@ -1,10 +1,10 @@
 package com.orgzly.android.espresso
 
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.SystemClock
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
@@ -13,6 +13,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import com.adevinta.android.barista.rule.BaristaRule
 import com.orgzly.R
 import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
@@ -25,17 +26,22 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
 
 class ShareActivityTest : OrgzlyTest() {
+
+    @get:Rule
+    var baristaRule = BaristaRule.create(ShareActivity::class.java)
+
     private fun startActivityWithIntent(
             action: String? = null,
             type: String? = null,
             extraText: String? = null,
             extraStreamUri: String? = null,
             queryString: String? = null,
-            extraSubjectText: String? = null): ActivityScenario<ShareActivity> {
+            extraSubjectText: String? = null): Activity {
 
         val intent = Intent(context, ShareActivity::class.java)
 
@@ -63,7 +69,8 @@ class ShareActivityTest : OrgzlyTest() {
             intent.putExtra(Intent.EXTRA_SUBJECT, extraSubjectText)
         }
 
-        return ActivityScenario.launch(intent)
+        baristaRule.launchActivity(intent)
+        return baristaRule.activityTestRule.activity
     }
 
     private fun setNoteTitle(title: String = "Dummy title") {
@@ -73,21 +80,17 @@ class ShareActivityTest : OrgzlyTest() {
 
     @Test
     fun testDefaultBookRemainsSetAfterRotation() {
-        val scenario = startActivityWithIntent(
+        val activity = startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = "This is some shared text")
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.location_button))
                 .check(matches(withText(context.getString(R.string.default_share_notebook))))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withId(R.id.location_button))
                 .check(matches(withText(context.getString(R.string.default_share_notebook))))
@@ -99,14 +102,12 @@ class ShareActivityTest : OrgzlyTest() {
         testUtils.setupBook("book-two", "")
         testUtils.setupBook("book-three", "")
 
-        val scenario = startActivityWithIntent(
+        val activity = startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = "This is some shared text")
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.location_button)).perform(scroll(), click())
         onView(withText("book-two")).perform(click())
@@ -114,9 +115,7 @@ class ShareActivityTest : OrgzlyTest() {
         onView(isRoot()).perform(waitId(R.id.location_button, 5000))
         onView(withId(R.id.location_button)).check(matches(withText("book-two")))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withId(R.id.location_button)).check(matches(withText("book-two")))
     }
@@ -152,10 +151,9 @@ class ShareActivityTest : OrgzlyTest() {
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = sharedText,
-                extraSubjectText = sharedSubject).use {
-            onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
-            onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
-        }
+                extraSubjectText = sharedSubject)
+        onView(withId(R.id.content_view)).check(matches(withText(sharedText)))
+        onView(withId(R.id.title_view)).check(matches(withText(sharedSubject)))
     }
 
     @Test
@@ -217,15 +215,13 @@ class ShareActivityTest : OrgzlyTest() {
 
     @Test
     fun testSaveAfterRotation() {
-        val scenario = startActivityWithIntent(
+        val activity = startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = "This is some shared text")
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         SystemClock.sleep(1000)
         setNoteTitle()
@@ -276,14 +272,12 @@ class ShareActivityTest : OrgzlyTest() {
 
     @Test
     fun testSettingScheduledTimeRemainsSetAfterRotation() {
-        val scenario = startActivityWithIntent(
+        val activity = startActivityWithIntent(
                 action = Intent.ACTION_SEND,
                 type = "text/plain",
                 extraText = "This is some shared text")
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
         SystemClock.sleep(500)
@@ -291,9 +285,7 @@ class ShareActivityTest : OrgzlyTest() {
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 
-        scenario.onActivity { activity ->
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        }
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
     }

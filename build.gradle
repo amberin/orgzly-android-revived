@@ -75,6 +75,8 @@ buildscript {
 
     versions.webdav_embedded_server = '0.2.1'
 
+    versions.barista = '4.3.0'
+
     ext.versions = versions
 
     repositories {

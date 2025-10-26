@@ -1,16 +1,19 @@
 package com.orgzly.android.espresso;
 
+import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.os.SystemClock;
 
 import androidx.test.core.app.ActivityScenario;
 
+import com.adevinta.android.barista.rule.BaristaRule;
 import com.orgzly.R;
 import com.orgzly.android.OrgzlyTest;
 import com.orgzly.android.ui.main.MainActivity;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static androidx.test.espresso.Espresso.onView;
@@ -29,7 +32,9 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
 
 public class ActionModeTest extends OrgzlyTest {
-    private ActivityScenario<MainActivity> scenario;
+
+    @Rule
+    public BaristaRule<MainActivity> baristaRule = BaristaRule.create(MainActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -62,16 +67,9 @@ public class ActionModeTest extends OrgzlyTest {
                 "** Note #10.\n" +
                 "");
 
-        scenario = ActivityScenario.launch(MainActivity.class);
+        baristaRule.launchActivity();
 
         onView(allOf(withText("book-one"), isDisplayed())).perform(click());
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        scenario.close();
     }
 
     @Test
@@ -84,13 +82,12 @@ public class ActionModeTest extends OrgzlyTest {
 
     @Test
     public void testCabStaysOpenOnRotation() {
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+        Activity activity = baristaRule.getActivityTestRule().getActivity();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         onNoteInBook(3).perform(longClick());
 
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         onView(withId(R.id.toggle_state)).check(matches(isDisplayed()));
 
@@ -99,22 +96,20 @@ public class ActionModeTest extends OrgzlyTest {
 
     @Test
     public void testCabStaysOpenOnRotationInQueryFragment() {
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+        Activity activity = baristaRule.getActivityTestRule().getActivity();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         onView(withId(R.id.drawer_layout)).perform(open());
         onView(withText("Scheduled")).perform(click());
 
         onNoteInSearch(1).perform(longClick());
 
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         // TODO: Check *the same* note is selected.
 
         SystemClock.sleep(500);
-        scenario.onActivity(activity ->
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         onView(withId(R.id.toggle_state)).check(matches(isDisplayed()));
     }
