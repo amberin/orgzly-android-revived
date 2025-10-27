@@ -8,6 +8,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.setFailureHandler
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.base.DefaultFailureHandler
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -17,20 +18,33 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
 import com.orgzly.android.AppIntent
 import com.orgzly.android.OrgzlyTest
-import com.orgzly.android.espresso.util.EspressoUtils
+import com.orgzly.android.RetryTestRule
 import com.orgzly.android.espresso.util.EspressoUtils.onSnackbar
 import com.orgzly.android.espresso.util.EspressoUtils.replaceTextCloseKeyboard
 import com.orgzly.android.espresso.util.EspressoUtils.scroll
 import com.orgzly.android.espresso.util.EspressoUtils.waitId
+import com.orgzly.android.espresso.util.EspressoUtils.OrgzlyCustomFailureHandler
 import com.orgzly.android.ui.share.ShareActivity
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.startsWith
+import org.junit.After
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
 
 class ShareActivityTest : OrgzlyTest() {
+
+    @get:Rule
+    val mRetryTestRule = RetryTestRule()
+
+    @After
+    override fun tearDown() {
+        super.tearDown()
+        setFailureHandler(DefaultFailureHandler(context))
+    }
+
     private fun startActivityWithIntent(
             action: String? = null,
             type: String? = null,
@@ -178,7 +192,7 @@ class ShareActivityTest : OrgzlyTest() {
 
         // Verify the link content
         onView(withId(R.id.title_view)).perform(click())
-        onView(withId(R.id.title_edit)).check(matches(withText("[[" + sharedText + "][" + sharedSubject + "]]")))
+        onView(withId(R.id.title_edit)).check(matches(withText("[[$sharedText][$sharedSubject]]")))
     }
 
     @Test
@@ -287,9 +301,8 @@ class ShareActivityTest : OrgzlyTest() {
 
         onView(withId(R.id.scheduled_button)).check(matches(withText("")))
         onView(isRoot()).perform(waitId(R.id.scheduled_button, 5000))
-        setFailureHandler(EspressoUtils.OrgzlyCustomFailureHandler(context))
-        onView(withId(R.id.scheduled_button)).perform(click())
-        setFailureHandler(DefaultFailureHandler(context))
+        setFailureHandler(OrgzlyCustomFailureHandler(context))
+        onView(withId(R.id.scheduled_button)).perform(scrollTo(90), click())
         onView(withText(R.string.set)).perform(click())
         onView(withId(R.id.scheduled_button)).check(matches(withText(startsWith(defaultDialogUserDate()))))
 
