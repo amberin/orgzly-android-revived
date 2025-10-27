@@ -2,12 +2,12 @@ package com.orgzly.android.espresso
 
 import android.os.SystemClock
 import androidx.core.net.toUri
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import com.adevinta.android.barista.rule.BaristaRule
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
 import com.orgzly.android.db.entity.Repo
@@ -24,6 +24,7 @@ import org.eclipse.jgit.api.Git
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import kotlin.io.path.createTempDirectory
@@ -32,6 +33,9 @@ class GitRepoTest : OrgzlyTest() {
     private lateinit var bareRepoDir: File
     private lateinit var gitWorkingTree: File
     private lateinit var repo: Repo
+
+    @get:Rule
+    var baristaRule = BaristaRule.create(MainActivity::class.java)
 
     @Before
     override fun setUp() {
@@ -65,20 +69,19 @@ class GitRepoTest : OrgzlyTest() {
         testUtils.setupBook("book-2", "...")
         testUtils.setupBook("book-3", "...")
         assertEquals(3, dataRepository.getBooks().size)
-        ActivityScenario.launch(MainActivity::class.java).use {
-            sync()
-            SystemClock.sleep(500)
-            onBook(0, R.id.item_book_link_repo).check(ViewAssertions.matches(withText(repo.url)))
-            onBook(1, R.id.item_book_link_repo).check(ViewAssertions.matches(withText(repo.url)))
-            onBook(2, R.id.item_book_link_repo).check(ViewAssertions.matches(withText(repo.url)))
-            onBook(0).perform(ViewActions.longClick())
-            onBook(1).perform(ViewActions.click())
-            onBook(2).perform(ViewActions.click())
-            contextualToolbarOverflowMenu().perform(ViewActions.click())
-            Espresso.onView(withText(R.string.delete)).perform(ViewActions.click())
-            Espresso.onView(withId(R.id.delete_linked_checkbox)).perform(ViewActions.click())
-            Espresso.onView(withText(R.string.delete)).perform(ViewActions.click())
-            assertEquals(0, dataRepository.getBooks().size)
-        }
+        baristaRule.launchActivity()
+        sync()
+        SystemClock.sleep(500)
+        onBook(0, R.id.item_book_link_repo).check(ViewAssertions.matches(withText(repo.url)))
+        onBook(1, R.id.item_book_link_repo).check(ViewAssertions.matches(withText(repo.url)))
+        onBook(2, R.id.item_book_link_repo).check(ViewAssertions.matches(withText(repo.url)))
+        onBook(0).perform(ViewActions.longClick())
+        onBook(1).perform(ViewActions.click())
+        onBook(2).perform(ViewActions.click())
+        contextualToolbarOverflowMenu().perform(ViewActions.click())
+        Espresso.onView(withText(R.string.delete)).perform(ViewActions.click())
+        Espresso.onView(withId(R.id.delete_linked_checkbox)).perform(ViewActions.click())
+        Espresso.onView(withText(R.string.delete)).perform(ViewActions.click())
+        assertEquals(0, dataRepository.getBooks().size)
     }
 }
