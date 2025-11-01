@@ -51,8 +51,6 @@ jobs:
         - language: actions
           build-mode: none
         - language: java-kotlin
-          build-mode: none
-        - language: java-kotlin
           build-mode: manual
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
@@ -97,8 +95,8 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        ./gradlew :app:compileFdroidDebugKotlin
-        ./gradlew :app:compilePremiumDebugKotlin
+        ./gradlew --no-daemon clean :app:compileFdroidDebugKotlin
+        ./gradlew --no-daemon clean :app:compilePremiumDebugKotlin
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@5d5cd550d3e189c569da8f16ea8de2d821c9bf7a # v3
