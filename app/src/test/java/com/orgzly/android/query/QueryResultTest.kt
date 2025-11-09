@@ -17,7 +17,9 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.startsWith
 import org.hamcrest.MatcherAssert.assertThat
+import org.joda.time.DateTime
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -613,5 +615,24 @@ class QueryResultTest {
         assertThat(results[0].note.title, `is`("Note B"))
         assertThat(results[1].note.title, `is`("Note C"))
         assertThat(results[2].note.title, `is`("Note A"))
+    }
+
+    // ===== Tests migrated from app/src/androidTest/java/com/orgzly/android/repos/DataRepositoryTest.java =====
+
+    /**
+     * Tests that active timestamps in note properties are detected as events
+     * and included in agenda queries.
+     */
+    @Test
+    fun testActiveTimestampInNotePropertyIsAnEvent() {
+        val tomorrow = DateTime.now().withTimeAtStartOfDay().plusDays(1).toString("YYYY-MM-dd")
+        setupBook(
+            "notebook-1",
+            "* Note A\n:PROPERTIES:\n:myprop: <$tomorrow>\n:END:"
+        )
+
+        val results = searchNotes("ad.2")
+
+        assertEquals(1, results.size)
     }
 }

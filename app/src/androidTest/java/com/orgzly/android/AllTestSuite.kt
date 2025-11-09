@@ -35,7 +35,6 @@ import com.orgzly.android.misc.UriTest
 import com.orgzly.android.query.QueryTokenizerTest
 import com.orgzly.android.query.QueryUtilsTest
 import com.orgzly.android.reminders.NoteRemindersTest
-import com.orgzly.android.repos.DataRepositoryTest
 import com.orgzly.android.repos.DirectoryRepoTest
 import com.orgzly.android.repos.DropboxRepoTest
 import com.orgzly.android.repos.LocalDbRepoTest
@@ -93,7 +92,6 @@ import org.junit.runners.Suite
 
         NoteRemindersTest::class,
 
-        DataRepositoryTest::class,
         DirectoryRepoTest::class,
         DropboxRepoTest::class,
         LocalDbRepoTest::class,

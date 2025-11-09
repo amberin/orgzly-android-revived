@@ -927,4 +927,140 @@ class SyncTest {
             dataRepository.getBook(book.id)?.lastAction?.message
         )
     }
+
+    // ===== Tests migrated from app/src/androidTest/java/com/orgzly/android/repos/DataRepositoryTest.java =====
+
+    @Test
+    fun testInsertDeletedRepo() {
+        testUtils.setupRepo(RepoType.MOCK, "mock://repo-a")
+        testUtils.deleteRepo("mock://repo-a")
+        testUtils.setupRepo(RepoType.MOCK, "mock://repo-a")
+    }
+
+    @Test
+    fun testRepoAndShelfSetup() {
+        val repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a")
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-1.org", "", "0abcdef", 1400067156000L)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-2.org", "", "1abcdef", 1300067156000L)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-3.org", "", "2abcdef", 1200067156000L)
+
+        testUtils.setupBook("local-book-1", "")
+
+        assertEquals("Local books", 1, dataRepository.getBooks().size)
+        assertEquals("Remote books", 3, com.orgzly.android.sync.SyncUtils.getBooksFromAllRepos(dataRepository, null).size)
+    }
+
+    @Test
+    fun testLoadRook() {
+        val repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a")
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-1.org", "", "0abcdef", 1400067156000L)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-2.org", "", "1abcdef", 1300067156000L)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-3.org", "", "2abcdef", 1200067156000L)
+
+        val vrook = com.orgzly.android.sync.SyncUtils.getBooksFromAllRepos(dataRepository, null)[0]
+
+        dataRepository.loadBookFromRepo(vrook)
+
+        assertEquals(1, dataRepository.getBooks().size)
+        val book = dataRepository.getBooks()[0]
+
+        assertEquals("remote-book-1", book.book.name)
+        assertEquals("/remote-book-1.org", book.syncedTo?.uri?.path)
+        assertEquals("remote-book-1", BookName.fromRook(book.syncedTo).name)
+        assertEquals("0abcdef", book.syncedTo?.revision)
+        assertEquals(1400067156000L, book.syncedTo?.mtime)
+        assertEquals(repo.url, vrook.repoUri.toString())
+    }
+
+    @Test
+    fun testCompareWithEmptyRepo() {
+        assertEquals("Starting with empty shelf", 0, dataRepository.getBooks().size)
+
+        val nameGroups = com.orgzly.android.sync.SyncUtils.groupAllNotebooksByName(dataRepository)
+
+        assertEquals(0, nameGroups.size)
+    }
+
+    @Test
+    fun testCompareWithRepo() {
+        assertEquals("Starting with empty shelf", 0, dataRepository.getBooks().size)
+        val repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a")
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-1.org", "", "0abcdef", 1400067156)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-2.org", "", "1abcdef", 1400412756)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-3.org", "", "2abcdef", 1400671956)
+
+        val groups = com.orgzly.android.sync.SyncUtils.groupAllNotebooksByName(dataRepository)
+
+        assertEquals(3, groups.size)
+
+        for (group in groups.values) {
+            val name = group.name
+
+            assertTrue(
+                "Book name $name not expected",
+                name == "remote-book-1" || name == "remote-book-2" || name == "remote-book-3"
+            )
+
+            assertTrue(group.book.book.isDummy)
+            assertEquals(1, group.rooks.size)
+        }
+    }
+
+    @Test
+    fun testShelfAndRepo() {
+        assertEquals("Starting with empty shelf", 0, dataRepository.getBooks().size)
+
+        var book: BookView
+
+        book = dataRepository.createBook("local-book-1")
+        assertEquals("local-book-1", book.book.name)
+        assertNull(book.syncedTo)
+
+        book = dataRepository.createBook("common-book-1")
+        assertEquals("common-book-1", book.book.name)
+        assertNull(book.syncedTo)
+
+        book = dataRepository.createBook("common-book-2")
+        assertEquals("common-book-2", book.book.name)
+        assertNull(book.syncedTo)
+
+        /* Setup mock repo. */
+        val repo = testUtils.setupRepo(RepoType.MOCK, "mock://repo-a")
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-2.org", "", "1abcdef", 1400412756000L)
+        testUtils.setupRook(repo, "mock://repo-a/common-book-1.org", "", "2abcdef", 1400671956000L)
+        testUtils.setupRook(repo, "mock://repo-a/common-book-2.org", "", "3abcdef", 1400671956000L)
+        testUtils.setupRook(repo, "mock://repo-a/remote-book-1.org", "", "0abcdef", 1400067156000L)
+
+        val groups = com.orgzly.android.sync.SyncUtils.groupAllNotebooksByName(dataRepository)
+
+        assertEquals(5, groups.size)
+
+        for (group in groups.values) {
+            val name = group.name
+
+            when (name) {
+                "local-book-1" -> {
+                    assertFalse(group.book.book.isDummy)
+                    assertEquals(0, group.rooks.size)
+                }
+                "common-book-1" -> {
+                    assertFalse(group.book.book.isDummy)
+                    assertEquals(1, group.rooks.size)
+                }
+                "common-book-2" -> {
+                    assertFalse(group.book.book.isDummy)
+                    assertEquals(1, group.rooks.size)
+                }
+                "remote-book-1" -> {
+                    assertTrue(group.book.book.isDummy)
+                    assertEquals(1, group.rooks.size)
+                }
+                "remote-book-2" -> {
+                    assertTrue(group.book.book.isDummy)
+                    assertEquals(1, group.rooks.size)
+                }
+                else -> org.junit.Assert.fail("unexpected name $name")
+            }
+        }
+    }
 }

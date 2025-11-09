@@ -200,6 +200,24 @@ class DataRepositoryTest {
         assertEquals("renamed..name", dataRepository.getBook(book.book.id)!!.name)
     }
 
+    // ===== Tests for nested set model =====
+    // Migrated from app/src/androidTest/java/com/orgzly/android/repos/DataRepositoryTest.java
+
+    /**
+     * Verifies that a newly created book has a root node with the correct
+     * nested set model structure (lft=1, rgt=2, level=0, empty title).
+     */
+    @Test
+    fun testRootNodeInNewBook() {
+        val book = dataRepository.createBook("booky")
+
+        val note = dataRepository.getRootNode(book.book.id)
+        assertEquals(1, note!!.position.lft)
+        assertEquals(2, note.position.rgt)
+        assertEquals(0, note.position.level)
+        assertEquals("", note.title)
+    }
+
     // ===== Tests for settings import/export validation =====
     // Migrated from app/src/androidTest/java/com/orgzly/android/data/DataRepositoryTest.kt
 
