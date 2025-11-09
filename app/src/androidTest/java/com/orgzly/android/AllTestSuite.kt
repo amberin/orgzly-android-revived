@@ -7,7 +7,6 @@ import com.orgzly.android.espresso.BookPrefaceTest
 import com.orgzly.android.espresso.BookTest
 import com.orgzly.android.espresso.BooksSortOrderTest
 import com.orgzly.android.espresso.BooksTest
-import com.orgzly.android.espresso.CreatedAtPropertyTest
 import com.orgzly.android.espresso.ExternalLinksTest
 import com.orgzly.android.espresso.InternalLinksTest
 import com.orgzly.android.espresso.MiscTest
@@ -63,7 +62,6 @@ import org.junit.runners.Suite
         BooksSortOrderTest::class,
         BooksTest::class,
         BookTest::class,
-        CreatedAtPropertyTest::class,
         ExternalLinksTest::class,
         InternalLinksTest::class,
         MiscTest::class,
@@ -80,7 +78,6 @@ import org.junit.runners.Suite
 
         BookNameTest::class,
         BookParsingTest::class,
-        CreatedAtPropertyTest::class,
         DataTest::class,
         SettingsTest::class,
         StateChangeTest::class,
