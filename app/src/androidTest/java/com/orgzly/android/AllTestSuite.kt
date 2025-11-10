@@ -5,7 +5,6 @@ import com.orgzly.android.espresso.AgendaFragmentTest
 import com.orgzly.android.espresso.BookChooserActivityTest
 import com.orgzly.android.espresso.BookPrefaceTest
 import com.orgzly.android.espresso.BookTest
-import com.orgzly.android.espresso.BooksSortOrderTest
 import com.orgzly.android.espresso.BooksTest
 import com.orgzly.android.espresso.ExternalLinksTest
 import com.orgzly.android.espresso.InternalLinksTest
@@ -14,7 +13,6 @@ import com.orgzly.android.espresso.NewNoteTest
 import com.orgzly.android.espresso.NoteEventsTest
 import com.orgzly.android.espresso.NoteFragmentTest
 import com.orgzly.android.espresso.QueryFragmentTest
-import com.orgzly.android.espresso.ReposActivityTest
 import com.orgzly.android.espresso.SavedSearchesFragmentTest
 import com.orgzly.android.espresso.SettingsChangeTest
 import com.orgzly.android.espresso.SettingsFragmentTest
@@ -59,7 +57,6 @@ import org.junit.runners.Suite
         AgendaFragmentTest::class,
         BookChooserActivityTest::class,
         BookPrefaceTest::class,
-        BooksSortOrderTest::class,
         BooksTest::class,
         BookTest::class,
         ExternalLinksTest::class,
@@ -69,7 +66,6 @@ import org.junit.runners.Suite
         NoteEventsTest::class,
         NoteFragmentTest::class,
         QueryFragmentTest::class,
-        ReposActivityTest::class,
         SavedSearchesFragmentTest::class,
         SettingsChangeTest::class,
         SettingsFragmentTest::class,
