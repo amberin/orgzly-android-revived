@@ -181,7 +181,6 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             binding.locationContainer.visibility = View.GONE
         }
 
-
         // Hide remove button if there are no tags
         binding.tagsButton.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -222,7 +221,6 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
 
         binding.content.setOnUserTextChangeListener { str ->
             binding.content.setSourceText(str)
-
         }
 
         /*
@@ -254,6 +252,14 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         }
 
         setContentFoldState(AppPreferences.isNoteContentFolded(context))
+
+        // Show/hide "insert timestamp" button
+        binding.content.setOnClickListener {
+            binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
+        }
+        binding.title.setOnClickListener {
+            binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
+        }
     }
 
     private fun topToolbarToViewMode() {
@@ -372,6 +378,15 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 }
                 val newContent = contentLines?.joinToString("\n")
                 binding.content.setSourceText(newContent)
+            }
+
+            R.id.insert_timestamp -> {
+                TimestampDialogFragment.getInstance(
+                    R.id.content_edit,
+                    TimeType.EVENT,
+                    emptySet(), // Unused
+                    null)
+                    .show(childFragmentManager, TimestampDialogFragment.FRAGMENT_TAG)
             }
         }
 
@@ -637,6 +652,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
              */
             if (viewModel.isNew() && !viewModel.hasInitialTitleData()) {
                 binding.title.toEditMode(0)
+                binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
             }
         }
 
@@ -896,6 +912,10 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             R.id.closed_button -> {
                 updateTimestampView(TimeType.CLOSED, range)
                 viewModel.updatePayloadClosedTime(range)
+            }
+
+            R.id.content_edit -> {
+                // TODO: Insert timestamp at cursor position
             }
         }
     }

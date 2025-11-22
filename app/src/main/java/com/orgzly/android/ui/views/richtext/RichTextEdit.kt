@@ -34,6 +34,7 @@ class RichTextEdit : AppCompatEditText {
         }
 
         addTextChangedListener(userEditingTextWatcher)
+
     }
 
     // TODO: Handle closed drawers (and such)
