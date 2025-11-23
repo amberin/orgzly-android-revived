@@ -42,6 +42,7 @@ import com.orgzly.android.ui.NotePriorities
 import com.orgzly.android.ui.NoteStates
 import com.orgzly.android.ui.Place
 import com.orgzly.android.ui.TimeType
+import com.orgzly.android.ui.dialogs.InlineTimestampDialogFragment
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment
 import com.orgzly.android.ui.drawer.DrawerItem
 import com.orgzly.android.ui.main.MainActivity
@@ -58,6 +59,7 @@ import com.orgzly.android.ui.util.goneUnless
 import com.orgzly.android.ui.util.invisibleIf
 import com.orgzly.android.ui.util.invisibleUnless
 import com.orgzly.android.ui.views.richtext.RichText
+import com.orgzly.android.ui.views.richtext.RichTextEdit
 import com.orgzly.android.util.LogUtils
 import com.orgzly.android.util.OrgFormatter
 import com.orgzly.android.util.SpaceTokenizer
@@ -73,7 +75,7 @@ import javax.inject.Inject
 /**
  * Note editor.
  */
-class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFragment.OnDateTimeSetListener, DrawerItem, RichText.OnModeChangeListener {
+class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFragment.OnDateTimeSetListener, InlineTimestampDialogFragment.OnInlineDateTimeSetListener, DrawerItem, RichText.OnModeChangeListener {
 
     private lateinit var binding: FragmentNoteBinding
 
@@ -384,15 +386,15 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             }
 
             R.id.insert_timestamp -> {
-                val currentViewId = if (binding.content.isInEditMode) {
+                // The current view can only be content_edit or title_edit
+                val originViewId = if (binding.content.isBeingEdited()) {
                     R.id.content_edit
                 } else {
                     R.id.title_edit
                 }
-                TimestampDialogFragment.getInstance(
-                    currentViewId,
+                InlineTimestampDialogFragment.getInstance(
+                    originViewId,
                     TimeType.EVENT,
-                    emptySet(), // Unused
                     null)
                     .show(childFragmentManager, TimestampDialogFragment.FRAGMENT_TAG)
             }
@@ -901,6 +903,12 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         return selected
     }
 
+    override fun onInlineDateTimeSet(originViewId: Int, time: OrgDateTime?) {
+        val range = if (time != null) OrgRange(time) else null
+        val originView = this.view?.findViewById<RichTextEdit>(originViewId)
+        originView?.insertStringAtCursorPosition(range.toString())
+    }
+
     override fun onDateTimeSet(id: Int, noteIds: TreeSet<Long>, time: OrgDateTime?) {
         val range = if (time != null) OrgRange(time) else null
 
@@ -921,10 +929,6 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 updateTimestampView(TimeType.CLOSED, range)
                 viewModel.updatePayloadClosedTime(range)
             }
-
-            R.id.content_edit -> {
-                // TODO: Insert timestamp at cursor position
-            }
         }
     }
 
@@ -940,7 +944,6 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
     }
 
     override fun onDateTimeAborted(id: Int, noteIds: TreeSet<Long>) {
-
     }
 
     private fun setMetadataViewsVisibility() {
@@ -993,8 +996,6 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
     }
 
     private fun userSave() {
-        // KeyboardUtils.closeSoftKeyboard(activity)
-
         updatePayloadFromViews()
 
         viewModel.saveNote()

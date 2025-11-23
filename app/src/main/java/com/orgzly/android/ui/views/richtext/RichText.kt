@@ -13,6 +13,7 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.orgzly.BuildConfig
 import com.orgzly.R
 import com.orgzly.android.prefs.AppPreferences
@@ -227,6 +228,17 @@ class RichText(context: Context, attrs: AttributeSet?) :
         } else {
             richTextView.text = null
         }
+    }
+
+    fun insertStringAtCursorPosition(string: String) {
+        val view = this.richTextEdit
+        if (view.isVisible) {
+            view.text?.replace(view.selectionStart, view.selectionEnd, string)
+        }
+    }
+
+    fun isBeingEdited(): Boolean {
+        return this.richTextEdit.isVisible
     }
 
     fun setTypeface(typeface: Typeface) {
