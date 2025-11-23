@@ -32,13 +32,24 @@ class RichText(context: Context, attrs: AttributeSet?) :
         fun onUserTextChange(str: String)
     }
 
+    interface OnModeChangeListener {
+        fun onEditMode()
+        fun onViewMode()
+    }
+
     data class Listeners(
-        var onUserTextChange: OnUserTextChangeListener? = null)
+        var onUserTextChange: OnUserTextChangeListener? = null,
+        var onModeChange: OnModeChangeListener? = null
+    )
 
     private val listeners = Listeners()
 
     fun setOnUserTextChangeListener(listener: OnUserTextChangeListener) {
         listeners.onUserTextChange = listener
+    }
+
+    fun setOnModeChangeListener(listener: OnModeChangeListener) {
+        listeners.onModeChange = listener
     }
 
     private val sourceBackgroundColor: Int by lazy {
@@ -187,6 +198,7 @@ class RichText(context: Context, attrs: AttributeSet?) :
 
         richTextEdit.activate(charOffset)
         richTextView.deactivate()
+        listeners.onModeChange?.onEditMode()
     }
 
     private fun toViewMode(reparseSource: Boolean = false) {
@@ -198,6 +210,7 @@ class RichText(context: Context, attrs: AttributeSet?) :
 
         richTextView.activate()
         richTextEdit.deactivate()
+        listeners.onModeChange?.onViewMode()
     }
 
     private fun parseAndSetViewText() {

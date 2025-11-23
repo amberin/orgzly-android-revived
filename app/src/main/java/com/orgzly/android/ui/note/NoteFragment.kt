@@ -57,6 +57,7 @@ import com.orgzly.android.ui.util.goneIf
 import com.orgzly.android.ui.util.goneUnless
 import com.orgzly.android.ui.util.invisibleIf
 import com.orgzly.android.ui.util.invisibleUnless
+import com.orgzly.android.ui.views.richtext.RichText
 import com.orgzly.android.util.LogUtils
 import com.orgzly.android.util.OrgFormatter
 import com.orgzly.android.util.SpaceTokenizer
@@ -72,7 +73,7 @@ import javax.inject.Inject
 /**
  * Note editor.
  */
-class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFragment.OnDateTimeSetListener, DrawerItem {
+class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFragment.OnDateTimeSetListener, DrawerItem, RichText.OnModeChangeListener {
 
     private lateinit var binding: FragmentNoteBinding
 
@@ -252,14 +253,16 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         }
 
         setContentFoldState(AppPreferences.isNoteContentFolded(context))
+        binding.content.setOnModeChangeListener(this)
+        binding.title.setOnModeChangeListener(this)
+    }
 
-        // Show/hide "insert timestamp" button
-        binding.content.setOnClickListener {
-            binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
-        }
-        binding.title.setOnClickListener {
-            binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
-        }
+    // Show/hide "insert timestamp" button
+    override fun onEditMode() {
+        binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
+    }
+    override fun onViewMode() {
+        binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = false
     }
 
     private fun topToolbarToViewMode() {
@@ -381,8 +384,13 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             }
 
             R.id.insert_timestamp -> {
+                val currentViewId = if (binding.content.isInEditMode) {
+                    R.id.content_edit
+                } else {
+                    R.id.title_edit
+                }
                 TimestampDialogFragment.getInstance(
-                    R.id.content_edit,
+                    currentViewId,
                     TimeType.EVENT,
                     emptySet(), // Unused
                     null)
