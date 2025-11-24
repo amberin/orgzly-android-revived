@@ -84,6 +84,10 @@ class InlineTimestampDialogFragment : DialogFragment(), View.OnClickListener {
 
         binding.datePickerButton.setOnClickListener(this)
 
+        binding.isActiveCheckbox.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setIsActive(isChecked)
+        }
+
         binding.timePickerButton.setOnClickListener(this)
         binding.timeUsedCheckbox.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setIsTimeUsed(isChecked)
@@ -120,9 +124,6 @@ class InlineTimestampDialogFragment : DialogFragment(), View.OnClickListener {
             .setView(binding.root)
             .setPositiveButton(R.string.set) { _, _ ->
                 listener?.onInlineDateTimeSet(originViewId!!, viewModel.getOrgDateTime())
-            }
-            .setNeutralButton(R.string.clear) { _, _ ->
-                listener?.onInlineDateTimeSet(originViewId!!, null)
             }
             .setNegativeButton(R.string.cancel) { _, _ -> }
             .show()

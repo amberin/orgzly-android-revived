@@ -904,9 +904,11 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
     }
 
     override fun onInlineDateTimeSet(originViewId: Int, time: OrgDateTime?) {
-        val range = if (time != null) OrgRange(time) else null
-        val originView = this.view?.findViewById<RichTextEdit>(originViewId)
-        originView?.insertStringAtCursorPosition(range.toString())
+        if (time != null) {
+            val originView = this.view?.findViewById<RichTextEdit>(originViewId)
+            originView?.insertStringAtCursorPosition(time.toString())
+            ensureAlarmPermissions(time)
+        }
     }
 
     override fun onDateTimeSet(id: Int, noteIds: TreeSet<Long>, time: OrgDateTime?) {
