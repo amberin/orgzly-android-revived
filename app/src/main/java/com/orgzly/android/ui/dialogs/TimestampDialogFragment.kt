@@ -80,7 +80,9 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
         viewModel = ViewModelProvider(this, factory).get(TimestampDialogViewModel::class.java)
 
         // Show/hide the active/inactive checkbox
-        if (originViewId == R.id.content_edit || originViewId == R.id.title_edit) {
+        if (allowChoosingActiveInactive()) {
+            // TODO: Fetch user's last choice from preferences
+            viewModel.setIsActive(false) // The constructor default is "true" for historical reasons.
             binding.isActiveCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 viewModel.setIsActive(isChecked)
             }
@@ -139,6 +141,10 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
                 listener?.onDateTimeAborted(originViewId, noteIds)
             }
             .show()
+    }
+
+    private fun allowChoosingActiveInactive(): Boolean {
+        return originViewId == R.id.content_edit || originViewId == R.id.title_edit
     }
 
     /**
@@ -276,7 +282,7 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
 
     override fun onDetach() {
         super.onDetach()
-        if (originViewId == R.id.content_edit || originViewId == R.id.title_edit) {
+        if (allowChoosingActiveInactive()) {
             originViewId.let {
                 KeyboardUtils.openSoftKeyboard(requireParentFragment().requireView().findViewById<RichTextEdit>(
                     it

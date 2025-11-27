@@ -73,7 +73,7 @@ class TimestampDialogViewModel(val timeType: TimeType, orgDateTime: String?) : C
                 val isRepeaterUsed = orgDateTime?.hasRepeater() ?: false
                 val repeater = orgDateTime?.repeater ?: DEFAULT_REPEATER
 
-                val isActive = orgDateTime?.isActive ?: false
+                val isActive = orgDateTime?.isActive ?: true
 
                 return DateTime(
                     year,
