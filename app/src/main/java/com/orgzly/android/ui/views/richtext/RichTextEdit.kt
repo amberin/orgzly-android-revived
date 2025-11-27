@@ -40,7 +40,7 @@ class RichTextEdit : AppCompatEditText {
     private fun scrollForBetterCursorPosition(charOffset: Int) {
         val scrollView = ancestors.firstOrNull { view -> view is NestedScrollView } as? NestedScrollView
 
-        if (scrollView != null) {
+        if (scrollView != null && layout != null) {
             post {
                 val richText = parent as RichText
 
