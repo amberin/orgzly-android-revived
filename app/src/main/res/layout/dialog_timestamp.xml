@@ -183,7 +183,7 @@
             android:gravity="center"
             android:textSize="?attr/font_micro"
             android:textAllCaps="true"
-            android:text="Active" />
+            android:text="@string/is_active_label" />
         <CheckBox
             android:id="@+id/is_active_checkbox"
             android:layout_width="wrap_content"

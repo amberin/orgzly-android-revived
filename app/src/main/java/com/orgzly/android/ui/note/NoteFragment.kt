@@ -42,7 +42,6 @@ import com.orgzly.android.ui.NotePriorities
 import com.orgzly.android.ui.NoteStates
 import com.orgzly.android.ui.Place
 import com.orgzly.android.ui.TimeType
-import com.orgzly.android.ui.dialogs.InlineTimestampDialogFragment
 import com.orgzly.android.ui.dialogs.TimestampDialogFragment
 import com.orgzly.android.ui.drawer.DrawerItem
 import com.orgzly.android.ui.main.MainActivity
@@ -75,7 +74,7 @@ import javax.inject.Inject
 /**
  * Note editor.
  */
-class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFragment.OnDateTimeSetListener, InlineTimestampDialogFragment.OnInlineDateTimeSetListener, DrawerItem, RichText.OnModeChangeListener {
+class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFragment.OnDateTimeSetListener, DrawerItem, RichText.OnModeChangeListener {
 
     private lateinit var binding: FragmentNoteBinding
 
@@ -392,9 +391,10 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 } else {
                     R.id.title_edit
                 }
-                InlineTimestampDialogFragment.getInstance(
+                TimestampDialogFragment.getInstance(
                     originViewId,
                     TimeType.EVENT,
+                    emptySet(),
                     null)
                     .show(childFragmentManager, TimestampDialogFragment.FRAGMENT_TAG)
             }
@@ -903,18 +903,10 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         return selected
     }
 
-    override fun onInlineDateTimeSet(originViewId: Int, time: OrgDateTime?) {
-        if (time != null) {
-            val originView = this.view?.findViewById<RichTextEdit>(originViewId)
-            originView?.insertStringAtCursorPosition(time.toString())
-            ensureAlarmPermissions(time)
-        }
-    }
-
-    override fun onDateTimeSet(id: Int, noteIds: TreeSet<Long>, time: OrgDateTime?) {
+    override fun onDateTimeSet(originViewId: Int, noteIds: TreeSet<Long>, time: OrgDateTime?) {
         val range = if (time != null) OrgRange(time) else null
 
-        when (id) {
+        when (originViewId) {
             R.id.scheduled_button -> {
                 updateTimestampView(TimeType.SCHEDULED, range)
                 ensureAlarmPermissions(time)
@@ -931,6 +923,14 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 updateTimestampView(TimeType.CLOSED, range)
                 viewModel.updatePayloadClosedTime(range)
             }
+
+            R.id.content_edit, R.id.title_edit -> {
+                if (time != null) {
+                    val originView = this.view?.findViewById<RichTextEdit>(originViewId)
+                    originView?.insertStringAtCursorPosition(time.toString())
+                    ensureAlarmPermissions(time)
+                }
+            }
         }
     }
 
@@ -945,7 +945,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         }
     }
 
-    override fun onDateTimeAborted(id: Int, noteIds: TreeSet<Long>) {
+    override fun onDateTimeAborted(originViewId: Int, noteIds: TreeSet<Long>) {
     }
 
     private fun setMetadataViewsVisibility() {
