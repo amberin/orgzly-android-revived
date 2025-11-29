@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.orgzly.BuildConfig
 import com.orgzly.R
+import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.ui.TimeType
 import com.orgzly.android.ui.util.KeyboardUtils
 import com.orgzly.android.ui.views.richtext.RichTextEdit
@@ -81,8 +82,9 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
 
         // Show/hide the active/inactive checkbox
         if (allowChoosingActiveInactive()) {
-            // TODO: Fetch user's last choice from preferences
-            viewModel.setIsActive(false) // The constructor default is "true" for historical reasons.
+            val lastInlineTimestampWasActive = AppPreferences.lastInlineTimestampWasActive(context)
+            viewModel.setIsActive(lastInlineTimestampWasActive)
+            binding.isActiveCheckbox.isChecked = lastInlineTimestampWasActive
             binding.isActiveCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 viewModel.setIsActive(isChecked)
             }
@@ -132,7 +134,11 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
             .setCustomTitle(titleBinding.root)
             .setView(binding.root)
             .setPositiveButton(R.string.set) { _, _ ->
-                listener?.onDateTimeSet(originViewId, noteIds, viewModel.getOrgDateTime())
+                val time = viewModel.getOrgDateTime()
+                if (time != null) {
+                    AppPreferences.lastInlineTimestampWasActive(context, time.isActive)
+                }
+                listener?.onDateTimeSet(originViewId, noteIds, time)
             }
             .setNeutralButton(R.string.clear) { _, _ ->
                 listener?.onDateTimeSet(originViewId, noteIds, null)
