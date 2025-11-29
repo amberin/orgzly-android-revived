@@ -230,7 +230,7 @@ class NoteItemViewBinder(private val context: Context, private val inBook: Boole
                 }
 
                 // Inflate the rest
-                for (i in container.childCount + 1..level) {
+                (container.childCount + 1..level).forEach { i ->
                     View.inflate(container.context, R.layout.indent, container)
                 }
             }
@@ -314,7 +314,7 @@ class NoteItemViewBinder(private val context: Context, private val inBook: Boole
     private fun updateFoldingButtons(context: Context, note: Note, holder: NoteItemViewHolder): Boolean {
         var isVisible = false
 
-        if (inBook) {
+        if (AppPreferences.isSearchFoldable(context) || inBook) {
             val contentFoldable = note.hasContent() &&
                     AppPreferences.isNotesContentFoldable(context) &&
                     AppPreferences.isNotesContentDisplayedInList(context)
@@ -335,7 +335,7 @@ class NoteItemViewBinder(private val context: Context, private val inBook: Boole
             holder.binding.itemHeadFoldButton.visibility = View.VISIBLE
             holder.binding.itemHeadFoldButtonText.visibility = View.VISIBLE
         } else {
-            if (inBook) { // Leave invisible for padding
+            if (AppPreferences.isSearchFoldable(context) || inBook) { // Leave invisible for padding
                 holder.binding.itemHeadFoldButton.visibility = View.INVISIBLE
                 holder.binding.itemHeadFoldButtonText.visibility = View.INVISIBLE
             } else {
@@ -346,7 +346,7 @@ class NoteItemViewBinder(private val context: Context, private val inBook: Boole
 
         // Add horizontal padding when in search results (no bullet, no folding button)
         val horizontalPadding = context.resources.getDimension(R.dimen.screen_edge).toInt()
-        if (!inBook) {
+        if (!(inBook || AppPreferences.isSearchFoldable(context))) {
             holder.binding.itemHeadContainer.setPadding(
                     horizontalPadding,
                     holder.binding.itemHeadContainer.paddingTop,
@@ -464,10 +464,10 @@ class NoteItemViewBinder(private val context: Context, private val inBook: Boole
 
 
     private data class Attrs(
-        @ColorInt val todoColor: Int,
-        @ColorInt val doneColor: Int,
+        @param:ColorInt val todoColor: Int,
+        @param:ColorInt val doneColor: Int,
         val postTitleTextSize: Int,
-        @ColorInt val postTitleTextColor: Int
+        @param:ColorInt val postTitleTextColor: Int
     ) {
         companion object {
             @SuppressWarnings("ResourceType")

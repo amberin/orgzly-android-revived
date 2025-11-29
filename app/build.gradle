@@ -3,22 +3,22 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    namespace 'com.orgzly'
+    namespace = 'com.orgzly'
 
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
-        versionCode 251
-        versionName "1.10.0"
+        targetSdkVersion 35
+        versionCode 267
+        versionName "1.14.0-beta.1"
         applicationId = "com.orgzlyrevived"
         resValue "string", "application_id", "com.orgzlyrevived"
 
         testInstrumentationRunner "com.orgzly.android.OrgzlyTestRunner"
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        multiDexEnabled true
+        multiDexEnabled = true
 
         buildConfigField "String", "DROPBOX_APP_KEY", gradle.ext.appProperties.getProperty("dropbox.app_key", '""')
 
@@ -35,8 +35,8 @@ android {
     }
 
     buildFeatures {
-        viewBinding true
-        buildConfig true
+        viewBinding = true
+        buildConfig = true
     }
 
     testOptions {
@@ -47,7 +47,7 @@ android {
 
     buildTypes {
         release {
-            shrinkResources true
+            shrinkResources = true
             minifyEnabled true
 
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -113,7 +113,7 @@ android {
     }
 
     lint {
-        checkDependencies true
+        checkDependencies = true
         disable 'MissingTranslation', 'MissingQuantity', 'ImpliedQuantity', 'InvalidPackage'
     }
 }
@@ -194,7 +194,7 @@ dependencies {
         exclude group: 'xpp3', module: 'xpp3'
     }
 
-    implementation('com.squareup.okhttp3:okhttp:4.12.0') {
+    implementation('com.squareup.okhttp3:okhttp:5.2.1') {
         because 'https://github.com/orgzly/orgzly-android/issues/880'
     }
 

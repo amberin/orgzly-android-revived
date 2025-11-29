@@ -49,6 +49,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
+enum class ScrollDirection {
+    UP,
+    DOWN,
+}
 
 /**
  * Displays all notes from the notebook.
@@ -73,6 +77,8 @@ class BookFragment :
     private lateinit var viewModel: BookViewModel
 
     private var hideButtonJob: Job? = null
+
+    private var jumpButtonDirection = ScrollDirection.DOWN
 
     override fun getAdapter(): BookAdapter? {
         return if (::viewAdapter.isInitialized) viewAdapter else null
@@ -797,7 +803,49 @@ class BookFragment :
         // Set up the click listener
         binding.jumpToEndFab.run {
             setOnClickListener {
-                binding.fragmentBookRecyclerView.smoothScrollToPosition(viewAdapter.itemCount - 1)
+                val adapter = binding.fragmentBookRecyclerView.adapter
+                val targetPosition: Int? =
+                    when (jumpButtonDirection) {
+                        ScrollDirection.UP -> 0
+                        ScrollDirection.DOWN -> adapter?.itemCount?.minus(1)?.let {
+                            if (it <= 0)
+                                null
+                            else
+                                it
+                        }
+                    }
+                if (targetPosition == null) return@setOnClickListener // Nothing to scroll to
+
+                val layoutManager = binding.fragmentBookRecyclerView.layoutManager as? LinearLayoutManager
+                if (layoutManager == null) {
+                    // Fallback or log error if layout manager is not LinearLayoutManager
+                    binding.fragmentBookRecyclerView.smoothScrollToPosition(targetPosition)
+                    return@setOnClickListener
+                }
+
+                val currentPosition = layoutManager.findFirstVisibleItemPosition()
+                if (currentPosition == RecyclerView.NO_POSITION) {
+                    // If current position is unknown, maybe just smooth scroll
+                    binding.fragmentBookRecyclerView.smoothScrollToPosition(targetPosition)
+                    return@setOnClickListener
+                }
+
+
+                // --- Conditional Logic ---
+                val totalItemCount = adapter?.itemCount ?: 0
+                val scrollDistance = abs(targetPosition - currentPosition)
+
+                // Define thresholds (adjust as needed)
+                val sizeThreshold = 500 // Jump instantly if total items > threshold
+                val distanceThreshold = 50 // Jump instantly if distance to scroll > threshold
+
+                if (totalItemCount > sizeThreshold || scrollDistance > distanceThreshold) {
+                    // Jump instantly for large lists or long distances
+                    layoutManager.scrollToPositionWithOffset(targetPosition, 0) // Or just scrollToPosition(targetPosition)
+                } else {
+                    // Smooth scroll for smaller lists/distances
+                    binding.fragmentBookRecyclerView.smoothScrollToPosition(targetPosition)
+                }
             }
         }
 
@@ -818,6 +866,14 @@ class BookFragment :
                     abs(dy) > SCROLL_SPEED_THRESHOLD -> {
                         binding.jumpToEndFab.show()
                         scheduleButtonHide()
+
+                        if (dy > 0) {
+                            jumpButtonDirection = ScrollDirection.DOWN
+                            binding.jumpToEndFab.setRotation(0f)
+                        } else {
+                            jumpButtonDirection = ScrollDirection.UP
+                            binding.jumpToEndFab.setRotation(180f)
+                        }
                     }
                 }
             }

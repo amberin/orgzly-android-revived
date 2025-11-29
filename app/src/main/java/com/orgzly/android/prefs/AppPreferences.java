@@ -297,6 +297,18 @@ public class AppPreferences {
                 context.getResources().getBoolean(R.bool.pref_default_ongoing_notification));
     }
 
+    public static boolean scheduledSyncEnabled(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_auto_sync_at_interval_enabled),
+                context.getResources().getBoolean(R.bool.pref_default_auto_sync_at_interval_enabled));
+    }
+
+    public static String scheduledSyncIntervalInMins(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_auto_sync_interval_in_mins),
+                context.getResources().getString(R.string.pref_default_auto_sync_interval_in_mins));
+    }
+
     public static String ongoingNotificationPriority(Context context) {
         return getDefaultSharedPreferences(context).getString(
                 context.getResources().getString(R.string.pref_key_ongoing_notification_priority),
@@ -523,6 +535,16 @@ public class AppPreferences {
         return Integer.valueOf(getDefaultSharedPreferences(context).getString(
                 context.getResources().getString(R.string.pref_key_org_indent_indentation_per_level),
                 context.getResources().getString(R.string.pref_default_org_indent_indentation_per_level)));
+    }
+
+    /*
+     * Orgzlyignore file
+     */
+
+    public static String orgzlyignoreFile(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_orgzlyignore_file),
+                context.getResources().getString(R.string.pref_default_orgzlyignore_file));
     }
 
     /*
@@ -855,6 +877,16 @@ public class AppPreferences {
     }
 
     /*
+     * Folding in search
+     */
+
+    public static boolean isSearchFoldable(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_is_search_foldable),
+                context.getResources().getBoolean(R.bool.pref_default_is_search_foldable));
+    }
+
+    /*
      * Keep screen on menu item
      */
 
@@ -1173,6 +1205,34 @@ public class AppPreferences {
     public static void settingsExportAndImportNoteId(Context context, String value) {
         String key = context.getResources().getString(R.string.pref_key_note_id_for_settings_export_and_import);
         getDefaultSharedPreferences(context).edit().putString(key, value).apply();
+    }
+
+    /*
+     * Where to put incoming shared text in new note
+     */
+
+    public static String sharedTextPlacement(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_shared_text_placement),
+                context.getResources().getString(R.string.pref_default_shared_text_placement));
+    }
+
+    // Added for test purposes
+    public static void sharedTextPlacement(Context context, String value) {
+        String key = context.getResources().getString(R.string.pref_key_shared_text_placement);
+        getDefaultSharedPreferences(context).edit().putString(key, value).apply();
+    }
+
+    public static Boolean createOrgLinksFromSharedLinks(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_create_org_links_from_shared_links),
+                context.getResources().getBoolean(R.bool.pref_default_create_org_links_from_shared_links));
+    }
+
+    // Added for test purposes
+    public static void createOrgLinksFromSharedLinks(Context context, Boolean value) {
+        String key = context.getResources().getString(R.string.pref_key_create_org_links_from_shared_links);
+        getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
     }
 
     /*

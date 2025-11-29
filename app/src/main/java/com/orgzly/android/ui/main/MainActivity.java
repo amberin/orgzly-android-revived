@@ -16,7 +16,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -203,7 +206,7 @@ public class MainActivity extends CommonActivity
                     DisplayManager.displayExistingNote(getSupportFragmentManager(), bookId, noteId);
                 }
             } else if (queryString != null) {
-                DisplayManager.displayQuery(getSupportFragmentManager(), queryString);
+                DisplayManager.displayQuery(getSupportFragmentManager(), queryString, null);
 
             } else {
                 handleOrgProtocolIntent(getIntent());
@@ -236,6 +239,20 @@ public class MainActivity extends CommonActivity
         mDrawerLayout = findViewById(R.id.drawer_layout);
 
         NavigationView navigationView = mDrawerLayout.findViewById(R.id.drawer_navigation_view);
+
+        // Handle edge-to-edge
+        ViewCompat.setOnApplyWindowInsetsListener(navigationView, (view, insets) -> {
+            Insets innerPadding = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+            );
+            navigationView.setPadding(
+                    innerPadding.left,
+                    innerPadding.top,
+                    innerPadding.right,
+                    innerPadding.bottom
+            );
+            return insets;
+        });
 
         navigationView.setNavigationItemSelectedListener(item -> {
             Intent intent = item.getIntent();
@@ -317,8 +334,8 @@ public class MainActivity extends CommonActivity
             }
         });
 
-        sharedMainActivityViewModel.getOpenDrawerRequest().observeSingle(this, open -> {
-            if (open) {
+        sharedMainActivityViewModel.getOpenDrawerRequest().observeSingle(this, value -> {
+            if (value != null && value) {
                 mDrawerLayout.openDrawer(GravityCompat.START);
             } else {
                 mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -373,7 +390,8 @@ public class MainActivity extends CommonActivity
 
                 DisplayManager.displayQuery(
                         getSupportFragmentManager(),
-                        thisAction.getQuery());
+                        thisAction.getQuery(),
+                        null);
             }
         });
 
@@ -906,12 +924,6 @@ public class MainActivity extends CommonActivity
         LocalBroadcastManager.getInstance(App.getAppContext()).sendBroadcast(intent);
     }
 
-    public static void openQuery(String query) {
-        Intent intent = new Intent(AppIntent.ACTION_OPEN_QUERY);
-        intent.putExtra(AppIntent.EXTRA_QUERY_STRING, query);
-        LocalBroadcastManager.getInstance(App.getAppContext()).sendBroadcast(intent);
-    }
-
     @Override
     public void onClockIn(@NonNull Set<Long> noteIds) {
         viewModel.clockingUpdateRequest(noteIds, 0);
@@ -953,7 +965,8 @@ public class MainActivity extends CommonActivity
 
                 case AppIntent.ACTION_OPEN_QUERY: {
                     String query = intent.getStringExtra(AppIntent.EXTRA_QUERY_STRING);
-                    DisplayManager.displayQuery(getSupportFragmentManager(), query);
+                    String searchName = intent.getStringExtra(AppIntent.EXTRA_SEARCH_NAME);
+                    DisplayManager.displayQuery(getSupportFragmentManager(), query, searchName);
                     break;
                 }
 
