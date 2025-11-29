@@ -208,9 +208,6 @@ public class GitRepo implements SyncRepo, IntegrallySyncedRepo {
 
         Uri sourceUri = Uri.parse("/" + repoRelativePath);
 
-        // Ensure our repo copy is up-to-date. This is necessary when force-loading a book.
-        synchronizer.mergeWithRemote();
-
         synchronizer.retrieveLatestVersionOfFile(sourceUri.getPath(), destination);
 
         return currentVersionedRook(sourceUri);
