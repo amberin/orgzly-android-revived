@@ -10,8 +10,8 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 267
-        versionName "1.14.0-beta.1"
+        versionCode 271
+        versionName "1.16.0-beta.1"
         applicationId = "com.orgzlyreviveddev"
         resValue "string", "application_id", "com.orgzlyreviveddev"
 

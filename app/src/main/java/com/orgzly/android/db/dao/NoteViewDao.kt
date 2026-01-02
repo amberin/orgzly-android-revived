@@ -39,6 +39,23 @@ abstract class NoteViewDao {
     """)
     abstract fun getVisibleLiveData(bookId: Long, lft: Long, rgt: Long): LiveData<List<NoteView>>
 
+    /**
+     * Get visible notes narrowed to a specific note's subtree.
+     * Uses a subquery to dynamically get the current lft/rgt bounds.
+     */
+    @Query("""
+        $QUERY
+        WHERE notes.book_id = :bookId
+        AND notes.level > 0
+        AND notes.is_cut = 0
+        AND notes.folded_under_id = 0
+        AND (SELECT lft FROM notes WHERE id = :narrowedNoteId) <= notes.lft
+        AND notes.rgt <= (SELECT rgt FROM notes WHERE id = :narrowedNoteId)
+        GROUP BY notes.id
+        ORDER BY notes.lft
+    """)
+    abstract fun getVisibleLiveDataNarrowed(bookId: Long, narrowedNoteId: Long): LiveData<List<NoteView>>
+
     @RawQuery(observedEntities = [ Note::class, Book::class ])
     abstract fun runQueryLiveData(query: SupportSQLiteQuery): LiveData<List<NoteView>>
 
@@ -47,6 +64,9 @@ abstract class NoteViewDao {
 
     @Query("$QUERY WHERE notes.id = :id GROUP BY notes.id")
     abstract fun get(id: Long): NoteView?
+
+    @Query("$QUERY WHERE (notes.scheduled_range_id IS NOT NULL OR notes.deadline_range_id IS NOT NULL) AND notes.level > 0 GROUP BY notes.id")
+    abstract fun getAllWithScheduledOrDeadline(): List<NoteView>
 
     @Query("$QUERY WHERE notes.title = :title GROUP BY notes.id ORDER BY lft DESC LIMIT 1")
     abstract fun getLast(title: String): NoteView?
