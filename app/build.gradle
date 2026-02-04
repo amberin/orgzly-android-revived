@@ -12,8 +12,8 @@ android {
         targetSdkVersion 35
         versionCode 274
         versionName "1.17.0"
-        applicationId = "com.orgzlyreviveddev"
-        resValue "string", "application_id", "com.orgzlyreviveddev"
+        applicationId = "com.orgzlyrevived"
+        resValue "string", "application_id", "com.orgzlyrevived"
 
         testInstrumentationRunner "com.orgzly.android.OrgzlyTestRunner"
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
