@@ -473,6 +473,23 @@ public class AppPreferences {
         getDefaultSharedPreferences(context).edit().putString(key, value).apply();
     }
 
+    public static String calendarColor(Context context) {
+        return getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_calendar_color),
+                context.getResources().getString(R.string.pref_default_calendar_color));
+    }
+
+    public static void calendarColor(Context context, String value) {
+        String key = context.getResources().getString(R.string.pref_key_calendar_color);
+        getDefaultSharedPreferences(context).edit().putString(key, value).apply();
+    }
+
+    public static long calendarSyncSearchId(Context context) {
+        return Long.parseLong(getDefaultSharedPreferences(context).getString(
+                context.getResources().getString(R.string.pref_key_calendar_sync_search),
+                context.getResources().getString(R.string.pref_default_calendar_sync_search)));
+    }
+
     public static boolean ignoreSystemLocale(Context context) {
         return getDefaultSharedPreferences(context).getBoolean(
                 context.getResources().getString(R.string.pref_key_ignore_system_locale),
@@ -910,6 +927,22 @@ public class AppPreferences {
         return getDefaultSharedPreferences(context).getBoolean(
                 context.getResources().getString(R.string.pref_key_hide_empty_days_in_agenda),
                 context.getResources().getBoolean(R.bool.pref_default_hide_empty_days_in_agenda));
+    }
+
+    /*
+     * Group scheduled tasks with today in agenda
+     */
+
+    public static boolean groupScheduledWithTodayInAgenda(Context context) {
+        return getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_key_group_scheduled_with_today),
+                context.getResources().getBoolean(R.bool.pref_default_group_scheduled_with_today));
+    }
+
+    public static void groupScheduledWithTodayInAgenda(Context context, boolean value) {
+        getDefaultSharedPreferences(context).edit().putBoolean(
+                context.getResources().getString(R.string.pref_key_group_scheduled_with_today),
+                value).apply();
     }
 
     /*

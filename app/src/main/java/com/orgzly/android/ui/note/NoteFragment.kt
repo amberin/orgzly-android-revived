@@ -17,6 +17,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -261,10 +262,10 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
 
     // Show/hide "insert timestamp" button
     override fun onEditMode() {
-        binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
+        binding.topToolbar.menu.findItem(R.id.insert_inline_timestamp).isVisible = true
     }
     override fun onViewMode() {
-        binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = false
+        binding.topToolbar.menu.findItem(R.id.insert_inline_timestamp).isVisible = false
     }
 
     private fun topToolbarToViewMode() {
@@ -391,7 +392,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 binding.content.setSourceText(newContent)
             }
 
-            R.id.insert_timestamp -> {
+            R.id.insert_inline_timestamp -> {
                 // The current view can only be content_edit or title_edit
                 val originViewId = if (binding.content.isBeingEdited()) {
                     R.id.content_edit
@@ -517,7 +518,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
 
         val propView = lastProperty()
 
-        val name = propView.findViewById<EditText>(R.id.name)
+        val name = propView.findViewById<AutoCompleteTextView>(R.id.name)
         val value = propView.findViewById<EditText>(R.id.value)
         val remove = propView.findViewById<View>(R.id.remove)
 
@@ -543,6 +544,16 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             } else {
                 binding.propertiesContainer.removeView(propView)
             }
+        }
+
+        val propertyNameSuggestionAdapter = NotePropertySuggestionAdapter(
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line
+        )
+        name.setAdapter(propertyNameSuggestionAdapter)
+
+        viewModel.propertyNames.observe(viewLifecycleOwner) {
+            propertyNameSuggestionAdapter.updateDictionary(it)
         }
 
         /*
@@ -669,7 +680,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
              */
             if (viewModel.isNew() && !viewModel.hasInitialTitleData()) {
                 binding.title.toEditMode(0)
-                binding.topToolbar.menu.findItem(R.id.insert_timestamp).isVisible = true
+                binding.topToolbar.menu.findItem(R.id.insert_inline_timestamp).isVisible = true
             }
         }
 

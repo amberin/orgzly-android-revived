@@ -5,7 +5,6 @@ import android.app.Dialog
 import android.app.TimePickerDialog
 import android.os.Bundle
 import android.text.format.DateFormat
-import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -16,6 +15,7 @@ import com.orgzly.R
 import com.orgzly.android.prefs.AppPreferences
 import com.orgzly.android.ui.TimeType
 import com.orgzly.android.ui.util.KeyboardUtils
+import com.orgzly.android.ui.util.getLayoutInflater
 import com.orgzly.android.ui.views.richtext.RichTextEdit
 import com.orgzly.android.util.LogUtils
 import com.orgzly.android.util.UserTimeFormatter
@@ -41,7 +41,7 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
 
     // The view that the dialog was launched from.
     // Sometimes required for showing the keyboard again after closing the dialog.
-    private var originViewId by Delegates.notNull<Int>()
+    private var originViewId: Int by Delegates.notNull()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,14 +71,26 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
         val noteIds = TreeSet(args.getLongArray(ARG_NOTE_IDS)?.toList() ?: emptyList())
         val dateTimeString = args.getString(ARG_TIME)
 
-
-        LayoutInflater.from(requireContext()).let { inflater ->
+        requireContext().getLayoutInflater().let { inflater ->
             binding = DialogTimestampBinding.inflate(inflater)
             titleBinding = DialogTimestampTitleBinding.inflate(inflater)
         }
 
         val factory = TimestampDialogViewModelFactory.getInstance(timeType, dateTimeString)
-        viewModel = ViewModelProvider(this, factory).get(TimestampDialogViewModel::class.java)
+        viewModel = ViewModelProvider(this, factory)[TimestampDialogViewModel::class.java]
+
+        if (timestampIsInline()) {
+            // Show/hide the active/inactive checkbox
+            val lastInlineTimestampWasActive = AppPreferences.lastInlineTimestampWasActive(context)
+            viewModel.setIsActive(lastInlineTimestampWasActive)
+            binding.isActiveCheckbox.isChecked = lastInlineTimestampWasActive
+            binding.isActiveCheckbox.setOnCheckedChangeListener { _, isChecked ->
+                viewModel.setIsActive(isChecked)
+            }
+        } else {
+            binding.isActiveCheckbox.visibility = View.GONE
+            binding.isActiveLabel.visibility = View.GONE
+        }
 
         // Show/hide the active/inactive checkbox
         if (allowChoosingActiveInactive()) {
@@ -92,8 +104,6 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
             binding.isActiveCheckbox.visibility = View.GONE
             binding.isActiveLabel.visibility = View.GONE
         }
-
-        setupObservers()
 
         // Pickers
 
@@ -149,7 +159,7 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
             .show()
     }
 
-    private fun allowChoosingActiveInactive(): Boolean {
+    private fun timestampIsInline(): Boolean {
         return originViewId == R.id.content_edit || originViewId == R.id.title_edit
     }
 
@@ -288,11 +298,11 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
 
     override fun onDetach() {
         super.onDetach()
-        if (allowChoosingActiveInactive()) {
+        if (timestampIsInline()) {
             originViewId.let {
-                KeyboardUtils.openSoftKeyboard(requireParentFragment().requireView().findViewById<RichTextEdit>(
-                    it
-                ))
+                val view = requireParentFragment().view?.findViewById<RichTextEdit>(it)
+                if (view != null)
+                    KeyboardUtils.openSoftKeyboard(view)
             }
         }
     }

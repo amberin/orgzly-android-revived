@@ -11,7 +11,7 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/insert_timestamp"
+        android:id="@+id/insert_inline_timestamp"
         android:title="@string/insert_timestamp"
         android:icon="@drawable/ic_today"
         android:visible="false"
