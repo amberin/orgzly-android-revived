@@ -92,18 +92,7 @@ class TimestampDialogFragment : DialogFragment(), View.OnClickListener {
             binding.isActiveLabel.visibility = View.GONE
         }
 
-        // Show/hide the active/inactive checkbox
-        if (allowChoosingActiveInactive()) {
-            val lastInlineTimestampWasActive = AppPreferences.lastInlineTimestampWasActive(context)
-            viewModel.setIsActive(lastInlineTimestampWasActive)
-            binding.isActiveCheckbox.isChecked = lastInlineTimestampWasActive
-            binding.isActiveCheckbox.setOnCheckedChangeListener { _, isChecked ->
-                viewModel.setIsActive(isChecked)
-            }
-        } else {
-            binding.isActiveCheckbox.visibility = View.GONE
-            binding.isActiveLabel.visibility = View.GONE
-        }
+        setupObservers()
 
         // Pickers
 
