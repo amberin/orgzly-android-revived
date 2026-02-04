@@ -112,7 +112,7 @@ android {
 
     packagingOptions {
         resources {
-            excludes += ['META-INF/DEPENDENCIES', 'plugin.properties']
+            excludes += ['META-INF/DEPENDENCIES', 'plugin.properties', 'OSGI-INF/l10n/plugin.properties']
         }
     }
 
@@ -204,13 +204,17 @@ dependencies {
 
     implementation "io.github.rburgst:okhttp-digest:$versions.okhttp_digest"
 
-    implementation("org.eclipse.jgit:org.eclipse.jgit:$versions.jgit") {
-        because 'Git repo support'
-    }
-    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.apache:$versions.jgit") {
+    // implementation("org.eclipse.jgit:org.eclipse.jgit:$versions.jgit") {
+    //     because 'Git repo support'
+    // }
+    implementation("org.eclipse.jgit:org.eclipse.jgit:7.6.0-SNAPSHOT")
+    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.apache:7.6.0-SNAPSHOT") {
         because 'SSH transport support for Git repos'
         // Avoid DuplicatePlatformClasses error:
         exclude group: 'org.apache.sshd', module: 'sshd-sftp'
+    }
+    implementation("net.i2p.crypto:eddsa:$versions.net_i2p_crypto_eddsa") {
+        because 'SSH Ed25519 key generation'
     }
     implementation("androidx.security:security-crypto:$versions.security_crypto") {
         because 'SSH key generation'
