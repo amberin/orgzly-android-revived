@@ -48,18 +48,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
 
-      - name: Setup build tool version variable
-        shell: bash
-        run: |
-          BUILD_TOOL_VERSION=$(ls /usr/lib/android-sdk/build-tools/ | head -n 1)
-          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
-          echo Last build tool version is: $BUILD_TOOL_VERSION
-
       - name: Assemble F-Droid APK
         run: ./gradlew :app:assembleFdroidRelease --stacktrace
         env:
           ANDROID_HOME: /usr/lib/android-sdk
-          BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Add Dropbox app identifier
         shell: bash
