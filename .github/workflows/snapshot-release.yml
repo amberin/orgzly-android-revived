@@ -59,6 +59,7 @@ jobs:
         run: ./gradlew :app:assembleFdroidRelease --stacktrace
         env:
           ANDROID_HOME: /usr/lib/android-sdk
+          BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Add Dropbox app identifier
         shell: bash
