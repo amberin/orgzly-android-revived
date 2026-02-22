@@ -1,4 +1,4 @@
-name: Build and publish unstable snapshot release
+name: Build & publish snapshot release
 
 # Based on https://github.com/refined-github/refined-github/blob/5cda3447bf80cca0c64ae5eb79779ecd62fec18e/.github/workflows/release.yml#L30-L32
 
@@ -50,6 +50,8 @@ jobs:
 
       - name: Assemble F-Droid APK
         run: ./gradlew :app:assembleFdroidRelease --stacktrace
+        env:
+          ANDROID_HOME: /usr/lib/android-sdk
 
       - name: Add Dropbox app identifier
         shell: bash
@@ -59,9 +61,13 @@ jobs:
 
       - name: Assemble "premium" APK
         run: ./gradlew :app:assemblePremiumRelease --stacktrace
+        env:
+          ANDROID_HOME: /usr/lib/android-sdk
 
       - name: Assemble "premium" AAB
         run: ./gradlew :app:bundlePremiumRelease --stacktrace
+        env:
+          ANDROID_HOME: /usr/lib/android-sdk
           
       - name: Sign F-Droid APK
         run: /apksigner-user-wrapper.sh ./app/build/outputs/apk/fdroid/release/*.apk ./orgzly-revived-fdroid-${{ env.VERSION }}.apk
