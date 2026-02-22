@@ -23,7 +23,7 @@ jobs:
         name: Tag commit unless already tagged
         id: daily-version
         with:
-          prefix: 'untested-snapshot-'
+          prefix: 'snapshot-'
 
   BuildSignAndUpload:
     permissions:
@@ -43,7 +43,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
@@ -80,5 +80,5 @@ jobs:
             *.aab
           prerelease: true
           tag_name: ${{ needs.AddTag.outputs.version }}
-          body: Install at your own risk! These untested snapshot builds are generated periodically from the current main branch (if it has changed).
+          body: Install at your own risk! These untested snapshot builds are generated periodically from the current main branch.
           generate_release_notes: true
