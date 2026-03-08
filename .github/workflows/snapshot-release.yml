@@ -95,3 +95,6 @@ jobs:
           tag_name: ${{ needs.AddTag.outputs.version }}
           body: Install at your own risk! These untested snapshot builds are generated periodically from the current main branch.
           generate_release_notes: true
+
+      - name: Delete artifacts
+        run: rm -rf ./apk ./bundle ./*.apk ./*.aab
