@@ -34,9 +34,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
-      - name: Store version/tag name in shell env variable
-        run: echo "VERSION=${{ needs.AddTag.outputs.version }}" >> $GITHUB_ENV
-
       - name: Setup Java
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
         with:
@@ -71,7 +68,7 @@ jobs:
             app/build/outputs/bundle/*/*.aab
 
   Sign:
-    needs: Build
+    needs: [AddTag, Build]
     runs-on: self-hosted
     steps:
       
