@@ -78,14 +78,11 @@ jobs:
       - name: Download unsigned artifacts
         uses: actions/download-artifact@v7
 
-      - name: Show
-        run: ls -lR
-        
       - name: Sign F-Droid APK
-        run: /apksigner-user-wrapper.sh ./apk/fdroid/release/*.apk ./orgzly-revived-fdroid-${{ env.VERSION }}.apk
+        run: /apksigner-user-wrapper.sh ./apk/fdroid/release/*.apk ./orgzly-revived-fdroid-${{ needs.AddTag.outputs.version }}.apk
 
       - name: Sign "premium" APK
-        run: /apksigner-user-wrapper.sh ./apk/premium/release/*.apk ./orgzly-revived-${{ env.VERSION }}.apk
+        run: /apksigner-user-wrapper.sh ./apk/premium/release/*.apk ./orgzly-revived-${{ needs.AddTag.outputs.version }}.apk
 
       # - name: Sign "premium" AAB
       #   run: /apksigner-user-wrapper.sh ./app/build/outputs/bundle/premiumRelease/*.aab ./orgzly-revived-${{ env.VERSION }}.aab
@@ -95,7 +92,6 @@ jobs:
         with:
           files: |
             *.apk
-            *.aab
           prerelease: true
           tag_name: ${{ needs.AddTag.outputs.version }}
           body: Install at your own risk! These untested snapshot builds are generated periodically from the current main branch.
