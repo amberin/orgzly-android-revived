@@ -70,6 +70,8 @@ jobs:
   Sign:
     needs: [AddTag, Build]
     runs-on: self-hosted
+    permissions:
+      contents: write
     steps:
       
       - name: Download unsigned artifacts
