@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.view.MenuItem;
 import android.view.View;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -173,6 +174,32 @@ public class MainActivity extends CommonActivity
         };
 
         new SharingShortcutsManager().replaceDynamicShortcuts(this);
+
+        // This callback is only called when MyFragment is at least started
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Close drawer if opened
+                if (mDrawerLayout != null) {
+                    if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                        mDrawerLayout.closeDrawer(GravityCompat.START);
+                        return;
+                    }
+                }
+                // Collapse search view if expanded
+                Toolbar toolbar = findViewById(R.id.top_toolbar);
+                if (toolbar != null) {
+                    MenuItem menuItem = toolbar.getMenu().findItem(R.id.search_view);
+                    if (menuItem != null) {
+                        if (menuItem.isActionViewExpanded()) {
+                            menuItem.collapseActionView();
+                            return;
+                        }
+                    }
+                }
+            }
+        };
+        this.getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
     @NotNull
@@ -583,33 +610,6 @@ public class MainActivity extends CommonActivity
         if (mDrawerLayout != null && mDrawerToggle != null) {
             mDrawerLayout.removeDrawerListener(mDrawerToggle);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG);
-
-        // Close drawer if opened
-        if (mDrawerLayout != null) {
-            if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-                mDrawerLayout.closeDrawer(GravityCompat.START);
-                return;
-            }
-        }
-
-        // Collapse search view if expanded
-        Toolbar toolbar = findViewById(R.id.top_toolbar);
-        if (toolbar != null) {
-            MenuItem menuItem = toolbar.getMenu().findItem(R.id.search_view);
-            if (menuItem != null) {
-                if (menuItem.isActionViewExpanded()) {
-                    menuItem.collapseActionView();
-                    return;
-                }
-            }
-        }
-
-        super.onBackPressed();
     }
 
     @Override
