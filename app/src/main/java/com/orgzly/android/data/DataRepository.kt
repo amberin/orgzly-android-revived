@@ -74,7 +74,8 @@ class DataRepository @Inject constructor(
         private val db: OrgzlyDatabase,
         private val repoFactory: RepoFactory,
         private val resources: Resources,
-        private val localStorage: LocalStorage) {
+        private val localStorage: LocalStorage,
+        private val shims: DataRepositoryShims) {
 
     private fun triggerCalendarSync() {
         val calendarRequest = OneTimeWorkRequestBuilder<CalendarWorker>().build()
@@ -1124,21 +1125,32 @@ class DataRepository @Inject constructor(
                 var updated = 0
 
                 val doneKeywords = AppPreferences.doneKeywordsSet(context)
+                val appLogDone = LogDonePolicy.fromPreferences(context)
+                // A null preface is a cacheable answer, which getOrPut cannot represent.
+                val prefaces = HashMap<Long, String?>()
 
                 db.note().getNoteForStateChange(noteIds, state).forEach { note ->
+                    if (!prefaces.containsKey(note.bookId)) {
+                        prefaces[note.bookId] = db.book().get(note.bookId)?.preface
+                    }
+                    val logDone = LogDonePolicy.resolve(
+                        db.noteProperty().getInherited(note.noteId, LogDonePolicy.LOGGING),
+                        prefaces[note.bookId],
+                        appLogDone)
 
                     var title = note.title
                     var content = note.content
 
                     val eventsInNote = EventsInNote(title, content)
 
-                    val scl = StateChangeLogic(doneKeywords)
+                    val scl = StateChangeLogic(doneKeywords, logDone)
 
                     scl.setState(
                             state,
                             note.state,
                             OrgRange.parseOrNull(note.scheduled),
                             OrgRange.parseOrNull(note.deadline),
+                            OrgRange.parseOrNull(note.closed),
                             eventsInNote.timestamps.map { OrgRange(it) })
 
                     if (scl.isShifted) {
@@ -1363,6 +1375,14 @@ class DataRepository @Inject constructor(
 
     fun getNoteProperties(noteId: Long): List<NoteProperty> {
         return db.noteProperty().get(noteId)
+    }
+
+    fun getInheritedProperty(noteId: Long, name: String): String? {
+        return db.noteProperty().getInherited(noteId, name)
+    }
+
+    fun getAncestorProperty(noteId: Long, name: String): String? {
+        return db.noteProperty().getInheritedFromAncestors(noteId, name)
     }
 
     fun getNotePropertyNames(): List<String> {
@@ -2189,74 +2209,68 @@ class DataRepository @Inject constructor(
      * Saved search
      */
 
+    @Deprecated("Use SavedSearchRepository.get instead")
     fun getSavedSearch(id: Long): SavedSearch? {
-        return db.savedSearch().get(id)
+        return shims.savedSearches.get(id)
     }
 
+    @Deprecated("Use SavedSearchRepository.getAll instead")
     fun getSavedSearches(): List<SavedSearch> {
-        return db.savedSearch().getAll()
+        return shims.savedSearches.getAll()
     }
 
+    @Deprecated("Use SavedSearchRepository.getLiveData instead")
     fun getSavedSearchesLiveData(): LiveData<List<SavedSearch>> {
-        return db.savedSearch().getLiveData()
+        return shims.savedSearches.getLiveData()
     }
 
     /**
      * Get [SavedSearch] by name (case insensitive).
      */
+    @Deprecated("Use SavedSearchRepository.getByNameIgnoreCase instead")
     fun getSavedSearchesByNameIgnoreCase(name: String): List<SavedSearch> {
-        return db.savedSearch().getAllByNameIgnoreCase(name)
+        return shims.savedSearches.getByNameIgnoreCase(name)
     }
 
+    @Deprecated("Use SavedSearchRepository.create instead")
     fun createSavedSearch(savedSearch: SavedSearch): Long {
-        val nextPosition = db.savedSearch().getNextAvailablePosition()
-        return db.savedSearch().insert(savedSearch.copy(position = nextPosition))
+        return shims.savedSearches.create(savedSearch)
     }
 
+    @Deprecated("Use SavedSearchRepository.update instead")
     fun updateSavedSearch(savedSearch: SavedSearch) {
-        db.savedSearch().update(savedSearch)
+        shims.savedSearches.update(savedSearch)
     }
 
+    @Deprecated("Use SavedSearchRepository.delete instead")
     fun deleteSavedSearches(ids: Set<Long>) {
-        db.savedSearch().delete(ids)
+        shims.savedSearches.delete(ids)
     }
 
+    @Deprecated("Use SavedSearchRepository.moveUp instead")
     fun moveSavedSearchUp(id: Long) {
-        db.savedSearch().get(id)?.let { savedSearch ->
-            db.savedSearch().getFirstAbove(savedSearch.position)?.let {
-                swapSavedSearchPositions(savedSearch, it)
-            }
-        }
+        shims.savedSearches.moveUp(id)
     }
 
+    @Deprecated("Use SavedSearchRepository.moveDown instead")
     fun moveSavedSearchDown(id: Long) {
-        db.savedSearch().get(id)?.let { savedSearch ->
-            db.savedSearch().getFirstBelow(savedSearch.position)?.let {
-                swapSavedSearchPositions(savedSearch, it)
-            }
-        }
+        shims.savedSearches.moveDown(id)
     }
 
-    private fun swapSavedSearchPositions(savedSearch: SavedSearch, other: SavedSearch) {
-        db.runInTransaction {
-            db.savedSearch().update(savedSearch.copy(position = other.position))
-            db.savedSearch().update(other.copy(position = savedSearch.position))
-        }
-    }
-
+    @Deprecated("Use FileSavedSearchStore.exportSearches instead")
     fun exportSavedSearches(uri: Uri?): Int {
-        return FileSavedSearchStore(context, this).exportSearches(uri)
+        return FileSavedSearchStore(context, shims.savedSearches).exportSearches(uri)
     }
 
+    @Deprecated("Use FileSavedSearchStore.importSearches instead")
     fun importSavedSearches(uri: Uri): Int {
-        return FileSavedSearchStore(context, this).importSearches(uri)
+        return FileSavedSearchStore(context, shims.savedSearches).importSearches(uri)
     }
 
 
+    @Deprecated("Use SavedSearchRepository.replaceAll instead")
     fun replaceSavedSearches(savedSearches: List<SavedSearch>): Int {
-        db.savedSearch().deleteAll()
-        db.savedSearch().insert(savedSearches)
-        return savedSearches.size
+        return shims.savedSearches.replaceAll(savedSearches)
     }
 
     /*
@@ -2589,6 +2603,6 @@ class DataRepository @Inject constructor(
     companion object {
         private val TAG = DataRepository::class.java.name
 
-        const val GETTING_STARTED_NOTEBOOK_RESOURCE_ID = R.raw.orgzly_getting_started
+        val GETTING_STARTED_NOTEBOOK_RESOURCE_ID = R.raw.orgzly_getting_started
     }
 }
