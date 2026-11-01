@@ -21,6 +21,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.orgzly.R
 import com.orgzly.android.OrgzlyTest
+import com.orgzly.android.RetryTestRule
 import com.orgzly.android.db.entity.SavedSearch
 import com.orgzly.android.espresso.util.EspressoUtils.onSavedSearch
 import com.orgzly.android.ui.main.MainActivity
@@ -28,10 +29,14 @@ import com.orgzly.android.usecase.UseCaseRunner
 import org.hamcrest.Matcher
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 class SavedSearchesStateTest : OrgzlyTest() {
     private lateinit var scenario: ActivityScenario<MainActivity>
+
+    @get:Rule
+    val mRetryTestRule = RetryTestRule()
 
     @Before
     override fun setUp() {
